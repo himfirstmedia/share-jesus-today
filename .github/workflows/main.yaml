@@ -1,0 +1,183 @@
+name: BX Android Production Build (Expo)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'main'
+        type: string
+
+env:
+  NODE_VERSION: '20.x'
+  JAVA_VERSION: '17'
+  DISTRIBUTION: 'temurin'
+
+jobs:
+  build_expo_production:
+    name: Build Expo Production APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref_name }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Setup Java JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          build-tools: 34.0.0
+          ndk-version: 25.1.8937393
+
+      - name: Cache Node Modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install Native Dependencies
+        run: yarn add react-native-svg
+
+      - name: Install Expo CLI
+        run: npm install -g @expo/cli
+
+      - name: Configure Android Package
+        run: |
+          echo "Checking app.json configuration..."
+          cat app.json
+          
+          # Add package name to android section if missing
+          if ! grep -q '"package"' app.json; then
+            jq '.expo.android.package = "com.sharejesustoday.app"' app.json > app_temp.json && mv app_temp.json app.json
+            echo "Added Android package name to app.json"
+          fi
+          
+          # Add proper version code for installation
+          if ! grep -q '"versionCode"' app.json; then
+            jq '.expo.android.versionCode = 1' app.json > app_temp.json && mv app_temp.json app.json
+            echo "Added Android versionCode to app.json"
+          fi
+          
+          echo "Updated app.json:"
+          cat app.json
+
+      - name: Prebuild Android for Production
+        run: npx expo prebuild --platform android 
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant Execute Permissions for gradlew
+        run: chmod +x android/gradlew
+
+      - name: Create Release Keystore
+        run: |
+          mkdir -p android/app
+          keytool -genkeypair -v -keystore android/app/release.keystore \
+            -alias release-key \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Share Jesus Today, OU=Mobile App, O=Share Jesus Today, L=City, S=State, C=US"
+          
+          # Verify keystore was created
+          ls -la android/app/
+
+      - name: Configure Android Build
+        run: |
+          cd android
+          
+          # Add signing configuration to gradle.properties
+          echo "MYAPP_RELEASE_STORE_FILE=release.keystore" >> gradle.properties
+          echo "MYAPP_RELEASE_KEY_ALIAS=release-key" >> gradle.properties
+          echo "MYAPP_RELEASE_STORE_PASSWORD=android" >> gradle.properties
+          echo "MYAPP_RELEASE_KEY_PASSWORD=android" >> gradle.properties
+          
+          # Add additional Android configuration
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" >> gradle.properties
+          
+          echo "Gradle properties:"
+          cat gradle.properties
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          
+          # Clean previous builds
+          ./gradlew clean
+          
+          # Build the APK with detailed logging
+          ./gradlew assembleRelease \
+            --console=plain \
+            --no-daemon \
+            --stacktrace \
+            --info
+          
+          # Verify APK was created
+          ls -la app/build/outputs/apk/release/
+
+      - name: Verify APK
+        run: |
+          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          
+          if [ -f "$APK_PATH" ]; then
+            echo "✅ APK successfully created!"
+            
+            # Get APK info
+            APK_SIZE=$(ls -lh "$APK_PATH" | awk '{print $5}')
+            echo "APK Size: $APK_SIZE"
+            
+            # Verify APK is properly signed
+            if command -v aapt &> /dev/null; then
+              echo "APK Package Info:"
+              aapt dump badging "$APK_PATH" | grep -E "(package|sdkVersion|targetSdkVersion)"
+            fi
+          else
+            echo "❌ APK not found at expected location!"
+            echo "Searching for APK files..."
+            find android -name "*.apk" -type f
+            exit 1
+          fi
+
+      - name: Upload Signed Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-production-signed-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
