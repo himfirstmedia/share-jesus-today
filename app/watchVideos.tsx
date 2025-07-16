@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Modal,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -13,13 +15,13 @@ import {
   View,
 } from 'react-native';
 
-import { VideoCard } from '../components/video/VideoCard'; // Import the actual VideoCard
-import { VideoModal } from '../components/video/VideoModal'; // Import VideoModal
-import videoApiService, { VideoModel } from '../services/videoApiService'; // Import real service and types
+import { VideoCard } from '../components/video/VideoCard';
+import { VideoModal } from '../components/video/VideoModal';
+import videoApiService, { VideoModel } from '../services/videoApiService';
 
-// --- Blocked Content Management (Placeholder - ideally in a separate util) ---
+// Blocked Content Management
 const BLOCKED_USER_IDS_KEY = 'blockedUserIds';
-const BLOCKED_VIDEO_IDS_KEY = 'blockedVideoIds'; // Assuming we block by video ID for more robustness
+const BLOCKED_VIDEO_IDS_KEY = 'blockedVideoIds';
 
 const getBlockedItemIds = async (key: string): Promise<string[]> => {
   try {
@@ -31,21 +33,147 @@ const getBlockedItemIds = async (key: string): Promise<string[]> => {
   }
 };
 
-// Example: Functions to add items to block list (would be called elsewhere)
-// const addBlockedUserId = async (userId: string) => {
-//   const currentBlocked = await getBlockedItemIds(BLOCKED_USER_IDS_KEY);
-//   if (!currentBlocked.includes(userId)) {
-//     await AsyncStorage.setItem(BLOCKED_USER_IDS_KEY, JSON.stringify([...currentBlocked, userId]));
-//   }
-// };
-// const addBlockedVideoId = async (videoId: string) => {
-//   const currentBlocked = await getBlockedItemIds(BLOCKED_VIDEO_IDS_KEY);
-//   if (!currentBlocked.includes(videoId)) {
-//     await AsyncStorage.setItem(BLOCKED_VIDEO_IDS_KEY, JSON.stringify([...currentBlocked, videoId]));
-//   }
-// };
-// --- End Blocked Content Management ---
+const addBlockedUserId = async (userId: string) => {
+  try {
+    const currentBlocked = await getBlockedItemIds(BLOCKED_USER_IDS_KEY);
+    if (!currentBlocked.includes(userId)) {
+      await AsyncStorage.setItem(BLOCKED_USER_IDS_KEY, JSON.stringify([...currentBlocked, userId]));
+    }
+  } catch (error) {
+    console.error('Failed to add blocked user ID:', error);
+    throw error;
+  }
+};
 
+const addBlockedVideoId = async (videoId: string) => {
+  try {
+    const currentBlocked = await getBlockedItemIds(BLOCKED_VIDEO_IDS_KEY);
+    if (!currentBlocked.includes(videoId)) {
+      await AsyncStorage.setItem(BLOCKED_VIDEO_IDS_KEY, JSON.stringify([...currentBlocked, videoId]));
+    }
+  } catch (error) {
+    console.error('Failed to add blocked video ID:', error);
+    throw error;
+  }
+};
+
+const reportUser = async (userId: string) => {
+  try {
+    // TODO: Implement actual reporting to your backend
+    console.log('Reporting user:', userId);
+    // You would make an API call here to report the user
+    // await apiService.reportUser(userId);
+  } catch (error) {
+    console.error('Failed to report user:', error);
+    throw error;
+  }
+};
+
+// Block Menu Component
+interface BlockMenuProps {
+  visible: boolean;
+  onClose: () => void;
+  video: VideoModel;
+  onVideoBlocked: () => void;
+  onUserBlocked: () => void;
+}
+
+const BlockMenu: React.FC<BlockMenuProps> = ({ 
+  visible, 
+  onClose, 
+  video, 
+  onVideoBlocked, 
+  onUserBlocked 
+}) => {
+  const handleBlockVideo = async () => {
+    try {
+      await addBlockedVideoId(video.id);
+      Alert.alert('Success', 'Video blocked successfully.', [
+        { text: 'OK', onPress: onVideoBlocked }
+      ]);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to block video.');
+    }
+    onClose();
+  };
+
+  const handleBlockUser = async () => {
+    try {
+      await addBlockedUserId(video.uploader.id);
+      Alert.alert('Success', 'User blocked successfully.', [
+        { text: 'OK', onPress: onUserBlocked }
+      ]);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to block user.');
+    }
+    onClose();
+  };
+
+  const handleReportUser = async () => {
+    Alert.alert(
+      'Report User',
+      'Are you sure you want to report this user?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Report', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await reportUser(video.uploader.id);
+              Alert.alert('Success', 'User reported. Thank you!');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to report user. Please try again.');
+            }
+            onClose();
+          }
+        }
+      ]
+    );
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <View style={styles.menuContainer}>
+          <Text style={styles.menuTitle}>Report & Block</Text>
+          
+          <TouchableOpacity style={styles.menuItem} onPress={handleBlockVideo}>
+            <Ionicons name="eye-off-outline" size={20} color="#333" />
+            <Text style={styles.menuItemText}>Block this video</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem} onPress={handleBlockUser}>
+            <Ionicons name="person-remove-outline" size={20} color="#333" />
+            <Text style={styles.menuItemText}>
+              Block {video.uploader.firstName} {video.uploader.lastName}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.menuItem} onPress={handleReportUser}>
+            <Ionicons name="flag-outline" size={20} color="#e74c3c" />
+            <Text style={[styles.menuItemText, { color: '#e74c3c' }]}>
+              Report {video.uploader.firstName} {video.uploader.lastName}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
 
 const WatchVideosScreen = () => {
   const [allVideos, setAllVideos] = useState<VideoModel[]>([]);
@@ -53,15 +181,19 @@ const WatchVideosScreen = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(false); // For initial load
-  const [isLoadingMore, setIsLoadingMore] = useState(false); // For loading more pages
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // States for VideoModal
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedVideoForModal, setSelectedVideoForModal] = useState<VideoModel | null>(null);
   const [currentVideoIndexInModal, setCurrentVideoIndexInModal] = useState(0);
 
-  const PAGE_SIZE = 10; // Number of videos to fetch per page
+  // Block Menu State
+  const [showBlockMenu, setShowBlockMenu] = useState(false);
+  const [selectedVideoForBlocking, setSelectedVideoForBlocking] = useState<VideoModel | null>(null);
+
+  const PAGE_SIZE = 10;
 
   const handleNextVideoInModal = () => {
     if (currentVideoIndexInModal < displayedVideos.length - 1) {
@@ -79,35 +211,42 @@ const WatchVideosScreen = () => {
     }
   };
 
+  const filterOutBlockedVideos = async (videos: VideoModel[]): Promise<VideoModel[]> => {
+    const [blockedUserIds, blockedVideoIds] = await Promise.all([
+      getBlockedItemIds(BLOCKED_USER_IDS_KEY),
+      getBlockedItemIds(BLOCKED_VIDEO_IDS_KEY),
+    ]);
+
+    return videos.filter(
+      video => 
+        video.uploader && 
+        !blockedUserIds.includes(video.uploader.id) && 
+        !blockedVideoIds.includes(video.id)
+    );
+  };
+
   const loadInitialVideos = async () => {
     if (isLoading) return;
     console.log('Loading initial videos...');
     setIsLoading(true);
     try {
-      const [blockedUserIds, blockedVideoIds] = await Promise.all([
-        getBlockedItemIds(BLOCKED_USER_IDS_KEY),
-        getBlockedItemIds(BLOCKED_VIDEO_IDS_KEY),
-      ]);
-
       const response = await videoApiService.fetchPublicVideos(0, PAGE_SIZE);
       if (response.success && response.data) {
         const fetchedVideos = response.data.data;
-        const nonBlockedVideos = fetchedVideos.filter(
-          video => video.uploader && !blockedUserIds.includes(video.uploader.id) && !blockedVideoIds.includes(video.id)
-        );
+        const nonBlockedVideos = await filterOutBlockedVideos(fetchedVideos);
 
         setAllVideos(nonBlockedVideos);
-        setDisplayedVideos(nonBlockedVideos); // Initially display all fetched non-blocked
-        setTotalPages(response.data.totalPages); // Total pages from API, filtering might affect perceived total by user
+        setDisplayedVideos(nonBlockedVideos);
+        setTotalPages(response.data.totalPages);
         setCurrentPage(response.data.number !== undefined ? response.data.number : 0);
-        console.log(`Initial load: Fetched ${fetchedVideos.length}, Displaying ${nonBlockedVideos.length} (after filtering). Total API pages: ${response.data.totalPages}.`);
+        console.log(`Initial load: Fetched ${fetchedVideos.length}, Displaying ${nonBlockedVideos.length} (after filtering).`);
       } else {
         console.error('Failed to load initial videos:', response.error);
-        // TODO: Show error message to user
+        Alert.alert('Error', 'Failed to load videos. Please try again.');
       }
     } catch (error) {
       console.error('Failed to load initial videos:', error);
-      // TODO: Show error message to user
+      Alert.alert('Error', 'Failed to load videos. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -115,10 +254,7 @@ const WatchVideosScreen = () => {
 
   const loadMoreVideos = async () => {
     if (isLoadingMore || (totalPages > 0 && currentPage >= totalPages - 1)) {
-      console.log('Load more condition not met or already at last page:', {isLoadingMore, currentPage, totalPages});
-      if (totalPages > 0 && currentPage >= totalPages - 1) {
-        console.log('Already on the last page.');
-      }
+      console.log('Load more condition not met or already at last page');
       return;
     }
     
@@ -127,18 +263,11 @@ const WatchVideosScreen = () => {
     setIsLoadingMore(true);
 
     try {
-      const [blockedUserIds, blockedVideoIds] = await Promise.all([
-        getBlockedItemIds(BLOCKED_USER_IDS_KEY),
-        getBlockedItemIds(BLOCKED_VIDEO_IDS_KEY),
-      ]);
-
       const response = await videoApiService.fetchPublicVideos(nextPageToFetch, PAGE_SIZE);
       if (response.success && response.data) {
         const fetchedVideos = response.data.data;
         if (fetchedVideos.length > 0) {
-          const nonBlockedNewVideos = fetchedVideos.filter(
-            video => !blockedUserIds.includes(video.uploader.id) && !blockedVideoIds.includes(video.id)
-          );
+          const nonBlockedNewVideos = await filterOutBlockedVideos(fetchedVideos);
 
           if (nonBlockedNewVideos.length > 0) {
             setAllVideos(prevAllVideos => {
@@ -155,24 +284,57 @@ const WatchVideosScreen = () => {
               return updatedAllVideos;
             });
             console.log(`Loaded ${nonBlockedNewVideos.length} more non-blocked videos.`);
-          } else {
-            console.log('Fetched new videos, but all were blocked or empty after filtering.');
           }
-        } else {
-          console.log('No more new videos to load from API.');
         }
         setCurrentPage(response.data.number !== undefined ? response.data.number : nextPageToFetch);
         setTotalPages(response.data.totalPages);
       } else {
         console.error('Failed to load more videos:', response.error);
-        // TODO: Show error message to user
       }
     } catch (error) {
       console.error('Failed to load more videos:', error);
-      // TODO: Show error message to user
     } finally {
       setIsLoadingMore(false);
     }
+  };
+
+  const refreshVideoList = async () => {
+    // Refresh the current displayed videos by filtering out newly blocked content
+    const refreshedVideos = await filterOutBlockedVideos(allVideos);
+    setAllVideos(refreshedVideos);
+    
+    if (searchTerm.trim() === '') {
+      setDisplayedVideos(refreshedVideos);
+    } else {
+      const filtered = refreshedVideos.filter(video =>
+        video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${video.uploader.firstName} ${video.uploader.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setDisplayedVideos(filtered);
+    }
+  };
+
+  const handleVideoBlocked = () => {
+    refreshVideoList();
+    // Close modal if the blocked video was currently being viewed
+    if (selectedVideoForModal && selectedVideoForBlocking && 
+        selectedVideoForModal.id === selectedVideoForBlocking.id) {
+      setIsModalVisible(false);
+    }
+  };
+
+  const handleUserBlocked = () => {
+    refreshVideoList();
+    // Close modal if the blocked user's video was currently being viewed
+    if (selectedVideoForModal && selectedVideoForBlocking && 
+        selectedVideoForModal.uploader.id === selectedVideoForBlocking.uploader.id) {
+      setIsModalVisible(false);
+    }
+  };
+
+  const handleShowBlockMenu = (video: VideoModel) => {
+    setSelectedVideoForBlocking(video);
+    setShowBlockMenu(true);
   };
 
   useEffect(() => {
@@ -193,18 +355,15 @@ const WatchVideosScreen = () => {
   };
 
   const renderVideoItem = ({ item }: { item: VideoModel }) => (
-    // @ts-ignore TODO: Resolve type incompatibility if VideoModel is not directly assignable to VideoType for VideoCard
-    // This is often due to one type being a subset of another or minor differences not affecting usage.
-    // For now, we assume VideoModel from videoApiService has the necessary fields for VideoCard.
     <VideoCard
-      video={item as any} // Use 'as any' for now, or create a mapping function if types diverge significantly
+      video={item as any}
       onPress={() => {
         const index = displayedVideos.findIndex(v => v.id === item.id);
         setSelectedVideoForModal(item);
         setCurrentVideoIndexInModal(index >= 0 ? index : 0);
         setIsModalVisible(true);
-        console.log('Pressed video:', item.title, `Index in displayed: ${index}`);
       }}
+      onFlagPress={() => handleShowBlockMenu(item)} // This prop needs to be added to VideoCard
     />
   );
 
@@ -225,27 +384,29 @@ const WatchVideosScreen = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Watch Videos</Text>
-        <View style={{width: 24}} />{/* Spacer */}
+        <View style={{width: 24}} />
       </View>
+      
       <TextInput
         style={styles.searchInput}
         placeholder="Search videos ..."
-        placeholderTextColor="#001"
+        placeholderTextColor="#666"
         value={searchTerm}
         onChangeText={handleSearch}
       />
+      
       <FlatList
         data={displayedVideos}
         renderItem={renderVideoItem}
         keyExtractor={item => item.id}
         onEndReached={loadMoreVideos}
-        onEndReachedThreshold={0.5} // Load more when half a screen away from the end
+        onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={() => (
-            !isLoading && !isLoadingMore && <Text style={styles.emptyListText}>No videos found.</Text>
+          !isLoading && !isLoadingMore && <Text style={styles.emptyListText}>No videos found.</Text>
         )}
         contentContainerStyle={styles.listContentContainer}
       />
@@ -253,17 +414,27 @@ const WatchVideosScreen = () => {
       {selectedVideoForModal && (
         <VideoModal
           visible={isModalVisible}
-          video={selectedVideoForModal as any} // Pass VideoModel, VideoModal handles VideoType internally
-          isLoading={false} // Assuming video data is part of selectedVideoForModal
+          video={selectedVideoForModal as any}
+          isLoading={false}
           onClose={() => setIsModalVisible(false)}
           onVideoLoad={() => console.log('Video modal: Video loaded')}
           onVideoError={(error) => console.error('Video modal: Video error', error)}
           onPlaybackStatusUpdate={(status) => console.log('Video modal: Playback status', status)}
-          videoList={displayedVideos as any[]} // Pass the list of currently displayed videos
+          videoList={displayedVideos as any[]}
           currentVideoIndex={currentVideoIndexInModal}
           onNextVideo={handleNextVideoInModal}
           onPreviousVideo={handlePreviousVideoInModal}
-          // profileImageUrl and userId are derived by VideoModal from video.uploader
+          onFlagPress={() => selectedVideoForModal && handleShowBlockMenu(selectedVideoForModal)}
+        />
+      )}
+
+      {selectedVideoForBlocking && (
+        <BlockMenu
+          visible={showBlockMenu}
+          video={selectedVideoForBlocking}
+          onClose={() => setShowBlockMenu(false)}
+          onVideoBlocked={handleVideoBlocked}
+          onUserBlocked={handleUserBlocked}
         />
       )}
     </SafeAreaView>
@@ -273,8 +444,8 @@ const WatchVideosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f2f5',
-    paddingTop: 20,
+    backgroundColor: '#e5e7ebff',
+    paddingTop: 1,
   },
   header: {
     flexDirection: 'row',
@@ -282,7 +453,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 15,
     paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#4472C4',
     borderBottomWidth: 1,
     borderBottomColor: '#dddddd',
   },
@@ -292,10 +463,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color:'white'
   },
   searchInput: {
     height: 45,
-    borderColor: '#000',
+    borderColor: '#ddd',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
@@ -308,32 +480,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingBottom: 15,
   },
-  videoCard: { // Placeholder style
-    backgroundColor: '#ffffff',
-    padding: 15,
-    marginVertical: 8,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  videoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  videoThumbnailText: {
-    fontSize: 12,
-    color: 'gray',
-    marginTop: 5,
-  },
   emptyListText: {
     textAlign: 'center',
     marginTop: 50,
     fontSize: 16,
     color: '#666666',
-  }
+  },
+  // Block Menu Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    minWidth: 280,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  menuTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  menuItemText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#333',
+  },
+  cancelButton: {
+    marginTop: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+  },
 });
 
 export default WatchVideosScreen;

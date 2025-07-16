@@ -140,20 +140,20 @@ const styles = StyleSheet.create({
   optionsContainer: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 10,
     backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 32,
+    marginBottom: 10,
     paddingLeft: 4,
   },
   noticeContainer: {
     backgroundColor: '#ffffff',
     padding: 16,
-    marginBottom: 40,
+    marginBottom: 30,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333333',
     lineHeight: 22,
-    marginBottom: 4,
+    marginBottom:1,
   },
   buttonsContainer: {
     flex: 1,

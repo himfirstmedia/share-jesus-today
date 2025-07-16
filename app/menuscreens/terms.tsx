@@ -2,13 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import {
-    Alert,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -48,7 +48,7 @@ export default function TermsAndConditionsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
           <Text style={styles.sectionText}>
-            By accessing or using the Share Jesus Today App (the &apos;App&apos;), you agree to be bound by these Terms and Conditions ('Terms'). If you do not agree with any of these Terms, you must immediately stop using the App and uninstall it. These Terms form a binding legal agreement between you and the developer of the App.
+            By accessing or using the Share Jesus Today App (the &apos;App&apos;), you agree to be bound by these Terms and Conditions (&apos;Terms&apos;). If you do not agree with any of these Terms, you must immediately stop using the App and uninstall it. These Terms form a binding legal agreement between you and the developer of the App.
           </Text>
         </View>
 
@@ -95,7 +95,7 @@ export default function TermsAndConditionsScreen() {
           <Text style={styles.sectionText}>
             The App provides a reporting feature for users to flag content they believe violates these Terms. If you come across objectionable content, you may report it as follows:
           </Text>
-          <Text style={styles.bulletPoint}>- Tap the 'Flag' or 'Report' button next to the offending content.</Text>
+          <Text style={styles.bulletPoint}>- Tap the &apos;Flag&apos; or &apos;Report&apos; button next to the offending content.</Text>
           <Text style={styles.bulletPoint}>- Provide a description of the issue and why the content violates the Terms.</Text>
         </View>
 
@@ -114,7 +114,7 @@ export default function TermsAndConditionsScreen() {
             We take reports of objectionable content seriously. When a report is received, we aim to review and resolve the issue within 24 hours. Our actions may include:
           </Text>
           <Text style={styles.bulletPoint}>- Removing the offending content.</Text>
-          <Text style={styles.bulletPoint}>- Suspending or terminating the user's account.</Text>
+          <Text style={styles.bulletPoint}>- Suspending or terminating the user&apos;s account.</Text>
           <Text style={styles.bulletPoint}>- Taking additional measures as necessary to maintain the safety and integrity of the App.</Text>
         </View>
 
@@ -130,7 +130,7 @@ export default function TermsAndConditionsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>10. Termination of Account</Text>
           <Text style={styles.sectionText}>
-            We may suspend or terminate your account if you are found to be in violation of these Terms. In the event of termination, you will lose access to the App, and your account and associated content may be deleted. You may also terminate your account at any time by contacting us or through the App's settings.
+            We may suspend or terminate your account if you are found to be in violation of these Terms. In the event of termination, you will lose access to the App, and your account and associated content may be deleted. You may also terminate your account at any time by contacting us or through the App&apos;s settings.
           </Text>
         </View>
 
@@ -154,7 +154,7 @@ export default function TermsAndConditionsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>13. Modifications to Terms</Text>
           <Text style={styles.sectionText}>
-            We reserve the right to modify these Terms at any time. Any changes to these Terms will be posted on this page with an updated 'Last Updated' date. You are responsible for reviewing the Terms regularly. Your continued use of the App after changes have been posted constitutes your acceptance of the new Terms.
+            We reserve the right to modify these Terms at any time. Any changes to these Terms will be posted on this page with an updated &apos;Last Updated&apos; date. You are responsible for reviewing the Terms regularly. Your continued use of the App after changes have been posted constitutes your acceptance of the new Terms.
           </Text>
         </View>
 
@@ -196,10 +196,10 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 9,
   },
   backText: {
-    fontSize: 25,
+    fontSize: 20,
     color: '#1e1b1b',
     marginLeft: 8,
   },

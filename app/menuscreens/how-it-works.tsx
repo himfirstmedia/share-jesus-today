@@ -3,12 +3,12 @@ import { ResizeMode, Video } from 'expo-av';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#4A90E2',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 45,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

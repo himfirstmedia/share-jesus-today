@@ -17,8 +17,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { VideoModal } from '../components/video/VideoModal'; // Ensure this path is correct
-import { profileService } from '../services/profileService'; // Ensure this path is correct
+import { VideoModal } from '../components/video/VideoModal';
+import { profileService } from '../services/profileService';
 
 const { width } = Dimensions.get('window');
 
@@ -26,7 +26,7 @@ interface UserProfile {
   id: string;
   firstName: string;
   lastName: string;
-  email?: string; // Email might not always be public
+  email?: string;
   gender?: string;
   dob?: string;
   country?: string;
@@ -37,7 +37,6 @@ interface UserProfile {
   biography?: string;
   profilePicture?: string;
   coverPhoto?: string;
-  // churchFrom is specific to own profile, may not apply here or be named differently
 }
 
 interface UserVideo {
@@ -64,6 +63,7 @@ export default function UserProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [videosLoading, setVideosLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false); // New state for bio expansion
 
   // Video Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -78,7 +78,6 @@ export default function UserProfileScreen() {
     }
     try {
       setLoading(true);
-      // Use getProfileById from profileService
       const userData = await profileService.getProfileById(userId);
       if (userData) {
         setProfile(userData);
@@ -100,7 +99,6 @@ export default function UserProfileScreen() {
     }
     try {
       setVideosLoading(true);
-      // Use getProfileVideos from profileService
       const userVideos = await profileService.getProfileVideos(userId);
       if (userVideos) {
         setVideos(userVideos.map(v => ({ ...v, duration: v.duration ?? 0 })));
@@ -140,8 +138,7 @@ export default function UserProfileScreen() {
         console.log(`User Profile screen (userId: ${userId}) unfocused.`);
       };
     }, [userId, loadProfileData, loadUserVideosData])
- );
-
+  );
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return 'Not Set';
@@ -196,6 +193,17 @@ export default function UserProfileScreen() {
     }
   };
 
+  // Helper functions for bio truncation (same as profile.tsx)
+  const shouldTruncateBio = (text: string) => {
+    return text && text.length > 120; // Approximate 3 lines worth of characters
+  };
+
+  const getTruncatedBio = (text: string) => {
+    if (!text) return '';
+    if (text.length <= 120) return text;
+    return text.substring(0, 120) + '...';
+  };
+
   const renderVideoItem = ({ item, index }: { item: UserVideo; index: number }) => (
     <View style={styles.videoItem}>
       <TouchableOpacity
@@ -220,7 +228,6 @@ export default function UserProfileScreen() {
           {formatDate(item.createdTimestamp)}
         </Text>
       </View>
-      {/* Removed Delete Button */}
     </View>
   );
 
@@ -269,7 +276,7 @@ export default function UserProfileScreen() {
           <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-            {profile.firstName ? `${profile.firstName} ${profile.lastName}` : 'User Profile'}
+          {profile.firstName ? `${profile.firstName} ${profile.lastName}` : 'User Profile'}
         </Text>
         <TouchableOpacity onPress={handleShareProfile}>
           <Ionicons name="share-outline" size={24} color="#1e1b1b" />
@@ -289,7 +296,6 @@ export default function UserProfileScreen() {
             }}
             style={styles.coverImage}
           />
-          {/* Removed Edit Cover Button */}
         </View>
 
         <View style={styles.profileSection}>
@@ -300,21 +306,33 @@ export default function UserProfileScreen() {
               }}
               style={styles.profileImage}
             />
-            {/* Removed Edit Profile Image Button */}
           </View>
 
           <Text style={styles.profileName}>
             {profile.firstName} {profile.lastName}
           </Text>
 
-          {/* Email display can be conditional based on privacy settings if available */}
-          {/* For now, assuming public profiles might show it if available in UserProfile interface */}
-          {/* {profile.email && (
-            <View style={styles.emailContainer}>
-              <Text style={styles.profileEmail}>Email: {profile.email}</Text>
+          {/* Biography Section - Now under username */}
+          {profile.biography && (
+            <View style={styles.biographyContainer}>
+              <Text style={styles.biographyText}>
+                {isBioExpanded || !shouldTruncateBio(profile.biography) 
+                  ? profile.biography 
+                  : getTruncatedBio(profile.biography)
+                }
+              </Text>
+              {shouldTruncateBio(profile.biography) && (
+                <TouchableOpacity 
+                  onPress={() => setIsBioExpanded(!isBioExpanded)}
+                  style={styles.readMoreButton}
+                >
+                  <Text style={styles.readMoreText}>
+                    {isBioExpanded ? 'Read less' : 'Read more'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
-          )} */}
-          {/* Removed Edit Profile Button */}
+          )}
         </View>
 
         <View style={styles.detailsSection}>
@@ -323,10 +341,6 @@ export default function UserProfileScreen() {
             <Text style={styles.detailLabel}>Gender:</Text>
             <Text style={styles.detailValue}>{profile.gender || 'Not Set'}</Text>
           </View>
-          {/* <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Date of Birth:</Text>
-            <Text style={styles.detailValue}>{formatDate(profile.dob)}</Text>
-          </View> */}
           <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>Country:</Text>
             <Text style={styles.detailValue}>{profile.country || 'Not Set'}</Text>
@@ -347,12 +361,7 @@ export default function UserProfileScreen() {
             <Text style={styles.detailLabel}>Church:</Text>
             <Text style={styles.detailValue}>{profile.church || 'Not Set'}</Text>
           </View>
-          {profile.biography && (
-            <View style={styles.biographySection}>
-              <Text style={styles.detailLabel}>Biography:</Text>
-              <Text style={styles.biographyText}>{profile.biography}</Text>
-            </View>
-          )}
+          {/* Removed biography section from here to avoid duplication */}
         </View>
 
         <View style={styles.videosSection}>
@@ -367,7 +376,7 @@ export default function UserProfileScreen() {
               renderItem={renderVideoItem}
               keyExtractor={(item) => item.id}
               numColumns={2}
-              scrollEnabled={false} // Important for ScrollView parent
+              scrollEnabled={false}
               columnWrapperStyle={styles.videoRow}
             />
           ) : (
@@ -390,7 +399,7 @@ export default function UserProfileScreen() {
               }
               : null
           }
-          isLoading={false} // Assuming video data is pre-loaded
+          isLoading={false}
           onClose={handleCloseModal}
           onVideoLoad={() => console.log('Video loaded in modal')}
           onVideoError={(err) => console.error('Video modal error:', err)}
@@ -405,12 +414,10 @@ export default function UserProfileScreen() {
           onPreviousVideo={handlePreviousVideo}
         />
       )}
-      {/* Removed ProfilePicturePage Modal */}
     </SafeAreaView>
   );
 }
 
-// Styles are mostly copied from profile.tsx, minor adjustments might be needed
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -429,8 +436,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1e1b1b',
-    flexShrink: 1, // Added to allow text to shrink if too long
-    marginHorizontal: 10, // Added for spacing
+    flexShrink: 1,
+    marginHorizontal: 10,
   },
   scrollView: {
     flex: 1,
@@ -477,16 +484,15 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#f0f0f0',
   },
-  // Removed editCoverButton
   profileSection: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20, // Adjusted as there's no edit button overlapping
+    paddingTop: 20,
     paddingBottom: 24,
   },
   profileImageContainer: {
     position: 'relative',
-    marginTop: -60, // To overlay on cover photo
+    marginTop: -60,
   },
   profileImage: {
     width: 120,
@@ -496,13 +502,32 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     backgroundColor: '#f0f0f0',
   },
-  // Removed editProfileImageButton
   profileName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1e1b1b',
     marginTop: 16,
     textAlign: 'center',
+  },
+  // New biography styles
+  biographyContainer: {
+    marginTop: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  biographyText: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  readMoreButton: {
+    marginTop: 8,
+  },
+  readMoreText: {
+    fontSize: 16,
+    color: '#3260AD',
+    fontWeight: '600',
   },
   emailContainer: {
     marginTop: 8,
@@ -512,7 +537,6 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  // Removed editProfileButton
   detailsSection: {
     paddingHorizontal: 20,
     paddingVertical: 24,
@@ -535,22 +559,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1e1b1b',
-    flex: 1, // Control width distribution
+    flex: 1,
   },
   detailValue: {
     fontSize: 16,
     color: '#666',
-    flex: 2, // Control width distribution
+    flex: 2,
     textAlign: 'right',
-  },
-  biographySection: {
-    marginTop: 16,
-  },
-  biographyText: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginTop: 8,
   },
   videosSection: {
     paddingHorizontal: 20,
@@ -576,7 +591,7 @@ const styles = StyleSheet.create({
   },
   videoItem: {
     flexDirection: 'column',
-    width: (width - 60) / 2, // (screenWidth - horizontalPadding*2 - gapBetweenItems) / numColumns
+    width: (width - 60) / 2,
   },
   videoThumbnail: {
     position: 'relative',
@@ -612,5 +627,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
   },
-  // Removed deleteButton style
 });

@@ -1,7 +1,7 @@
-// app/profile.tsx - Fixed Profile Screen
+// app/profile.tsx - Updated Profile Screen with Blue Header and Conditional Details
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useFocusEffect } from 'expo-router'; // Import useFocusEffect
+import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -68,6 +68,7 @@ export default function ProfileScreen() {
   const [videosLoading, setVideosLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showProfilePicModal, setShowProfilePicModal] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false); // New state for bio expansion
 
   // Video Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -245,22 +246,19 @@ export default function ProfileScreen() {
     };
 
     initializeProfile();
-  }, [debugAllStorage, loadProfile, loadUserVideos]); // This effect runs on initial mount and when its dependencies change
+  }, [debugAllStorage, loadProfile, loadUserVideos]);
 
   // Add useFocusEffect to reload data when the screen is focused
   useFocusEffect(
     useCallback(() => {
       console.log('Profile screen focused, reloading data.');
-      // Load profile to get the latest cover photo
-      // Optionally, also reload videos if they might change frequently or due to other actions
       loadProfile(); 
-      loadUserVideos(); // Assuming videos should also refresh, adjust if not needed
+      loadUserVideos();
       
       return () => {
-        // Optional cleanup if needed when the screen goes out of focus
         console.log('Profile screen unfocused.');
       };
-    }, [loadProfile, loadUserVideos]) // Dependencies for the useCallback wrapping the effect
+    }, [loadProfile, loadUserVideos])
   );
 
   // EVENT HANDLERS
@@ -353,6 +351,42 @@ export default function ProfileScreen() {
     }
   };
 
+  // Helper function to check if bio text exceeds 3 lines
+  const shouldTruncateBio = (text: string) => {
+    return text && text.length > 120; // Approximate 3 lines worth of characters
+  };
+
+  const getTruncatedBio = (text: string) => {
+    if (!text) return '';
+    if (text.length <= 120) return text;
+    return text.substring(0, 120) + '...';
+  };
+
+  // Helper function to check if any profile details exist
+  const hasProfileDetails = () => {
+    if (!profile) return false;
+    return !!(
+      profile.gender ||
+      profile.country ||
+      profile.state ||
+      profile.city ||
+      profile.zipcode ||
+      profile.church
+    );
+  };
+
+  // Helper function to render profile detail item only if value exists
+  const renderDetailItem = (label: string, value?: string) => {
+    if (!value || value.trim() === '') return null;
+    
+    return (
+      <View style={styles.detailItem}>
+        <Text style={styles.detailLabel}>{label}:</Text>
+        <Text style={styles.detailValue}>{value}</Text>
+      </View>
+    );
+  };
+
   const renderVideoItem = ({ item, index }: { item: UserVideo; index: number }) => (
     <View style={styles.videoItem}>
       <TouchableOpacity
@@ -388,13 +422,13 @@ export default function ProfileScreen() {
     </View>
   );
 
-  // LOADING STATE - Handle in JSX, not early return
+  // LOADING STATE
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
           <View style={{ width: 24 }} />
@@ -413,7 +447,7 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
           <View style={{ width: 24 }} />
@@ -433,11 +467,11 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <TouchableOpacity onPress={handleShareProfile}>
-          <Ionicons name="share-outline" size={24} color="#1e1b1b" />
+          <Ionicons name="share-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -481,6 +515,28 @@ export default function ProfileScreen() {
             {profile.firstName} {profile.lastName}
           </Text>
 
+          {/* Biography Section - Now under username */}
+          {profile.biography && (
+            <View style={styles.biographyContainer}>
+              <Text style={styles.biographyText}>
+                {isBioExpanded || !shouldTruncateBio(profile.biography) 
+                  ? profile.biography 
+                  : getTruncatedBio(profile.biography)
+                }
+              </Text>
+              {shouldTruncateBio(profile.biography) && (
+                <TouchableOpacity 
+                  onPress={() => setIsBioExpanded(!isBioExpanded)}
+                  style={styles.readMoreButton}
+                >
+                  <Text style={styles.readMoreText}>
+                    {isBioExpanded ? 'Read less' : 'Read more'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           {profile.churchFrom === 'yes' && (
             <View style={styles.emailContainer}>
               <Text style={styles.profileEmail}>Email: {profile.email}</Text>
@@ -492,52 +548,19 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Details */}
-        <View style={styles.detailsSection}>
-          <Text style={styles.sectionTitle}>Profile Information</Text>
+        {/* Profile Details - Only render if details exist */}
+        {hasProfileDetails() && (
+          <View style={styles.detailsSection}>
+            <Text style={styles.sectionTitle}>Profile Information</Text>
 
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Gender:</Text>
-            <Text style={styles.detailValue}>{profile.gender || 'Not Set'}</Text>
+            {renderDetailItem('Gender', profile.gender)}
+            {renderDetailItem('Country', profile.country)}
+            {renderDetailItem('State', profile.state)}
+            {renderDetailItem('City', profile.city)}
+            {renderDetailItem('Zipcode', profile.zipcode)}
+            {renderDetailItem('Church', profile.church)}
           </View>
-
-          {/* <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Date of Birth:</Text>
-            <Text style={styles.detailValue}>{formatDate(profile.dob || '')}</Text>
-          </View> */}
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Country:</Text>
-            <Text style={styles.detailValue}>{profile.country || 'Not Set'}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>State:</Text>
-            <Text style={styles.detailValue}>{profile.state || 'Not Set'}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>City:</Text>
-            <Text style={styles.detailValue}>{profile.city || 'Not Set'}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Zipcode:</Text>
-            <Text style={styles.detailValue}>{profile.zipcode || 'Not Set'}</Text>
-          </View>
-
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Church:</Text>
-            <Text style={styles.detailValue}>{profile.church || 'Not Set'}</Text>
-          </View>
-
-          {profile.biography && (
-            <View style={styles.biographySection}>
-              <Text style={styles.detailLabel}>Biography:</Text>
-              <Text style={styles.biographyText}>{profile.biography}</Text>
-            </View>
-          )}
-        </View>
+        )}
 
         {/* Videos Section */}
         <View style={styles.videosSection}>
@@ -616,13 +639,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: '#3260AD', // Blue background
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#2855A8',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1e1b1b',
+    color: '#fff', // White text
   },
   scrollView: {
     flex: 1,
@@ -710,8 +734,28 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  emailContainer: {
+  // New biography styles
+  biographyContainer: {
+    marginTop: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  biographyText: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  readMoreButton: {
     marginTop: 8,
+  },
+  readMoreText: {
+    fontSize: 16,
+    color: '#3260AD',
+    fontWeight: '600',
+  },
+  emailContainer: {
+    marginTop: 12,
   },
   profileEmail: {
     fontSize: 16,
@@ -759,15 +803,6 @@ const styles = StyleSheet.create({
     color: '#666',
     flex: 2,
     textAlign: 'right',
-  },
-  biographySection: {
-    marginTop: 16,
-  },
-  biographyText: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginTop: 8,
   },
   videosSection: {
     paddingHorizontal: 20,
