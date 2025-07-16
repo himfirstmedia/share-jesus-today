@@ -1,11 +1,7 @@
-// First, install the required packages:
-// npm install react-native-localize i18n-js
-// or
-// yarn add react-native-localize i18n-js
 
-// utils/i18n.ts - Internationalization setup
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Localization from 'expo-localization';
+import { locale as deviceLocale } from 'expo-localization';
+
 import { I18n } from 'i18n-js';
 
 // Import all language files
@@ -61,7 +57,7 @@ export const supportedLanguages = [
 ];
 
 // Set fallback language
-i18n.fallbacks = true;
+// i18n.fallbacks = true;
 i18n.defaultLocale = 'en';
 
 // Initialize language from storage or device locale
@@ -72,8 +68,10 @@ export const initializeLanguage = async () => {
       i18n.locale = savedLanguage;
     } else {
       // Use device locale or fallback to English
-      const deviceLocale = Localization.locale.split('-')[0];
+      const deviceLangCode = deviceLocale.split('-')[0];
       const supportedCodes = supportedLanguages.map(lang => lang.code);
+      i18n.locale = supportedCodes.includes(deviceLangCode) ? deviceLangCode : 'en';
+
       i18n.locale = supportedCodes.includes(deviceLocale) ? deviceLocale : 'en';
     }
   } catch (error) {

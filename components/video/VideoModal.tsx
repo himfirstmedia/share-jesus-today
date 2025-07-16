@@ -542,11 +542,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             <Animated.View style={[styles.videoContentWrapper, animatedStyle]}>
               <View style={styles.videoContainer}>
                 {/* Video Player */}
-                <TouchableOpacity
-                  style={styles.videoPlayerContainer}
-                  activeOpacity={1}
-                  onPress={toggleControls}
-                >
+                
                   {visible && video?.url && player && (
                     <VideoView
                       style={styles.video}
@@ -568,29 +564,34 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     </View>
                   )}
 
-                  {/* Controls overlay */}
+                  {/* Always visible critical controls */}
+                  <View style={styles.persistentControls}>
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                      <Ionicons name="close" size={28} color="#fff" />
+                    </TouchableOpacity>
+
+                    <View style={styles.rightControls}>
+                      {onFlagPress && (
+                        <TouchableOpacity
+                          style={styles.flagButton}
+                          onPress={onFlagPress}
+                        >
+                          <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Conditional playback controls */}
                   {showControls && (
                     <View style={styles.controlsOverlay}>
-                      {/* Top controls */}
+                      {/* Top controls - without close and flag buttons */}
                       <View style={styles.topControls}>
-                        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                          <Ionicons name="close" size={28} color="#fff" />
-                        </TouchableOpacity>
-
                         <View style={styles.rightControls}>
                           {/* Swipe instruction */}
                           <Text style={styles.swipeInstruction}>
                             Swipe left/right to view next or previous video
                           </Text>
-                          
-                          {onFlagPress && (
-                            <TouchableOpacity
-                              style={styles.flagButton}
-                              onPress={onFlagPress}
-                            >
-                              <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
-                            </TouchableOpacity>
-                          )}
                         </View>
                       </View>
 
@@ -609,6 +610,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                           </TouchableOpacity>
                         </View>
                       )}
+
+                      <TouchableOpacity style={styles.toggleButton} onPress={toggleControls} />
 
                       {/* Bottom controls */}
                       <View style={styles.bottomControls}>
@@ -649,7 +652,6 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                       </View>
                     </View>
                   )}
-                </TouchableOpacity>
               </View>
 
               {/* Video info section */}
@@ -681,7 +683,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                   </View>
                 </View>
               </View>
-            </Animated.View>
+              </Animated.View>
           </GestureDetector>
         </SafeAreaView>
       </GestureHandlerRootView>
@@ -702,11 +704,6 @@ const styles = StyleSheet.create({
   videoContainer: {
     flex: 1,
   },
-  videoPlayerContainer: {
-    flex: 1,
-    position: 'relative',
-    backgroundColor: '#000',
-  },
   video: {
     width: '100%',
     height: '100%',
@@ -726,6 +723,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
   },
+  persistentControls: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    zIndex: 10, // Higher z-index to stay on top
+  },
   controlsOverlay: {
     position: 'absolute',
     top: 0,
@@ -737,9 +746,9 @@ const styles = StyleSheet.create({
   },
   topControls: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'flex-start',
-    paddingTop: 20,
+    paddingTop: 70, // Add padding to avoid overlap with persistent controls
     paddingHorizontal: 20,
   },
   closeButton: {
@@ -750,13 +759,11 @@ const styles = StyleSheet.create({
   rightControls: {
     alignItems: 'flex-end',
     flex: 1,
-    marginLeft: 20,
   },
   swipeInstruction: {
     color: '#fff',
     fontSize: 12,
     textAlign: 'right',
-    marginBottom: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 8,
     borderRadius: 12,
@@ -832,6 +839,14 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 12,
     minWidth: 80,
+  },
+  toggleButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   infoSection: {
     backgroundColor: '#fff',
