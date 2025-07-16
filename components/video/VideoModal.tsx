@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React from 'react';
 import {
@@ -90,6 +91,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
   const [playerReady, setPlayerReady] = React.useState(false);
+  const router = useRouter();
 
   // Fixed: Use number type for React Native timeouts
   const controlsTimeoutRef = React.useRef<number | null>(null);
@@ -455,12 +457,12 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         Math.abs(translationX) > swipeThreshold || 
         Math.abs(velocityX) > velocityThreshold;
       
-      console.log('Swipe end:', { 
-        translationX, 
-        velocityX, 
+      console.log('Swipe end:', {
+        translationX,
+        velocityX,
         isSignificantSwipe,
         swipeThreshold,
-        velocityThreshold 
+        velocityThreshold
       });
       
       if (isSignificantSwipe) {
@@ -528,7 +530,12 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   // Check if navigation is available
   const canSwipeLeft = onNextVideo && videoList && currentVideoIndex < videoList.length - 1;
   const canSwipeRight = onPreviousVideo && currentVideoIndex > 0;
-
+  const handleProfilePress = () => {
+    if (currentUserId) {
+      onClose(); // Close the modal first
+      router.push(`/userProfile?userId=${currentUserId}`);
+    }
+  };
   return (
     <Modal
       visible={visible}
@@ -660,7 +667,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                   <Text style={styles.videoTitle}>{video.title}</Text>
 
                   <View style={styles.uploaderInfo}>
-                    <TouchableOpacity style={styles.uploaderContainer}>
+                    <TouchableOpacity
+                      style={styles.uploaderContainer}
+                      onPress={handleProfilePress} // Navigate on press
+                    >
                       {currentProfileImageUrl ? (
                         <Image
                           source={{ uri: currentProfileImageUrl }}
