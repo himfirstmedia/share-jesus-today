@@ -23,6 +23,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+// Define proper types for video player status
+interface VideoPlayerStatusPayload {
+  status: 'idle' | 'loading' | 'loaded' | 'error' | 'readyToPlay';
+  error?: any;
+}
+
+interface VideoPlayerTimePayload {
+  currentTime: number;
+}
+
+interface VideoPlayerPlayingPayload {
+  isPlaying: boolean;
+}
+
 interface VideoType {
   id: string;
   title: string;
@@ -77,71 +91,93 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [duration, setDuration] = React.useState(0);
   const [playerReady, setPlayerReady] = React.useState(false);
 
-  const controlsTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  // Fixed: Use number type for React Native timeouts
+  const controlsTimeoutRef = React.useRef<number | null>(null);
+  const loadingTimeoutRef = React.useRef<number | null>(null);
   const cleanupFunctionsRef = React.useRef<(() => void)[]>([]);
 
   // Reanimated shared values for swipe animation
   const translateX = useSharedValue(0);
   const isSwipeInProgress = useSharedValue(false);
 
-  // Initialize video player with proper source handling
-  const player = useVideoPlayer(
-    visible && video?.url ? { uri: video.url } : null,
-    (player) => {
-      if (player) {
-        player.loop = false;
-        player.muted = false;
-        
-        // Add event listeners with proper error handling
-        const addEventListeners = () => {
-          try {
-            // Time update listener
-            const timeUpdateListener = player.addListener('timeUpdate', (payload) => {
-              if (payload.currentTime !== undefined && player.duration !== undefined) {
-                runOnJS(setCurrentTime)(payload.currentTime);
-                runOnJS(setDuration)(player.duration);
-              }
-            });
-
-            // Playing state listener
-            const playingListener = player.addListener('playingChange', (payload) => {
-              runOnJS(setIsPlaying)(payload.isPlaying);
-              if (payload.isPlaying) {
-                runOnJS(setShowLoading)(false);
-                runOnJS(setPlayerReady)(true);
-              }
-            });
-
-            // Status change listener
-            const statusListener = player.addListener('statusChange', (payload) => {
-              if (payload.status === 'loaded') {
-                runOnJS(setShowLoading)(false);
-                runOnJS(setPlayerReady)(true);
-                runOnJS(handleVideoLoad)();
-              } else if (payload.status === 'error') {
-                runOnJS(setShowLoading)(false);
-                runOnJS(handleVideoError)(payload.error);
-              }
-            });
-
-            // Store cleanup functions
-            cleanupFunctionsRef.current = [
-              () => timeUpdateListener?.remove?.(),
-              () => playingListener?.remove?.(),
-              () => statusListener?.remove?.(),
-            ];
-          } catch (error) {
-            console.error('Error adding event listeners:', error);
-            runOnJS(setShowLoading)(false);
-            runOnJS(handleVideoError)(error);
-          }
-        };
-
-        addEventListeners();
-      }
+  // Create a new video source when video changes
+  const videoSource = React.useMemo(() => {
+    if (visible && video?.url) {
+      console.log('Creating new video source for:', video.url);
+      return { uri: video.url };
     }
-  );
+    return null;
+  }, [visible, video?.url]);
+
+  // Initialize video player with proper source handling
+  const player = useVideoPlayer(videoSource, (player) => {
+    if (player && videoSource) {
+      console.log('Player initialized with source:', videoSource.uri);
+      player.loop = false;
+      player.muted = false;
+      
+      // Clear previous event listeners
+      cleanupFunctionsRef.current.forEach((cleanup) => {
+        try {
+          cleanup();
+        } catch (error) {
+          console.error('Error cleaning up previous event listener:', error);
+        }
+      });
+      cleanupFunctionsRef.current = [];
+      
+      // Add event listeners with proper error handling
+      const addEventListeners = () => {
+        try {
+          // Time update listener
+          const timeUpdateListener = player.addListener('timeUpdate', (payload: VideoPlayerTimePayload) => {
+            if (payload.currentTime !== undefined && player.duration !== undefined) {
+              runOnJS(setCurrentTime)(payload.currentTime);
+              runOnJS(setDuration)(player.duration);
+            }
+          });
+
+          // Playing state listener
+          const playingListener = player.addListener('playingChange', (payload: VideoPlayerPlayingPayload) => {
+            runOnJS(setIsPlaying)(payload.isPlaying);
+            if (payload.isPlaying) {
+              runOnJS(setShowLoading)(false);
+              runOnJS(setPlayerReady)(true);
+            }
+          });
+
+          // Status change listener - Fixed type handling
+          const statusListener = player.addListener('statusChange', (payload: VideoPlayerStatusPayload) => {
+            console.log('Player status changed:', payload.status);
+            // Use proper type checking for status
+            if (payload.status === 'loaded' || payload.status === 'readyToPlay') {
+              runOnJS(setShowLoading)(false);
+              runOnJS(setPlayerReady)(true);
+              runOnJS(handleVideoLoad)();
+            } else if (payload.status === 'error') {
+              runOnJS(setShowLoading)(false);
+              runOnJS(handleVideoError)(payload.error || 'Unknown video error');
+            } else if (payload.status === 'loading') {
+              runOnJS(setShowLoading)(true);
+            }
+          });
+
+          // Store cleanup functions
+          cleanupFunctionsRef.current = [
+            () => timeUpdateListener?.remove?.(),
+            () => playingListener?.remove?.(),
+            () => statusListener?.remove?.(),
+          ];
+        } catch (error) {
+          console.error('Error adding event listeners:', error);
+          runOnJS(setShowLoading)(false);
+          runOnJS(handleVideoError)(error);
+        }
+      };
+
+      addEventListeners();
+    }
+  });
 
   // Auto-hide controls after 3 seconds
   const resetControlsTimeout = React.useCallback(() => {
@@ -211,6 +247,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
 
   // Handle video load success
   const handleVideoLoad = React.useCallback(() => {
+    console.log('Video loaded successfully');
     setShowLoading(false);
     setPlayerReady(true);
     onVideoLoad();
@@ -234,25 +271,60 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     }
   }, [onVideoError]);
 
-  // Handle swipe to next video
+  // Handle swipe to next video - Fixed to properly trigger callback
   const handleSwipeToNext = React.useCallback(() => {
     if (onNextVideo && videoList && currentVideoIndex < videoList.length - 1) {
-      console.log('Swiping to next video');
+      console.log('Executing swipe to next video');
+      // Reset player state before switching
+      setShowLoading(true);
+      setPlayerReady(false);
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+      
+      // Pause current player if playing
+      if (player && isPlaying) {
+        try {
+          player.pause();
+        } catch (error) {
+          console.error('Error pausing player before next video:', error);
+        }
+      }
+      
+      // Trigger the next video callback
       onNextVideo();
     }
-  }, [onNextVideo, videoList, currentVideoIndex]);
+  }, [onNextVideo, videoList, currentVideoIndex, player, isPlaying]);
 
-  // Handle swipe to previous video
+  // Handle swipe to previous video - Fixed to properly trigger callback
   const handleSwipeToPrevious = React.useCallback(() => {
     if (onPreviousVideo && currentVideoIndex > 0) {
-      console.log('Swiping to previous video');
+      console.log('Executing swipe to previous video');
+      // Reset player state before switching
+      setShowLoading(true);
+      setPlayerReady(false);
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+      
+      // Pause current player if playing
+      if (player && isPlaying) {
+        try {
+          player.pause();
+        } catch (error) {
+          console.error('Error pausing player before previous video:', error);
+        }
+      }
+      
+      // Trigger the previous video callback
       onPreviousVideo();
     }
-  }, [onPreviousVideo, currentVideoIndex]);
+  }, [onPreviousVideo, currentVideoIndex, player, isPlaying]);
 
-  // Reset states when modal visibility changes
+  // Fixed: Reset states when video changes (not just when modal opens)
   React.useEffect(() => {
     if (visible && video?.url) {
+      console.log('Video changed or modal opened:', video.url);
       setShowLoading(true);
       setShowControls(true);
       setPlayerReady(false);
@@ -270,9 +342,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       
       // Fallback timeout for loading
       loadingTimeoutRef.current = setTimeout(() => {
+        console.log('Loading timeout reached, setting player ready');
         setShowLoading(false);
         setPlayerReady(true);
-      }, 5000); // Increased timeout
+      }, 8000); // Increased timeout
     } else if (!visible) {
       setShowControls(true);
       setShowLoading(true);
@@ -296,7 +369,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         clearTimeout(loadingTimeoutRef.current);
       }
     }
-  }, [visible, video?.url, resetControlsTimeout, player]);
+  }, [visible, video?.url, video?.id, resetControlsTimeout, player]); // Added video?.id to dependencies
 
   // Player status monitoring
   React.useEffect(() => {
@@ -341,22 +414,13 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         }
       });
       cleanupFunctionsRef.current = [];
-      
-      // Safely pause player
-      if (player) {
-        try {
-          player.pause();
-        } catch (error) {
-          console.error('Error pausing player on unmount:', error);
-        }
-      }
     };
-  }, [player]);
+  }, []);
 
   // Improved swipe gesture with proper threshold and velocity handling
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10]) // Horizontal swipe sensitivity
-    .failOffsetY([-50, 50]) // Allow some vertical movement before failing
+    .activeOffsetX([-15, 15]) // Slightly increased sensitivity
+    .failOffsetY([-60, 60]) // Allow more vertical movement before failing
     .onStart(() => {
       isSwipeInProgress.value = true;
       console.log('Swipe gesture started');
@@ -371,10 +435,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       
       if (translationX > 0 && !canSwipeRight) {
         // Swiping right but can't go to previous - add resistance
-        translateX.value = translationX * 0.3;
+        translateX.value = translationX * 0.2;
       } else if (translationX < 0 && !canSwipeLeft) {
         // Swiping left but can't go to next - add resistance
-        translateX.value = translationX * 0.3;
+        translateX.value = translationX * 0.2;
       } else {
         translateX.value = translationX;
       }
@@ -382,52 +446,65 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     .onEnd((event) => {
       const { translationX, velocityX } = event;
       
-      // Define thresholds
-      const swipeThreshold = screenWidth * 0.25; // 25% of screen width
-      const velocityThreshold = 800; // pixels per second
+      // Define thresholds - Made more lenient
+      const swipeThreshold = screenWidth * 0.2; // 20% of screen width
+      const velocityThreshold = 600; // pixels per second
       
       const isSignificantSwipe = 
         Math.abs(translationX) > swipeThreshold || 
         Math.abs(velocityX) > velocityThreshold;
       
-      console.log('Swipe end:', { translationX, velocityX, isSignificantSwipe });
+      console.log('Swipe end:', { 
+        translationX, 
+        velocityX, 
+        isSignificantSwipe,
+        swipeThreshold,
+        velocityThreshold 
+      });
       
       if (isSignificantSwipe) {
         if (translationX > 0) {
           // Swiping right - go to previous video
           const canSwipeRight = onPreviousVideo && currentVideoIndex > 0;
           if (canSwipeRight) {
-            console.log('Triggering previous video');
+            console.log('Triggering previous video - animation start');
             translateX.value = withSpring(screenWidth, {
-              damping: 20,
-              stiffness: 300
-            }, () => {
-              runOnJS(handleSwipeToPrevious)();
-              translateX.value = 0;
+              damping: 15,
+              stiffness: 200
+            }, (finished) => {
+              if (finished) {
+                console.log('Previous video animation finished, calling handler');
+                runOnJS(handleSwipeToPrevious)();
+                translateX.value = 0;
+              }
             });
           } else {
-            // Bounce back
+            console.log('Cannot swipe right, bouncing back');
             translateX.value = withSpring(0, { damping: 20, stiffness: 300 });
           }
         } else {
           // Swiping left - go to next video
           const canSwipeLeft = onNextVideo && videoList && currentVideoIndex < videoList.length - 1;
           if (canSwipeLeft) {
-            console.log('Triggering next video');
+            console.log('Triggering next video - animation start');
             translateX.value = withSpring(-screenWidth, {
-              damping: 20,
-              stiffness: 300
-            }, () => {
-              runOnJS(handleSwipeToNext)();
-              translateX.value = 0;
+              damping: 15,
+              stiffness: 200
+            }, (finished) => {
+              if (finished) {
+                console.log('Next video animation finished, calling handler');
+                runOnJS(handleSwipeToNext)();
+                translateX.value = 0;
+              }
             });
           } else {
-            // Bounce back
+            console.log('Cannot swipe left, bouncing back');
             translateX.value = withSpring(0, { damping: 20, stiffness: 300 });
           }
         }
       } else {
         // Not a significant swipe - bounce back
+        console.log('Not a significant swipe, bouncing back');
         translateX.value = withSpring(0, { damping: 20, stiffness: 300 });
       }
       
@@ -476,7 +553,6 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                       allowsFullscreen={false}
                       allowsPictureInPicture={false}
                       nativeControls={false}
-                      onLoadStart={() => setShowLoading(true)}
                       onLoad={handleVideoLoad}
                       onError={handleVideoError}
                     />
