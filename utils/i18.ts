@@ -1,7 +1,5 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { locale as deviceLocale } from 'expo-localization';
-
+import { getLocales } from 'expo-localization';
 import { I18n } from 'i18n-js';
 
 // Import all language files
@@ -68,10 +66,9 @@ export const initializeLanguage = async () => {
       i18n.locale = savedLanguage;
     } else {
       // Use device locale or fallback to English
-      const deviceLangCode = deviceLocale.split('-')[0];
+      const locales = getLocales();
+      const deviceLocale = locales[0]?.languageCode || 'en';
       const supportedCodes = supportedLanguages.map(lang => lang.code);
-      i18n.locale = supportedCodes.includes(deviceLangCode) ? deviceLangCode : 'en';
-
       i18n.locale = supportedCodes.includes(deviceLocale) ? deviceLocale : 'en';
     }
   } catch (error) {
