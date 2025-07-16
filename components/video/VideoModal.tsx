@@ -115,6 +115,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       console.log('Player initialized with source:', videoSource.uri);
       player.loop = false;
       player.muted = false;
+      player.play();
       
       // Clear previous event listeners
       cleanupFunctionsRef.current.forEach((cleanup) => {
@@ -553,6 +554,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                       allowsFullscreen={false}
                       allowsPictureInPicture={false}
                       nativeControls={false}
+                      autoplay={true}
                       onLoad={handleVideoLoad}
                       onError={handleVideoError}
                     />
