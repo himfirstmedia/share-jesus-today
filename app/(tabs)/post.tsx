@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CameraRecord from '../CameraRecord.jsx';
+import CameraRecord from '../CameraRecord';
 import VideoUploadInterface from '../VideoUploadInterface'; // Import the new component
 
 type PostMode = 'options' | 'upload' | 'record';
