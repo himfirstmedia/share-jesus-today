@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CameraRecord from '../CameraRecord';
+import CameraRecord from '../CameraRecord.jsx';
 import VideoUploadInterface from '../VideoUploadInterface'; // Import the new component
 
 type PostMode = 'options' | 'upload' | 'record';
@@ -37,23 +37,6 @@ export default function PostVideoScreen() {
       // You can navigate to the video feed or show success message here
     }
   };
-
-  const OptionButton = ({ title, iconName, onPress }: {
-    title: string;
-    iconName: keyof typeof Ionicons.glyphMap;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      style={styles.optionButton}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <View style={styles.buttonContent}>
-        <Ionicons name={iconName} size={24} color="#666666" style={styles.buttonIcon} />
-        <Text style={styles.buttonText}>{title}</Text>
-      </View>
-    </TouchableOpacity>
-  );
 
   const renderContent = () => {
     switch (mode) {
@@ -122,6 +105,23 @@ export default function PostVideoScreen() {
     </SafeAreaView>
   );
 }
+
+const OptionButton = ({ title, iconName, onPress }: {
+  title: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity
+    style={styles.optionButton}
+    onPress={onPress}
+    activeOpacity={0.8}
+  >
+    <View style={styles.buttonContent}>
+      <Ionicons name={iconName} size={24} color="#666666" style={styles.buttonIcon} />
+      <Text style={styles.buttonText}>{title}</Text>
+    </View>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   safeArea: {
