@@ -2,7 +2,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import React, { useEffect, useState } from 'react';
-import { router } from 'expo-router';
 import {
   ActivityIndicator,
   ScrollView,
@@ -170,8 +169,6 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
         setTimeout(() => {
           if (onUploadComplete) {
             onUploadComplete(videoData);
-          } else {
-            router.push('/watchVideos');
           }
         }, 2000);
       } else {
@@ -315,7 +312,7 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
                 disabled={isLoading}
               >
                 <Text style={styles.selectFileButtonText}>
-                  {initialFile ? 'Record Another Video' : (selectedFile ? 'Record Different Video' : 'Select Video File')}
+                  {selectedFile ? 'Select Different Video' : 'Select Video File'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -334,46 +331,40 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
             )}
           </View>
 
-          {!isTrimming && (
-            <View style={styles.section}>
-              <Text style={styles.label}>Title *:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter video title"
-                value={title}
-                onChangeText={setTitle}
-                editable={!isLoading}
-              />
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.label}>Title *:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter video title"
+              value={title}
+              onChangeText={setTitle}
+              editable={!isLoading}
+            />
+          </View>
 
-          {!isTrimming && (
-            <View style={styles.section}>
-              <Text style={styles.label}>Name (optional):</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter video name"
-                value={name}
-                onChangeText={setName}
-                editable={!isLoading}
-              />
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.label}>Name (optional):</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter video name"
+              value={name}
+              onChangeText={setName}
+              editable={!isLoading}
+            />
+          </View>
 
-          {!isTrimming && (
-            <View style={styles.section}>
-              <Text style={styles.label}>Caption (optional):</Text>
-              <TextInput
-                style={[styles.input, styles.captionInput]}
-                placeholder="Enter video caption"
-                value={caption}
-                onChangeText={setCaption}
-                editable={!isLoading}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.label}>Caption (optional):</Text>
+            <TextInput
+              style={[styles.input, styles.captionInput]}
+              placeholder="Enter video caption"
+              value={caption}
+              onChangeText={setCaption}
+              editable={!isLoading}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
 
           {message ? (
             <View style={styles.messageContainer}>

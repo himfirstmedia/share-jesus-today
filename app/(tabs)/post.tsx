@@ -6,6 +6,7 @@ import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CameraRecord from '../CameraRecord';
 import VideoUploadInterface from '../VideoUploadInterface'; // Import the new component
+import { router } from 'expo-router';
 
 type PostMode = 'options' | 'upload' | 'record';
 
@@ -34,7 +35,7 @@ export default function PostVideoScreen() {
     setMode('options');
     if (uploadedVideoData) {
       console.log('Video uploaded successfully:', uploadedVideoData);
-      // You can navigate to the video feed or show success message here
+      router.replace('/watchVideos');
     }
   };
 

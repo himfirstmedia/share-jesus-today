@@ -1,24 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
-// Assuming VideoCompressionService is in the correct path
-// import VideoCompressionService from '../services/videoCompressionService';
-
-// Mock VideoCompressionService for demonstration purposes
-const VideoCompressionService = {
-  createCompressedCopy: async (uri: string): Promise<string> => {
-    console.log(`Compressing video at: ${uri}`);
-    // In a real app, this would return a new URI for the compressed file
-    // For this example, we'll just return the same URI after a short delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('Compression finished.');
-    return uri;
-  },
-};
-
+// Import the actual VideoCompressionService
+import VideoCompressionService from '../services/videoCompressionService';
 
 // Define interfaces for better type safety
 interface RecordingData {
@@ -29,6 +16,9 @@ interface CameraRecordProps {
   onRecordingComplete?: (data: RecordingData | null) => void;
   onCancel?: () => void;
 }
+
+// Helper function to introduce a short delay
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCancel }) => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -44,7 +34,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   // --- Effects ---
 
   useEffect(() => {
-    // Request permissions when the component mounts
     (async () => {
       if (!permission) {
         await requestPermission();
@@ -53,7 +42,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   }, [permission, requestPermission]);
 
   useEffect(() => {
-    // Clean up interval on unmount
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -69,37 +57,32 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       Alert.alert("Camera Not Ready", "Please wait for the camera to initialize.");
       return;
     }
-    if (recording) return; // Prevent starting a new recording while one is in progress
+    if (recording) return;
 
     setRecording(true);
     setCountdown(30);
 
-    // This interval is ONLY for updating the UI countdown.
     intervalRef.current = setInterval(() => {
       setCountdown(prev => (prev > 1 ? prev - 1 : 0));
     }, 1000);
 
     const recordingOptions = {
       quality: '720p',
-      maxDuration: 30, // The camera will stop recording automatically after 30s
+      maxDuration: 30,
     };
 
     cameraRef.current.recordAsync(recordingOptions)
       .then(async (data) => {
-        // This block executes when recording stops, either via maxDuration or a manual stop.
         if (!data?.uri) {
           throw new Error("Recording failed: No video data URI was returned.");
         }
-        
-        // The file is available, begin processing.
         await processVideo(data.uri);
       })
       .catch((error: Error) => {
-        console.error('ERROR  Recording promise was rejected:', error);
+        console.error('ERROR: Recording promise was rejected:', error);
         Alert.alert('Recording Error', `An error occurred during recording: ${error.message}`);
       })
       .finally(() => {
-        // This block ensures state is cleaned up regardless of success or failure.
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -111,45 +94,71 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
   const stopRecording = () => {
     if (cameraRef.current && recording) {
-      console.log('LOG  Manually stopping video recording...');
+      console.log('LOG: Manually stopping video recording...');
       cameraRef.current.stopRecording();
-      // The .then() block of recordAsync will handle the rest.
     }
   };
 
   const processVideo = async (originalUri: string) => {
     setIsProcessing(true);
-    
+
     try {
-      console.log(`LOG  Recording finished. Original URI: ${originalUri}`);
+      console.log(`LOG: Recording finished. Original URI: ${originalUri}`);
       setProcessingText('Saving video...');
 
-      // Define a new path in a persistent directory
-      const newUri = `${FileSystem.documentDirectory}video_${Date.now()}.mp4`;
+      // **[FIX]** Implement a retry mechanism to handle file system race conditions.
+      let fileExists = false;
+      let attempts = 0;
+      const maxAttempts = 5;
+      const delay = 300; // ms
 
-      // Move the file from the temporary cache to the new path.
-      // This is a crucial step to ensure the file is fully written and accessible.
-      await FileSystem.moveAsync({
+      while (!fileExists && attempts < maxAttempts) {
+        attempts++;
+        console.log(`LOG: Attempt ${attempts} to access video file...`);
+        const fileInfo = await FileSystem.getInfoAsync(originalUri);
+        fileExists = fileInfo.exists;
+        
+        if (!fileExists) {
+            if (attempts < maxAttempts) {
+                console.log(`LOG: File not found, waiting ${delay}ms before retrying.`);
+                await sleep(delay);
+            } else {
+                throw new Error(`File does not exist at URI after ${maxAttempts} attempts.`);
+            }
+        }
+      }
+
+      // 1. Define the destination directory and ensure it exists.
+      const directory = `${FileSystem.documentDirectory}videos/`;
+      await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
+      const newUri = `${directory}video_${Date.now()}.mp4`;
+
+      // 2. Copy the file (we've now confirmed it exists).
+      await FileSystem.copyAsync({
         from: originalUri,
         to: newUri,
       });
-      console.log(`LOG  Video moved successfully to: ${newUri}`);
+      console.log(`LOG: Video copied successfully to: ${newUri}`);
 
+      // Clean up the original file from the cache directory after copying.
+      await FileSystem.deleteAsync(originalUri, { idempotent: true });
+
+      // 3. Compress the video file using the service.
       setProcessingText('Compressing video...');
       const compressedUri = await VideoCompressionService.createCompressedCopy(newUri);
-      console.log(`LOG  Compression complete. Final URI: ${compressedUri}`);
+      console.log(`LOG: Compression complete. Final URI: ${compressedUri}`);
 
-      // Handle the completed recording
+      // 4. Handle the completed recording with the compressed URI.
       if (onRecordingComplete) {
         onRecordingComplete({ uri: compressedUri });
       } else {
         router.push({
-          pathname: '/share/ShareVideo' as any, // Type assertion for safety
+          pathname: '/share/ShareVideo' as any,
           params: { videoUri: compressedUri },
         });
       }
     } catch (error: any) {
-      console.error('ERROR  Failed to process video:', error);
+      console.error('ERROR: Failed to process video:', error);
       Alert.alert('Processing Error', `Failed to save or compress video: ${error.message}`);
       if (onRecordingComplete) {
         onRecordingComplete(null);
@@ -171,9 +180,8 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
   const handleBackPress = () => {
     if (recording) {
-      stopRecording(); // Ensure recording is stopped before going back
+      stopRecording();
     }
-    
     if (onCancel) {
       onCancel();
     } else {
@@ -184,12 +192,10 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   // --- Render Logic ---
 
   if (!permission) {
-    // Permissions are still being checked
     return <View style={styles.container} />;
   }
 
   if (!permission.granted) {
-    // Permissions have been denied
     return (
       <View style={styles.container}>
         <Text style={styles.permissionText}>
@@ -202,7 +208,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     );
   }
 
-  // Permissions are granted, render the camera UI
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -218,7 +223,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
         mode="video"
         facing="back"
         onCameraReady={() => {
-          console.log('LOG  Camera is ready.');
+          console.log('LOG: Camera is ready.');
           setIsCameraReady(true);
         }}
       />
@@ -276,7 +281,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    // Offset to truly center the title by accounting for the back button's space
     marginRight: 44, 
   },
   camera: {
@@ -307,9 +311,9 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   permissionText: {
-     textAlign: 'center', 
-     color: 'white',
-     paddingHorizontal: 20,
+    textAlign: 'center', 
+    color: 'white',
+    paddingHorizontal: 20,
   },
   permissionButton: {
     marginTop: 20,
