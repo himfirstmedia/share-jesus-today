@@ -163,12 +163,16 @@ export default function MenuScreen() {
     router.push("/profile");
   };
 
+  // const handleChangePassword = () => {
+  //   Alert.alert(
+  //     t('alerts.changePassword'),
+  //     t('alerts.changePasswordMessage')
+  //   );
+  // };
+
   const handleChangePassword = () => {
-    Alert.alert(
-      t('alerts.changePassword'),
-      t('alerts.changePasswordMessage')
-    );
-  };
+  router.push('/menuscreens/changepassword');
+};
 
   const handleNotifications = () => {
     Alert.alert(

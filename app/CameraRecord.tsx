@@ -6,15 +6,30 @@ import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import VideoCompressionService from '../services/videoCompressionService'; // Your compression service
 
-const CameraRecord = ({ onRecordingComplete, onCancel }) => {
+// Define interfaces for better type safety
+interface RecordingData {
+  uri: string;
+}
+
+interface CameraRecordProps {
+  onRecordingComplete?: (data: RecordingData | null) => void;
+  onCancel?: () => void;
+}
+
+interface RecordingOptions {
+  quality: '720p' | '1080p' | '480p';
+  maxDuration: number;
+}
+
+const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCancel }) => {
   const [permission, requestPermission] = useCameraPermissions();
-  const [isCameraReady, setIsCameraReady] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingText, setProcessingText] = useState('Processing...');
-  const [countdown, setCountdown] = useState(30);
-  const cameraRef = useRef(null);
-  const intervalRef = useRef(null);
+  const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
+  const [recording, setRecording] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [processingText, setProcessingText] = useState<string>('Processing...');
+  const [countdown, setCountdown] = useState<number>(30);
+  const cameraRef = useRef<CameraView>(null);
+  const intervalRef = useRef<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,25 +52,26 @@ const CameraRecord = ({ onRecordingComplete, onCancel }) => {
    * Waits for a file to be available and have content.
    * This is crucial to ensure the file is fully written before we try to compress it.
    */
-  const waitForFile = async (uri, attempts = 40, delay = 500) => {
+  const waitForFile = async (uri: string, attempts: number = 40, delay: number = 500): Promise<boolean> => {
     for (let i = 0; i < attempts; i++) {
       try {
         const fileInfo = await FileSystem.getInfoAsync(uri);
-        if (fileInfo.exists && fileInfo.size > 0) {
+        if (fileInfo.exists && 'size' in fileInfo && fileInfo.size > 0) {
           console.log(`LOG  File is ready: ${uri}, size: ${fileInfo.size}`);
           return true;
         }
-        console.log(`LOG  File not ready on attempt ${i + 1}. Exists: ${fileInfo.exists}, Size: ${fileInfo.size || 0}`);
+        const size = 'size' in fileInfo ? fileInfo.size : 0;
+        console.log(`LOG  File not ready on attempt ${i + 1}. Exists: ${fileInfo.exists}, Size: ${size}`);
       } catch (error) {
         console.error('Error checking file info:', error);
       }
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise<void>(resolve => setTimeout(resolve, delay));
     }
     console.error('LOG  waitForFile timed out after 20 seconds.');
     return false;
   };
 
-  const startRecording = () => {
+  const startRecording = (): void => {
     if (cameraRef.current && !recording && isCameraReady) {
       setRecording(true);
       setCountdown(30);
@@ -64,21 +80,23 @@ const CameraRecord = ({ onRecordingComplete, onCancel }) => {
       intervalRef.current = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
-            clearInterval(intervalRef.current);
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+            }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
 
-      const recordingOptions = {
+      const recordingOptions: RecordingOptions = {
         quality: '720p',
         maxDuration: 30,
       };
 
       const recordPromise = cameraRef.current.recordAsync(recordingOptions);
 
-      recordPromise.then(async (data) => {
+      recordPromise.then(async (data: { uri: string; } | undefined) => {
         console.log('LOG  Recording completed with data:', JSON.stringify(data, null, 2));
         setProcessingText('Processing...');
         setIsProcessing(true);
@@ -102,7 +120,7 @@ const CameraRecord = ({ onRecordingComplete, onCancel }) => {
             onRecordingComplete({ uri: compressedUri });
           } else {
             router.push({
-              pathname: '/share/ShareVideo',
+              pathname: '/share/ShareVideo' as any,
               params: { videoUri: compressedUri },
             });
           }
@@ -110,7 +128,7 @@ const CameraRecord = ({ onRecordingComplete, onCancel }) => {
           // If the file never becomes available, throw an error.
           throw new Error("File not available after multiple attempts");
         }
-      }).catch(error => {
+      }).catch((error: Error) => {
         console.error('ERROR  Recording failed:', error);
         Alert.alert('Recording Error', `Failed to save or compress video: ${error.message}`);
         if (onRecordingComplete) {
@@ -129,14 +147,14 @@ const CameraRecord = ({ onRecordingComplete, onCancel }) => {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = (): void => {
     if (cameraRef.current && recording) {
       console.log('LOG  Stopping video recording manually...');
       cameraRef.current.stopRecording();
     }
   };
 
-  const handleRecordButtonPress = () => {
+  const handleRecordButtonPress = (): void => {
     if (recording) {
       stopRecording();
     } else {
@@ -144,7 +162,7 @@ const CameraRecord = ({ onRecordingComplete, onCancel }) => {
     }
   };
 
-  const handleBackPress = () => {
+  const handleBackPress = (): void => {
     if (onCancel) {
       onCancel();
     } else {

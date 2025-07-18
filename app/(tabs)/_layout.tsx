@@ -23,7 +23,8 @@ export default function TabLayout() {
     '/login',
     '/Signup', 
     '/VerifyOtp',
-    '/CreatePassword'
+    '/CreatePassword',
+    '/CameraRecord'
   ];
   
   // Check if current screen should hide the tab bar

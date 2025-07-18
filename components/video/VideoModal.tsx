@@ -646,9 +646,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                             </Text>
                           </View>
                           
-                          <Text style={styles.videoCounter}>
+                          {/* <Text style={styles.videoCounter}>
                             {currentVideoIndex + 1} of {videoList?.length || 1}
-                          </Text>
+                          </Text> */}
                           
                           <View style={styles.navIndicator}>
                             <Text style={styles.navIndicatorText}>
