@@ -7,7 +7,6 @@ import {
   Alert,
   Dimensions,
   FlatList,
-  Image,
   RefreshControl,
   ScrollView,
   Share,
@@ -16,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoModal } from '../components/video/VideoModal';
 import { profileService } from '../services/profileService';
@@ -215,6 +215,7 @@ export default function UserProfileScreen() {
             uri: item.thumbnailUrl || 'https://via.placeholder.com/150x100?text=No+Thumbnail',
           }}
           style={styles.thumbnailImage}
+          contentFit="cover"
         />
         <View style={styles.playButtonOverlay}>
           <Ionicons name="play-circle" size={40} color="rgba(255, 255, 255, 0.9)" />
@@ -230,6 +231,11 @@ export default function UserProfileScreen() {
       </View>
     </View>
   );
+
+  // Helper function to check if a value is set and not empty
+  const isValueSet = (value?: string): boolean => {
+    return value !== undefined && value !== null && value.trim() !== '';
+  };
 
   if (loading) {
     return (
@@ -268,6 +274,14 @@ export default function UserProfileScreen() {
       </SafeAreaView>
     );
   }
+
+  // Check if we have any profile information to display
+  const hasProfileInfo = isValueSet(profile.gender) || 
+                         isValueSet(profile.country) || 
+                         isValueSet(profile.state) || 
+                         isValueSet(profile.city) || 
+                         isValueSet(profile.zipcode) || 
+                         isValueSet(profile.church);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -335,34 +349,54 @@ export default function UserProfileScreen() {
           )}
         </View>
 
-        <View style={styles.detailsSection}>
-          <Text style={styles.sectionTitle}>Profile Information</Text>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Gender:</Text>
-            <Text style={styles.detailValue}>{profile.gender || 'Not Set'}</Text>
+        {/* Only show the details section if there's at least one piece of profile information */}
+        {hasProfileInfo && (
+          <View style={styles.detailsSection}>
+            <Text style={styles.sectionTitle}>Profile Information</Text>
+            
+            {isValueSet(profile.gender) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Gender:</Text>
+                <Text style={styles.detailValue}>{profile.gender}</Text>
+              </View>
+            )}
+            
+            {isValueSet(profile.country) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Country:</Text>
+                <Text style={styles.detailValue}>{profile.country}</Text>
+              </View>
+            )}
+            
+            {isValueSet(profile.state) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>State:</Text>
+                <Text style={styles.detailValue}>{profile.state}</Text>
+              </View>
+            )}
+            
+            {isValueSet(profile.city) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>City:</Text>
+                <Text style={styles.detailValue}>{profile.city}</Text>
+              </View>
+            )}
+            
+            {isValueSet(profile.zipcode) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Zipcode:</Text>
+                <Text style={styles.detailValue}>{profile.zipcode}</Text>
+              </View>
+            )}
+            
+            {isValueSet(profile.church) && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Church:</Text>
+                <Text style={styles.detailValue}>{profile.church}</Text>
+              </View>
+            )}
           </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Country:</Text>
-            <Text style={styles.detailValue}>{profile.country || 'Not Set'}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>State:</Text>
-            <Text style={styles.detailValue}>{profile.state || 'Not Set'}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>City:</Text>
-            <Text style={styles.detailValue}>{profile.city || 'Not Set'}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Zipcode:</Text>
-            <Text style={styles.detailValue}>{profile.zipcode || 'Not Set'}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>Church:</Text>
-            <Text style={styles.detailValue}>{profile.church || 'Not Set'}</Text>
-          </View>
-          {/* Removed biography section from here to avoid duplication */}
-        </View>
+        )}
 
         <View style={styles.videosSection}>
           <Text style={styles.sectionTitle}>

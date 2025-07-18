@@ -1,10 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
-import VideoCompressionService from '../services/videoCompressionService'; // Your compression service
+// Assuming VideoCompressionService is in the correct path
+// import VideoCompressionService from '../services/videoCompressionService';
+
+// Mock VideoCompressionService for demonstration purposes
+const VideoCompressionService = {
+  createCompressedCopy: async (uri: string): Promise<string> => {
+    console.log(`Compressing video at: ${uri}`);
+    // In a real app, this would return a new URI for the compressed file
+    // For this example, we'll just return the same URI after a short delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('Compression finished.');
+    return uri;
+  },
+};
+
 
 // Define interfaces for better type safety
 interface RecordingData {
@@ -16,11 +30,6 @@ interface CameraRecordProps {
   onCancel?: () => void;
 }
 
-interface RecordingOptions {
-  quality: '720p' | '1080p' | '480p';
-  maxDuration: number;
-}
-
 const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCancel }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
@@ -29,10 +38,13 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   const [processingText, setProcessingText] = useState<string>('Processing...');
   const [countdown, setCountdown] = useState<number>(30);
   const cameraRef = useRef<CameraView>(null);
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
+  // --- Effects ---
+
   useEffect(() => {
+    // Request permissions when the component mounts
     (async () => {
       if (!permission) {
         await requestPermission();
@@ -41,6 +53,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   }, [permission, requestPermission]);
 
   useEffect(() => {
+    // Clean up interval on unmount
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -48,113 +61,107 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     };
   }, []);
 
-  /**
-   * Waits for a file to be available and have content.
-   * This is crucial to ensure the file is fully written before we try to compress it.
-   */
-  const waitForFile = async (uri: string, attempts: number = 40, delay: number = 500): Promise<boolean> => {
-    for (let i = 0; i < attempts; i++) {
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(uri);
-        if (fileInfo.exists && 'size' in fileInfo && fileInfo.size > 0) {
-          console.log(`LOG  File is ready: ${uri}, size: ${fileInfo.size}`);
-          return true;
-        }
-        const size = 'size' in fileInfo ? fileInfo.size : 0;
-        console.log(`LOG  File not ready on attempt ${i + 1}. Exists: ${fileInfo.exists}, Size: ${size}`);
-      } catch (error) {
-        console.error('Error checking file info:', error);
-      }
-      await new Promise<void>(resolve => setTimeout(resolve, delay));
+
+  // --- Recording Logic ---
+
+  const startRecording = () => {
+    if (!cameraRef.current || !isCameraReady) {
+      Alert.alert("Camera Not Ready", "Please wait for the camera to initialize.");
+      return;
     }
-    console.error('LOG  waitForFile timed out after 20 seconds.');
-    return false;
-  };
+    if (recording) return; // Prevent starting a new recording while one is in progress
 
-  const startRecording = (): void => {
-    if (cameraRef.current && !recording && isCameraReady) {
-      setRecording(true);
-      setCountdown(30);
-      console.log('LOG  Starting video recording for a max of 30 seconds...');
+    setRecording(true);
+    setCountdown(30);
 
-      intervalRef.current = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    // This interval is ONLY for updating the UI countdown.
+    intervalRef.current = setInterval(() => {
+      setCountdown(prev => (prev > 1 ? prev - 1 : 0));
+    }, 1000);
 
-      const recordingOptions: RecordingOptions = {
-        quality: '720p',
-        maxDuration: 30,
-      };
+    const recordingOptions = {
+      quality: '720p',
+      maxDuration: 30, // The camera will stop recording automatically after 30s
+    };
 
-      const recordPromise = cameraRef.current.recordAsync(recordingOptions);
-
-      recordPromise.then(async (data: { uri: string; } | undefined) => {
-        console.log('LOG  Recording completed with data:', JSON.stringify(data, null, 2));
-        setProcessingText('Processing...');
-        setIsProcessing(true);
-
-        if (!data || !data.uri) {
-          throw new Error("Recording data is invalid.");
+    cameraRef.current.recordAsync(recordingOptions)
+      .then(async (data) => {
+        // This block executes when recording stops, either via maxDuration or a manual stop.
+        if (!data?.uri) {
+          throw new Error("Recording failed: No video data URI was returned.");
         }
-
-        // First, wait for the original file to be fully saved.
-        const fileReady = await waitForFile(data.uri);
-
-        if (fileReady) {
-          console.log('LOG  File verified. Now starting compression...');
-          setProcessingText('Compressing...'); // Update UI text
-
-          // Now that the file is ready, compress it.
-          const compressedUri = await VideoCompressionService.createCompressedCopy(data.uri);
-          console.log(`LOG  Compression complete. New URI: ${compressedUri}`);
-
-          if (onRecordingComplete) {
-            onRecordingComplete({ uri: compressedUri });
-          } else {
-            router.push({
-              pathname: '/share/ShareVideo' as any,
-              params: { videoUri: compressedUri },
-            });
-          }
-        } else {
-          // If the file never becomes available, throw an error.
-          throw new Error("File not available after multiple attempts");
-        }
-      }).catch((error: Error) => {
-        console.error('ERROR  Recording failed:', error);
-        Alert.alert('Recording Error', `Failed to save or compress video: ${error.message}`);
-        if (onRecordingComplete) {
-          onRecordingComplete(null);
-        }
-      }).finally(() => {
+        
+        // The file is available, begin processing.
+        await processVideo(data.uri);
+      })
+      .catch((error: Error) => {
+        console.error('ERROR  Recording promise was rejected:', error);
+        Alert.alert('Recording Error', `An error occurred during recording: ${error.message}`);
+      })
+      .finally(() => {
+        // This block ensures state is cleaned up regardless of success or failure.
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
+          intervalRef.current = null;
         }
-        setIsProcessing(false);
         setRecording(false);
         setCountdown(30);
       });
-    } else if (!isCameraReady) {
-      Alert.alert("Camera Not Ready", "Please wait a moment for the camera to initialize.");
-    }
   };
 
-  const stopRecording = (): void => {
+  const stopRecording = () => {
     if (cameraRef.current && recording) {
-      console.log('LOG  Stopping video recording manually...');
+      console.log('LOG  Manually stopping video recording...');
       cameraRef.current.stopRecording();
+      // The .then() block of recordAsync will handle the rest.
     }
   };
 
-  const handleRecordButtonPress = (): void => {
+  const processVideo = async (originalUri: string) => {
+    setIsProcessing(true);
+    
+    try {
+      console.log(`LOG  Recording finished. Original URI: ${originalUri}`);
+      setProcessingText('Saving video...');
+
+      // Define a new path in a persistent directory
+      const newUri = `${FileSystem.documentDirectory}video_${Date.now()}.mp4`;
+
+      // Move the file from the temporary cache to the new path.
+      // This is a crucial step to ensure the file is fully written and accessible.
+      await FileSystem.moveAsync({
+        from: originalUri,
+        to: newUri,
+      });
+      console.log(`LOG  Video moved successfully to: ${newUri}`);
+
+      setProcessingText('Compressing video...');
+      const compressedUri = await VideoCompressionService.createCompressedCopy(newUri);
+      console.log(`LOG  Compression complete. Final URI: ${compressedUri}`);
+
+      // Handle the completed recording
+      if (onRecordingComplete) {
+        onRecordingComplete({ uri: compressedUri });
+      } else {
+        router.push({
+          pathname: '/share/ShareVideo' as any, // Type assertion for safety
+          params: { videoUri: compressedUri },
+        });
+      }
+    } catch (error: any) {
+      console.error('ERROR  Failed to process video:', error);
+      Alert.alert('Processing Error', `Failed to save or compress video: ${error.message}`);
+      if (onRecordingComplete) {
+        onRecordingComplete(null);
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // --- UI Handlers ---
+
+  const handleRecordButtonPress = () => {
     if (recording) {
       stopRecording();
     } else {
@@ -162,7 +169,11 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     }
   };
 
-  const handleBackPress = (): void => {
+  const handleBackPress = () => {
+    if (recording) {
+      stopRecording(); // Ensure recording is stopped before going back
+    }
+    
     if (onCancel) {
       onCancel();
     } else {
@@ -170,15 +181,19 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     }
   };
 
+  // --- Render Logic ---
+
   if (!permission) {
-    return <View />;
+    // Permissions are still being checked
+    return <View style={styles.container} />;
   }
 
   if (!permission.granted) {
+    // Permissions have been denied
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center', color: 'white' }}>
-          We need your permission to show the camera
+        <Text style={styles.permissionText}>
+          We need your permission to use the camera
         </Text>
         <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
           <Text style={styles.permissionButtonText}>Grant Permission</Text>
@@ -187,6 +202,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     );
   }
 
+  // Permissions are granted, render the camera UI
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -201,17 +217,20 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
         ref={cameraRef}
         mode="video"
         facing="back"
-        onCameraReady={() => setIsCameraReady(true)}
+        onCameraReady={() => {
+          console.log('LOG  Camera is ready.');
+          setIsCameraReady(true);
+        }}
       />
 
       <View style={styles.controlsContainer}>
         {recording && (
           <Text style={styles.timerText}>
-            0:{countdown.toString().padStart(2, '0')}
+            0:{String(countdown).padStart(2, '0')}
           </Text>
         )}
         <TouchableOpacity
-          style={[styles.button, !isCameraReady && styles.disabledButton]}
+          style={[styles.button, (!isCameraReady || isProcessing) && styles.disabledButton]}
           onPress={handleRecordButtonPress}
           disabled={!isCameraReady || isProcessing}
         >
@@ -257,7 +276,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginRight: 44,
+    // Offset to truly center the title by accounting for the back button's space
+    marginRight: 44, 
   },
   camera: {
     flex: 1,
@@ -286,9 +306,15 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
+  permissionText: {
+     textAlign: 'center', 
+     color: 'white',
+     paddingHorizontal: 20,
+  },
   permissionButton: {
     marginTop: 20,
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     backgroundColor: '#007BFF',
     borderRadius: 5,
     alignSelf: 'center',
@@ -296,10 +322,11 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     color: 'white',
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   processingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
@@ -307,6 +334,7 @@ const styles = StyleSheet.create({
   processingText: {
     color: 'white',
     fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 

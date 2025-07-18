@@ -28,7 +28,10 @@ export default function TabLayout() {
   ];
   
   // Check if current screen should hide the tab bar
-  const shouldHideTabBar = hideTabBarScreens.includes(pathname);
+  // const shouldHideTabBar = hideTabBarScreens.includes(pathname);
+  const shouldHideTabBar = hideTabBarScreens.includes(pathname) || 
+                        pathname.includes('CameraRecord') ||
+                        pathname.endsWith('/CameraRecord');
 
   console.log('CustomTabBar: app/(tabs)/_layout.tsx', { pathname, shouldHideTabBar }); // Added log
 
