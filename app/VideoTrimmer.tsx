@@ -86,94 +86,136 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
   }, []);
 
   // Create a safe wrapper for the onSave callback
-  const safeOnSave = useCallback(async (startTime: number, endTime: number, outputPath: string) => {
-    // Prevent multiple executions
-    if (callbackExecutedRef.current || processingRef.current) {
-      console.log('onSave already executed or processing, skipping...');
-      return;
-    }
+// Fix for VideoTrimmer.tsx - in the safeOnSave callback
 
-    callbackExecutedRef.current = true;
-    processingRef.current = true;
-    setStatus('saving');
+const safeOnSave = useCallback(async (startTime: number, endTime: number, outputPath: string) => {
+  // Prevent multiple executions
+  if (callbackExecutedRef.current || processingRef.current) {
+    console.log('onSave already executed or processing, skipping...');
+    return;
+  }
 
-    // Add a small delay to ensure the modal/native component is in a stable state
-    setTimeout(async () => {
+  callbackExecutedRef.current = true;
+  processingRef.current = true;
+  setStatus('saving');
+
+  setTimeout(async () => {
+    try {
+      console.log('Executing onSave callback safely:', { startTime, endTime, outputPath });
+      
+      // Validate parameters before calling
+      if (!outputPath || typeof outputPath !== 'string') {
+        throw new Error('Invalid output path provided');
+      }
+
+      if (typeof startTime !== 'number' || typeof endTime !== 'number') {
+        throw new Error('Invalid time parameters provided');
+      }
+
+      let finalOutputPath = outputPath;
+      
+      // ** FIX: Ensure proper file URI format and validation **
       try {
-        console.log('Executing onSave callback safely:', { startTime, endTime, outputPath });
+        // Remove file:// prefix for file system operations
+        const cleanPath = outputPath.replace(/^file:\/\//, '');
+        console.log('Checking trimmed file at:', cleanPath);
         
-        // Validate parameters before calling
-        if (!outputPath || typeof outputPath !== 'string') {
-          throw new Error('Invalid output path provided');
+        const outputExists = await RNFS.exists(cleanPath);
+        if (!outputExists) {
+          throw new Error('File does not exist at output path');
         }
 
-        if (typeof startTime !== 'number' || typeof endTime !== 'number') {
-          throw new Error('Invalid time parameters provided');
+        // Get file stats to ensure it's valid
+        const stats = await RNFS.stat(cleanPath);
+        console.log('Trimmed file stats:', { size: stats.size, isFile: stats.isFile() });
+        
+        if (!stats.isFile() || stats.size === 0) {
+          throw new Error('Invalid trimmed file: file is empty or not a regular file');
         }
 
-        let finalOutputPath = outputPath;
+        // ** KEY FIX: Ensure consistent URI format **
+        // Always use file:// prefix format that matches camera recordings
+        if (!outputPath.startsWith('file://')) {
+          finalOutputPath = `file://${cleanPath}`;
+        } else {
+          finalOutputPath = outputPath;
+        }
+        
+        console.log('Final output path for upload:', finalOutputPath);
+        
+      } catch (e) {
+        console.log('File validation failed, attempting to copy from content URI');
+        
+        // If validation fails, copy to a known good location
+        const fileName = `trimmed_video_${Date.now()}.mp4`;
+        const permanentPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+        
         try {
-            const outputExists = await RNFS.exists(outputPath.replace(/^file:\/\//, ''));
-            if (!outputExists) {
-                throw new Error('File does not exist at output path');
-            }
-        } catch (e) {
-            console.log('Could not find file at output path, attempting to copy from content URI');
-            const fileName = `trimmed_video_${Date.now()}.mp4`;
-            const permanentPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-            await RNFS.copyFile(outputPath, permanentPath);
-            finalOutputPath = `file://${permanentPath}`;
-        }
-
-        // Call the actual callback in a try-catch
-        await new Promise<void>((resolve, reject) => {
-          try {
-            // If onSave is async, handle it properly
-            const result = onSave(startTime, endTime, finalOutputPath);
-
-            // Type guard for Promise
-            if (
-              result !== undefined &&
-              result !== null &&
-              typeof (result as Promise<void>).then === 'function'
-            ) {
-              (result as Promise<void>).then(resolve).catch(reject);
-            } else {
-              resolve();
-            }
-          } catch (error) {
-            reject(error);
+          await RNFS.copyFile(outputPath.replace(/^file:\/\//, ''), permanentPath);
+          
+          // Verify the copied file
+          const copiedExists = await RNFS.exists(permanentPath);
+          if (!copiedExists) {
+            throw new Error('Failed to copy trimmed file to permanent location');
           }
-        });
+          
+          finalOutputPath = `file://${permanentPath}`;
+          console.log('File copied to permanent location:', finalOutputPath);
+          
+        } catch (copyError) {
+          console.error('Failed to copy file:', copyError);
+          throw new Error('Could not access trimmed video file');
+        }
+      }
 
-        console.log('onSave callback completed successfully');
-      } catch (error) {
-        console.error('Error in onSave callback:', error);
-        
-        // Show error to user and provide fallback
-        Alert.alert(
-          'Save Error',
-          'Failed to save the trimmed video. The video file may still be available in your device storage.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (isMountedRef.current) {
-                  onCancel();
-                }
+      // Call the actual callback with validated path
+      await new Promise<void>((resolve, reject) => {
+        try {
+          const result = onSave(startTime, endTime, finalOutputPath);
+
+          // Handle async callbacks
+          if (
+            result !== undefined &&
+            result !== null &&
+            typeof (result as Promise<void>).then === 'function'
+          ) {
+            (result as Promise<void>).then(resolve).catch(reject);
+          } else {
+            resolve();
+          }
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      console.log('onSave callback completed successfully');
+      
+    } catch (error) {
+      console.error('Error in onSave callback:', error);
+      
+      Alert.alert(
+        'Save Error',
+        'Failed to save the trimmed video. Please try selecting a different video.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (isMountedRef.current) {
+                onCancel();
               }
             }
-          ]
-        );
-      } finally {
-        // Reset processing state after a delay
-        setTimeout(() => {
-          processingRef.current = false;
-          setStatus('ready');
-        }, 500);
-      }
-    }, 300); // 300ms delay to ensure modal stability
-  }, [onSave, onCancel]);
+          }
+        ]
+      );
+    } finally {
+      // Reset processing state after a delay
+      setTimeout(() => {
+        processingRef.current = false;
+        setStatus('ready');
+      }, 500);
+    }
+  }, 300);
+}, [onSave, onCancel]);
 
   const safeOnCancel = useCallback(() => {
     if (callbackExecutedRef.current || processingRef.current) {

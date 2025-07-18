@@ -248,83 +248,130 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
     }
   };
 
-  const handleUpload = async (): Promise<void> => {
-    if (!validateInputs()) {
-      return;
+  // Fix for VideoUpload.tsx - Add validation before upload
+
+const handleUpload = async (): Promise<void> => {
+  if (!validateInputs()) {
+    return;
+  }
+
+  setIsLoading(true);
+  setIsUploading(true);
+  setUploadStage('preparing');
+  setMessage('Preparing upload...');
+  resetProgressTracking();
+
+  try {
+    // ** ENHANCED VALIDATION FOR TRIMMED FILES **
+    console.log('Validating file before upload:', selectedFile?.uri);
+    
+    if (!selectedFile?.uri) {
+      throw new Error('No valid file URI');
     }
 
-    setIsLoading(true);
-    setIsUploading(true);
-    setUploadStage('preparing');
-    setMessage('Preparing upload...');
-    resetProgressTracking();
-
+    // Validate the file exists and is accessible
     try {
-      const extension = getFileExtension(selectedFile!.uri);
-      const fileName = selectedFile!.name || `video-${Date.now()}.${extension}`;
-
-      const fileToUpload = {
-        uri: selectedFile!.uri,
-        name: fileName,
-        type: selectedFile!.type || 'video/mp4',
-      };
-
-      const metadata = {
-        name: name.trim() || title.trim(),
-        title: title.trim(),
-        caption: caption.trim(),
-      };
-
-      console.log('VideoUpload - Uploading file:', fileToUpload);
-      console.log('VideoUpload - With metadata:', metadata);
-
-      setUploadStage('uploading');
-      setMessage('Uploading video...');
-
-      // Use the enhanced upload method with progress tracking
-      const response = await videoApiService.uploadVideo(fileToUpload, metadata, {
-        onUploadProgress: handleUploadProgress,
-        onStateChange: handleUploadStateChange,
-      });
-
-      setIsLoading(false);
-      setIsUploading(false);
-
-      if (response.success) {
-        const videoData = response.data;
-        setUploadStage('complete');
-        setMessage(`Upload successful! Video uploaded.`);
-        resetForm();
-        setTimeout(() => {
-          if (onUploadComplete) {
-            onUploadComplete(videoData);
-          }
-        }, 2000);
-      } else {
-        const errorMessage = response.error || 'Unknown error occurred';
-        resetProgressTracking();
-        if (errorMessage.includes('unsupported format')) {
-          setMessage('Upload failed: Video format not supported. Please use MP4, MOV, or MP2T format.');
-        } else if (errorMessage.includes('File is empty')) {
-          setMessage('Upload failed: The selected file appears to be empty.');
-        } else {
-          setMessage(`Upload failed: ${errorMessage}`);
-        }
+      const fileInfo = await FileSystem.getInfoAsync(selectedFile.uri);
+      console.log('File validation info:', fileInfo);
+      
+      if (!fileInfo.exists) {
+        throw new Error('Selected file no longer exists');
       }
-    } catch (error: any) {
-      setIsLoading(false);
-      setIsUploading(false);
+      
+      if (fileInfo.isDirectory) {
+        throw new Error('Selected path is a directory, not a file');
+      }
+      
+      if (fileInfo.size === 0) {
+        throw new Error('Selected file is empty');
+      }
+      
+      // Update total bytes with actual file size
+      setTotalBytes(fileInfo.size || 0);
+      
+    } catch (validationError) {
+      console.error('File validation failed:', validationError);
+      throw new Error('The selected video file is not accessible. Please try again.');
+    }
+
+    const extension = getFileExtension(selectedFile.uri);
+    const fileName = selectedFile.name || `video-${Date.now()}.${extension}`;
+
+    // ** ENSURE PROPER FILE OBJECT STRUCTURE **
+    const fileToUpload = {
+      uri: selectedFile.uri,
+      name: fileName,
+      type: selectedFile.type || 'video/mp4',
+    };
+
+    const metadata = {
+      name: name.trim() || title.trim(),
+      title: title.trim(),
+      caption: caption.trim(),
+    };
+
+    console.log('VideoUpload - Uploading file:', fileToUpload);
+    console.log('VideoUpload - With metadata:', metadata);
+
+    setUploadStage('uploading');
+    setMessage('Uploading video...');
+
+    // Use the enhanced upload method with progress tracking
+    const response = await videoApiService.uploadVideo(fileToUpload, metadata, {
+      onUploadProgress: handleUploadProgress,
+      onStateChange: handleUploadStateChange,
+    });
+
+    setIsLoading(false);
+    setIsUploading(false);
+
+    if (response.success) {
+      const videoData = response.data;
+      setUploadStage('complete');
+      setMessage(`Upload successful! Video uploaded.`);
+      resetForm();
+      setTimeout(() => {
+        if (onUploadComplete) {
+          onUploadComplete(videoData);
+        }
+      }, 2000);
+    } else {
+      const errorMessage = response.error || 'Unknown error occurred';
       resetProgressTracking();
-      console.error('VideoUpload - Upload error:', error);
-      if (error.message && error.message.includes('Network request failed')) {
+      
+      // Enhanced error handling
+      if (errorMessage.includes('unsupported format')) {
+        setMessage('Upload failed: Video format not supported. Please use MP4, MOV, or MP2T format.');
+      } else if (errorMessage.includes('File is empty')) {
+        setMessage('Upload failed: The selected file appears to be empty.');
+      } else if (errorMessage.includes('Authentication')) {
+        setMessage('Upload failed: Please login again.');
+      } else if (errorMessage.includes('Network')) {
         setMessage('Upload failed: Network connection error. Please check your internet connection.');
-      } else if (error.message && error.message.includes('413')) {
-        setMessage('Upload failed: File too large. Please select a smaller video file.');
       } else {
-        setMessage(`Upload failed: ${error.message || 'Network error or server unavailable'}`);
+        setMessage(`Upload failed: ${errorMessage}`);
       }
     }
-  };
+  } catch (error: any) {
+    setIsLoading(false);
+    setIsUploading(false);
+    resetProgressTracking();
+    console.error('VideoUpload - Upload error:', error);
+    
+    // Enhanced error handling with specific messages
+    if (error.message && error.message.includes('Network request failed')) {
+      setMessage('Upload failed: Network connection error. Please check your internet connection.');
+    } else if (error.message && error.message.includes('413')) {
+      setMessage('Upload failed: File too large. Please select a smaller video file.');
+    } else if (error.message && error.message.includes('not accessible')) {
+      setMessage('Upload failed: Cannot access the video file. Please try selecting the video again.');
+    } else if (error.message && error.message.includes('empty')) {
+      setMessage('Upload failed: The video file appears to be empty or corrupted.');
+    } else {
+      setMessage(`Upload failed: ${error.message || 'Network error or server unavailable'}`);
+    }
+  }
+};
 
   const handleCancel = (): void => {
     if (isUploading) {
