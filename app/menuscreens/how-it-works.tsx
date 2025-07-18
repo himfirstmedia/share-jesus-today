@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ResizeMode, Video } from 'expo-av';
+import { useEvent, useEventListener } from 'expo';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -15,41 +16,74 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const { width } = Dimensions.get('window');
 
 export default function HowItWorksScreen() {
-  const [status, setStatus] = useState({});
-  const video = useRef(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const player = useVideoPlayer(require('../../assets/video/sharejesustoday.mp4'), player => {
+    player.loop = false;
+    player.timeUpdateEventInterval = 500; // Update every 500ms
+  });
+
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+
+  // Listen to time updates
+  useEventListener(player, 'timeUpdate', (event) => {
+    setCurrentTime(event.currentTime);
+  });
+
+  // Get the duration from the player when it's available
+  useEffect(() => {
+    const subscription = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay' && player.duration) {
+        setDuration(player.duration);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [player]);
 
   const handleBackPress = () => {
     router.navigate('/(tabs)/menu');
   };
 
   const handlePlayPause = () => {
-    if (status.isPlaying) {
-      video.current.pauseAsync();
+    if (isPlaying) {
+      player.pause();
     } else {
-      video.current.playAsync();
+      player.play();
     }
   };
 
   const handleRewind = () => {
-    if (video.current && status.positionMillis) {
-      const newPosition = Math.max(0, status.positionMillis - 10000); // 10 seconds back
-      video.current.setPositionAsync(newPosition);
-    }
+    // Use seekBy for relative seeking (negative value to go back)
+    player.seekBy(-10); // 10 seconds back
   };
 
   const handleFastForward = () => {
-    if (video.current && status.positionMillis && status.durationMillis) {
-      const newPosition = Math.min(status.durationMillis, status.positionMillis + 10000); // 10 seconds forward
-      video.current.setPositionAsync(newPosition);
+    // Use seekBy for relative seeking (positive value to go forward)
+    player.seekBy(10); // 10 seconds forward
+  };
+
+  const handleSeekToStart = () => {
+    // For absolute seeking, set currentTime directly
+    player.currentTime = 0;
+  };
+
+  const handleSeekToEnd = () => {
+    // For absolute seeking to end, set currentTime to duration
+    if (duration > 0) {
+      player.currentTime = duration;
     }
   };
 
-  const formatTime = (millis) => {
-    if (!millis) return '00:00';
-    const totalSeconds = Math.floor(millis / 1000);
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds === 0) return '00:00';
+    const totalSeconds = Math.floor(seconds);
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const secs = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -64,70 +98,68 @@ export default function HowItWorksScreen() {
       </View>
 
       {/* Content */}
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
         {/* Video Player */}
         <View style={styles.videoContainer}>
-          <Video
-            ref={video}
+          <VideoView
             style={styles.video}
-            source={require('../../assets/video/sharejesustoday.mp4')}
-            useNativeControls={false}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay={false}
-            isLooping={false}
-            onPlaybackStatusUpdate={status => setStatus(() => status)}
+            player={player}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+            nativeControls={false}
+            contentFit="contain"
           />
-          
+
           {/* Custom Video Controls */}
           <View style={styles.videoControls}>
             <View style={styles.controlButtons}>
               <TouchableOpacity onPress={handleRewind} style={styles.controlButton}>
                 <Ionicons name="play-back" size={24} color="white" />
               </TouchableOpacity>
-              
-              <TouchableOpacity onPress={handleRewind} style={styles.controlButton}>
+
+              <TouchableOpacity onPress={handleSeekToStart} style={styles.controlButton}>
                 <Ionicons name="play-skip-back" size={20} color="white" />
               </TouchableOpacity>
-              
+
               <TouchableOpacity onPress={handlePlayPause} style={styles.playButton}>
-                <Ionicons 
-                  name={status.isPlaying ? "pause" : "play"} 
-                  size={28} 
-                  color="white" 
+                <Ionicons
+                  name={isPlaying ? "pause" : "play"}
+                  size={28}
+                  color="white"
                 />
               </TouchableOpacity>
-              
+
               <TouchableOpacity onPress={handleFastForward} style={styles.controlButton}>
                 <Ionicons name="play-skip-forward" size={20} color="white" />
               </TouchableOpacity>
-              
-              <TouchableOpacity onPress={handleFastForward} style={styles.controlButton}>
+
+              <TouchableOpacity onPress={handleSeekToEnd} style={styles.controlButton}>
                 <Ionicons name="play-forward" size={24} color="white" />
               </TouchableOpacity>
             </View>
-            
+
             {/* Progress Bar */}
             <View style={styles.progressContainer}>
-              <Text style={styles.timeText}>{formatTime(status.positionMillis)}</Text>
+              <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
               <View style={styles.progressBar}>
                 <View style={styles.progressTrack}>
-                  <View 
+                  <View
                     style={[
-                      styles.progressFill, 
-                      { 
-                        width: status.durationMillis 
-                          ? `${(status.positionMillis / status.durationMillis) * 100}%` 
-                          : '0%' 
+                      styles.progressFill,
+                      {
+                        width: duration
+                          ? `${(currentTime / duration) * 100}%`
+                          : '0%'
                       }
-                    ]} 
+                    ]}
                   />
                 </View>
               </View>
-              <Text style={styles.timeText}>{formatTime(status.durationMillis)}</Text>
+              <Text style={styles.timeText}>{formatTime(duration)}</Text>
             </View>
           </View>
         </View>
@@ -143,7 +175,7 @@ export default function HowItWorksScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sharing Made Simple:</Text>
           <Text style={styles.sectionText}>
-            Sharing the Love of Jesus every day fulfills the great commission, fills you and others with the Joy of learning or being reminded of his great love for us all! With just a few taps, you can record, upload and share your personal experiences with a world-wide community of people who would also like to share Jesus' love today and every day!
+            Sharing the Love of Jesus every day fulfills the great commission, fills you and others with the Joy of learning or being reminded of his great love for us all! With just a few taps, you can record, upload and share your personal experiences with a world-wide community of people who would also like to share Jesus&apos; love today and every day!
           </Text>
         </View>
       </ScrollView>
@@ -192,8 +224,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     marginBottom: 24,
     position: 'relative',
-    marginTop:24,
-    
+    marginTop: 24,
   },
   video: {
     width: width,

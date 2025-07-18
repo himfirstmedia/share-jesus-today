@@ -1,8 +1,7 @@
-// Fixed VideoUploadInterface.tsx with proper video URI handling
 import { Ionicons } from '@expo/vector-icons';
-import { ResizeMode, Video } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import * as DocumentPicker from 'expo-document-picker';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -33,16 +32,10 @@ interface VideoUploadInterfaceProps {
   onComplete: (videoData?: any) => void;
 }
 
-interface VideoLoadStatus {
-  isLoaded: boolean;
-  durationMillis?: number;
-  [key: string]: any;
-}
-
-const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({ 
-  initialVideo, 
-  onCancel, 
-  onComplete 
+const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
+  initialVideo,
+  onCancel,
+  onComplete,
 }) => {
   const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(initialVideo || null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -54,8 +47,12 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
   const [trimEnd, setTrimEnd] = useState(30);
   const [needsTrimming, setNeedsTrimming] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  const videoRef = useRef<Video | null>(null);
+
+  // Create video player instance
+  const player = useVideoPlayer(selectedVideo?.uri || '', (player) => {
+    player.loop = false;
+    player.muted = false;
+  });
 
   // Debug logging to track video state
   React.useEffect(() => {
@@ -69,7 +66,7 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
   React.useEffect(() => {
     if (initialVideo) {
       console.log('VideoUploadInterface - Setting initial video:', initialVideo);
-      
+
       // Ensure we have a proper video object with uri
       if (initialVideo.uri) {
         setSelectedVideo(initialVideo);
@@ -80,10 +77,51 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
     }
   }, [initialVideo]);
 
+  // Update player source when video changes
+// Update player source when video changes
+React.useEffect(() => {
+  if (selectedVideo?.uri) {
+    player.replace(selectedVideo.uri);
+  }
+}, [selectedVideo?.uri, player]); // ✅ Added 'player' to dependency array
+
+  // Listen to player events
+// Listen to player events
+// Listen to player events
+React.useEffect(() => {
+  const statusSubscription = player.addListener('statusChange', (status) => {
+    console.log('VideoUploadInterface - Player status:', status);
+    
+    // Access duration when video is ready
+    if (status.status === 'readyToPlay' && player.duration) {
+      const durationSeconds = player.duration;
+      setVideoDuration(durationSeconds);
+
+      if (durationSeconds > 31) {
+        setNeedsTrimming(true);
+        setTrimEnd(30);
+      } else {
+        setNeedsTrimming(false);
+        setTrimEnd(durationSeconds);
+      }
+    }
+  });
+
+  // ✅ CORRECTED: Listen to playing state changes using the correct event
+  const playingSubscription = player.addListener('playingChange', ({ isPlaying }) => {
+    console.log('VideoUploadInterface - Playing state changed:', isPlaying);
+    setIsPlaying(isPlaying);
+  });
+
+  return () => {
+    statusSubscription?.remove();
+    playingSubscription?.remove();
+  };
+}, [player]);
   const handleSelectVideo = async () => {
     try {
       console.log('VideoUploadInterface - Starting video selection...');
-      
+
       const result = await DocumentPicker.getDocumentAsync({
         type: 'video/*',
         copyToCacheDirectory: true,
@@ -117,23 +155,6 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
     }
   };
 
-  const handleVideoLoad = (status: VideoLoadStatus) => {
-    console.log('VideoUploadInterface - Video load status:', status);
-    
-    if (status.isLoaded && status.durationMillis) {
-      const durationSeconds: number = status.durationMillis / 1000;
-      setVideoDuration(durationSeconds);
-      
-      if (durationSeconds > 30.1) {
-        setNeedsTrimming(true);
-        setTrimEnd(30);
-      } else {
-        setNeedsTrimming(false);
-        setTrimEnd(durationSeconds);
-      }
-    }
-  };
-
   const handleTrimChange = (startTime: number, endTime: number) => {
     console.log('VideoUploadInterface - Trim change:', startTime, endTime);
     setTrimStart(startTime);
@@ -142,10 +163,10 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
 
   const handleTrimSave = async (startTime: number, endTime: number, outputPath: string) => {
     console.log('VideoUploadInterface - Trim save:', { startTime, endTime, outputPath });
-    
+
     setTrimStart(startTime);
     setTrimEnd(endTime);
-    
+
     // Update the selected video to use the trimmed output
     if (outputPath && selectedVideo) {
       const updatedVideo: VideoFile = {
@@ -154,14 +175,14 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
         name: selectedVideo.name || `trimmed_video_${Date.now()}.mp4`,
         type: selectedVideo.type || 'video/mp4',
       };
-      
+
       console.log('VideoUploadInterface - Updated video after trim:', updatedVideo);
       setSelectedVideo(updatedVideo);
     }
-    
+
     setNeedsTrimming(false);
     setShowTrimmer(false);
-    
+
     // Update video duration to reflect the trimmed length
     setVideoDuration(endTime - startTime);
   };
@@ -178,7 +199,7 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
     }
 
     setIsLoading(true);
-    
+
     try {
       // Prepare video file for upload using your existing service
       const videoFile = {
@@ -203,7 +224,7 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
 
       // Use your existing video upload service
       const response = await videoApiService.uploadVideo(videoFile, metadata);
-      
+
       if (response.success) {
         Alert.alert('Success', 'Video uploaded successfully!', [
           { text: 'OK', onPress: () => onComplete(response.data) }
@@ -219,6 +240,14 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
     }
   };
 
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  };
+
   const renderVideoPreview = () => {
     if (!selectedVideo || !selectedVideo.uri) {
       return (
@@ -231,25 +260,15 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
 
     return (
       <View style={styles.videoContainer}>
-        <Video
-          ref={videoRef}
-          source={{ uri: selectedVideo.uri }}
+        <VideoView
           style={styles.video}
-          useNativeControls={false}
-          resizeMode={ResizeMode.CONTAIN}
-          onLoad={handleVideoLoad}
-          shouldPlay={false}
+          player={player}
+          allowsFullscreen={false}
+          allowsPictureInPicture={false}
+          nativeControls={false}
+          contentFit="contain"
         />
-        <TouchableOpacity style={styles.playButton} onPress={() => {
-          if (videoRef.current) {
-            if (isPlaying) {
-              videoRef.current.pauseAsync();
-            } else {
-              videoRef.current.playAsync();
-            }
-            setIsPlaying(!isPlaying);
-          }
-        }}>
+        <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
           <Ionicons name={isPlaying ? "pause" : "play"} size={40} color="white" />
         </TouchableOpacity>
         <Text style={styles.uriText} numberOfLines={1}>
@@ -271,7 +290,7 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
       </View>
 
       {/* Select Video Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.selectVideoButton}
         onPress={handleSelectVideo}
         disabled={isLoading}
@@ -284,13 +303,13 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
       {/* Video Preview */}
       <View style={styles.previewSection}>
         {renderVideoPreview()}
-        
+
         {needsTrimming && !showTrimmer && (
           <View style={styles.warningContainer}>
             <Text style={styles.warningText}>
               Video is longer than 30 seconds. Please trim.
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.trimButton}
               onPress={() => {
                 if (selectedVideo && selectedVideo.uri) {
@@ -326,8 +345,8 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
       </View>
 
       {/* Caption Input */}
-   
-   {/*   <View style={styles.inputSection}>
+      {/*
+      <View style={styles.inputSection}>
         <Text style={styles.inputLabel}>Caption (optional):</Text>
         <TextInput
           style={[styles.titleInput, styles.captionInput]}
@@ -339,11 +358,11 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
           numberOfLines={3}
         />
       </View>
-   */}
+      */}
 
       {/* Upload Button */}
       <View style={styles.uploadSection}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.uploadButton,
             (!selectedVideo || !selectedVideo.uri || !videoTitle.trim() || isLoading || needsTrimming) && styles.disabledButton
@@ -552,9 +571,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#bdc3c7',
     opacity: 0.7,
   },
-    loadingOverlay: {
-      ...StyleSheet.absoluteFillObject,
-    },
-  });
-    
-  export default VideoUploadInterface;
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});
+
+export default VideoUploadInterface;

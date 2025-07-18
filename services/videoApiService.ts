@@ -1,4 +1,4 @@
-// services/videoApiService.ts - Updated with Auth Manager
+// services/videoApiService.ts - Updated with Progress Tracking Support
 import { ReactNode } from "react";
 import AuthManager from '../utils/authManager';
 
@@ -37,28 +37,46 @@ interface VideoFile {
   type: string;
 }
 
+interface UploadProgressEvent {
+  loaded: number;
+  total: number;
+  progress: number;
+}
+
+interface UploadOptions {
+  onUploadProgress?: (progressEvent: UploadProgressEvent) => void;
+  onStateChange?: (state: 'preparing' | 'uploading' | 'processing' | 'complete') => void;
+}
+
 export interface UploaderProfile {
   id: string;
   firstName: string;
   lastName: string;
   profilePicture?: string | null;
-  // Add other uploader fields if needed from the JSON
 }
 
 export interface VideoModel {
   id: string;
   title: string;
-  url:string;
+  url: string;
   thumbnailUrl?: string | null;
   duration?: number;
   createdTimestamp: string;
   uploader: UploaderProfile;
-  // Add other video fields like visibility, reported, caption if needed
+}
+
+export interface VideoPage {
+  data: Video[];
+  totalPages: number;
+  totalElements: number;
+  size?: number; 
+  number?: number; 
 }
 
 class VideoApiService {
   private baseURL = 'https://himfirstapis.com';
   private unsubscribeAuth: (() => void) | null = null;
+  private activeUploads = new Map<string, AbortController>();
 
   constructor() {
     // Subscribe to auth token changes
@@ -69,7 +87,7 @@ class VideoApiService {
 
   // Get authentication token from AuthManager (now async)
   private async getAuthToken(): Promise<string | null> {
-    await AuthManager.ensureInitialized(); // Ensure AuthManager has loaded token
+    await AuthManager.ensureInitialized();
     return AuthManager.getAuthToken();
   }
 
@@ -161,10 +179,160 @@ class VideoApiService {
     }
   }
 
-  // Upload video (Fixed and Complete)
+  // Enhanced upload method with progress tracking using XMLHttpRequest
+  private async uploadWithProgress(
+    url: string,
+    formData: FormData,
+    options: UploadOptions = {}
+  ): Promise<ApiResponse<any>> {
+    return new Promise(async (resolve) => {
+      try {
+        const token = await this.getAuthToken();
+        const uploadId = Date.now().toString();
+        const abortController = new AbortController();
+        this.activeUploads.set(uploadId, abortController);
+
+        // Notify state change to preparing
+        options.onStateChange?.('preparing');
+
+        const xhr = new XMLHttpRequest();
+
+        // Handle upload progress
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            const progressEvent: UploadProgressEvent = {
+              loaded: event.loaded,
+              total: event.total,
+              progress: progress
+            };
+            
+            console.log('VideoAPI: Upload progress:', progressEvent);
+            options.onUploadProgress?.(progressEvent);
+          }
+        });
+
+        // Handle load start (uploading begins)
+        xhr.upload.addEventListener('loadstart', () => {
+          console.log('VideoAPI: Upload started');
+          options.onStateChange?.('uploading');
+        });
+
+        // Handle successful completion
+        xhr.addEventListener('load', async () => {
+          this.activeUploads.delete(uploadId);
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log('VideoAPI: Upload completed successfully');
+            options.onStateChange?.('processing');
+            
+            try {
+              const responseData = JSON.parse(xhr.responseText);
+              console.log('VideoAPI: Upload response:', responseData);
+              
+              // Simulate processing delay
+              setTimeout(() => {
+                options.onStateChange?.('complete');
+                resolve({
+                  success: true,
+                  data: responseData
+                });
+              }, 1000);
+            } catch (error) {
+              console.error('VideoAPI: Error parsing response:', error);
+              resolve({
+                success: false,
+                error: 'Invalid response from server'
+              });
+            }
+          } else {
+            console.error('VideoAPI: Upload failed with status:', xhr.status);
+            let errorMessage = 'Upload failed';
+            
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch {
+              errorMessage = `HTTP ${xhr.status}: ${xhr.statusText}`;
+            }
+
+            // Special handling for auth errors
+            if (xhr.status === 401) {
+              console.error('VideoAPI: Authentication failed during upload');
+              await AuthManager.clearAuthToken();
+              errorMessage = 'Authentication failed. Please login again.';
+            }
+
+            resolve({
+              success: false,
+              error: errorMessage
+            });
+          }
+        });
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          this.activeUploads.delete(uploadId);
+          console.error('VideoAPI: Upload network error');
+          resolve({
+            success: false,
+            error: 'Network error during upload'
+          });
+        });
+
+        // Handle abort
+        xhr.addEventListener('abort', () => {
+          this.activeUploads.delete(uploadId);
+          console.log('VideoAPI: Upload aborted');
+          resolve({
+            success: false,
+            error: 'Upload cancelled'
+          });
+        });
+
+        // Handle timeout
+        xhr.addEventListener('timeout', () => {
+          this.activeUploads.delete(uploadId);
+          console.error('VideoAPI: Upload timeout');
+          resolve({
+            success: false,
+            error: 'Upload timeout'
+          });
+        });
+
+        // Set up abort signal
+        abortController.signal.addEventListener('abort', () => {
+          xhr.abort();
+        });
+
+        // Configure and send request
+        xhr.open('POST', url);
+        xhr.timeout = 300000; // 5 minutes timeout
+
+        // Set auth header if available
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          console.log('VideoAPI: Added auth header to XMLHttpRequest');
+        }
+
+        console.log('VideoAPI: Starting XMLHttpRequest upload to:', url);
+        xhr.send(formData);
+
+      } catch (error) {
+        console.error('VideoAPI: Upload setup error:', error);
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : 'Upload setup failed'
+        });
+      }
+    });
+  }
+
+  // Upload video with progress support
   async uploadVideo(
     videoFile: VideoFile,
-    metadata: VideoUploadMetadata
+    metadata: VideoUploadMetadata,
+    options: UploadOptions = {}
   ): Promise<ApiResponse<any>> {
     try {
       // Check authentication first
@@ -206,13 +374,21 @@ class VideoApiService {
         title: metadata.title,
         caption: metadata.caption,
         isAuthenticated: this.isAuthenticated(),
+        hasProgressCallback: !!options.onUploadProgress,
       });
 
-      // Make the upload request
-      return await this.makeRequest('/api/v1/video/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const uploadUrl = `${this.baseURL}/api/v1/video/upload`;
+
+      // Use progress-enabled upload if callback provided
+      if (options.onUploadProgress || options.onStateChange) {
+        return await this.uploadWithProgress(uploadUrl, formData, options);
+      } else {
+        // Fallback to regular upload
+        return await this.makeRequest('/api/v1/video/upload', {
+          method: 'POST',
+          body: formData,
+        });
+      }
 
     } catch (error) {
       console.error('VideoAPI: Upload error:', error);
@@ -223,15 +399,40 @@ class VideoApiService {
     }
   }
 
+  // Cancel active upload
+  cancelUpload(uploadId?: string): void {
+    if (uploadId && this.activeUploads.has(uploadId)) {
+      const controller = this.activeUploads.get(uploadId);
+      controller?.abort();
+      this.activeUploads.delete(uploadId);
+      console.log('VideoAPI: Upload cancelled:', uploadId);
+    } else {
+      // Cancel all active uploads
+      this.activeUploads.forEach((controller, id) => {
+        controller.abort();
+        console.log('VideoAPI: Upload cancelled:', id);
+      });
+      this.activeUploads.clear();
+    }
+  }
+
+  // Get active upload count
+  getActiveUploadCount(): number {
+    return this.activeUploads.size;
+  }
+
   // Get all videos
-    async fetchPublicVideos(page: number = 0, size: number = 10, sortBy: string = 'createdTimestamp', sortOrder: string = 'DESC'): Promise<ApiResponse<VideoPage>> {
+  async fetchPublicVideos(
+    page: number = 0, 
+    size: number = 10, 
+    sortBy: string = 'createdTimestamp', 
+    sortOrder: string = 'DESC'
+  ): Promise<ApiResponse<VideoPage>> {
     const endpoint = `/api/v1/video/public/all?page=${page}&size=${size}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
-    // This is a public endpoint, so auth token is not strictly required but will be sent if available by makeRequest
     return this.makeRequest<VideoPage>(endpoint, {
       method: 'GET',
     });
   }
-
 
   // Get user's videos
   async getMyVideos(page: number = 0, size: number = 10): Promise<ApiResponse<Video[]>> {
@@ -249,21 +450,16 @@ class VideoApiService {
 
   // Cleanup subscription when service is destroyed
   destroy(): void {
+    // Cancel all active uploads
+    this.cancelUpload();
+    
     if (this.unsubscribeAuth) {
       this.unsubscribeAuth();
       this.unsubscribeAuth = null;
     }
   }
-
-
 }
-  export interface VideoPage {
-  data: Video[];
-  totalPages: number;
-  totalElements: number;
-  size?: number; 
-  number?: number; 
-}
+
 // Create and export singleton instance
 const videoApiService = new VideoApiService();
 export default videoApiService;

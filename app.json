@@ -2,7 +2,7 @@
   "expo": {
     "name": "share-jesus-today",
     "slug": "share-jesus-today",
-    "version": "1.0.5",
+    "version": "13.4.0",
     "orientation": "portrait",
     "icon": "./assets/images/easylogo.png",
     "scheme": "sharejesustodayui",
@@ -35,10 +35,17 @@
     "plugins": [
       "expo-router",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to record videos.",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone to record audio with videos.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/logo.png",
-        
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
