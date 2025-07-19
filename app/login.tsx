@@ -292,7 +292,20 @@ const handleLogin = async () => {
       fontSize: 14,
       fontWeight: 'bold',
     },
+    header: {
+      paddingTop: 20,
+      paddingHorizontal: 20,
+      paddingBottom: 10,
+    },
+    backButton: {
+      padding: 8,
+      alignSelf: 'flex-start',
+    },
   });
+
+  const handleBack = () => {
+    router.replace('/(tabs)');
+  };
 
   return (
     <SafeAreaView style={dynamicStyles.container}>
@@ -300,6 +313,12 @@ const handleLogin = async () => {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Header with Back Button */}
+        <View style={dynamicStyles.header}>
+          <TouchableOpacity onPress={handleBack} style={dynamicStyles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#374151" />
+          </TouchableOpacity>
+        </View>
         <ScrollView 
           contentContainerStyle={dynamicStyles.scrollContainer}
           keyboardShouldPersistTaps="handled"

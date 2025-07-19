@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx - Updated with video navigation
-import { router, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -21,35 +21,13 @@ import {
 import { VideoCard } from '@/components/video/VideoCard';
 import { VideoModal } from '@/components/video/VideoModal';
 import apiService, { type ApiResponse, type Video } from '@/services/apiService';
-import { homeStyles } from '../../styles/HomeStyles';
-import AuthManager from '@/utils/authManager'; // Import AuthManager
 import { t } from '@/utils/i18';
+import { homeStyles } from '../../styles/HomeStyles';
 
 export default function HomeTabScreen() {
   const router = useRouter();
 
-  // Authentication Check
-  useEffect(() => {
-    const checkAuth = async () => {
-      await AuthManager.ensureInitialized(); // Ensure AuthManager has loaded token from storage
-      if (!AuthManager.isAuthenticated()) {
-        console.log('User not authenticated, redirecting to login.');
-        router.replace('/login'); // Redirect to login page
-      }
-    };
-
-    checkAuth();
-
-    // Optional: Subscribe to auth changes if you want real-time updates
-    const unsubscribe = AuthManager.subscribe((token) => {
-      if (!token) {
-        console.log('Auth token cleared, redirecting to login.');
-        router.replace('/login');
-      }
-    });
-
-    return () => unsubscribe(); // Cleanup subscription
-  }, []);
+  
 
   // State Management
   const [videoList, setVideoList] = useState<Video[]>([]);
@@ -361,6 +339,7 @@ export default function HomeTabScreen() {
               <TouchableOpacity onPress={() => router.push('/watchVideos')} style={homeStyles.loadMoreButton}>
                 <Text style={homeStyles.loadMoreButtonText}>{t('home.watchAllVideos')}</Text>
               </TouchableOpacity>
+       
             </View>
           )}
 

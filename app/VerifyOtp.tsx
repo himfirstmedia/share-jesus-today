@@ -190,7 +190,7 @@ const OTPVerification = () => {
           {/* Icon */}
           <View style={styles.iconContainer}>
             <View style={styles.iconCircle}>
-              <Ionicons name="mail" size={32} color="#2563EB" />
+              <Ionicons name="mail" size={32} color="white" />
             </View>
           </View>
 
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#3260ad',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2563EB',
+    color: '#3260ad',
     textAlign: 'center',
   },
   successContainer: {
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   otpInputFilled: {
-    borderColor: '#2563EB',
+    borderColor: '#3260ad',
     backgroundColor: '#EFF6FF',
   },
   otpInputError: {
@@ -394,18 +394,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   pasteButtonText: {
-    color: '#2563EB',
+    color: '#3260ad',
     fontSize: 16,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
   verifyButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#3260ad',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#2563EB',
+    shadowColor: '#3260ad',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   resendLink: {
-    color: '#2563EB',
+    color: '#3260ad',
     fontSize: 16,
     fontWeight: '600',
     textDecorationLine: 'underline',

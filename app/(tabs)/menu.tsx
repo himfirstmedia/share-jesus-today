@@ -88,6 +88,7 @@ export default function MenuScreen() {
   const [showShareSubMenu, setShowShareSubMenu] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Load profile data and initialize language when component mounts
   useEffect(() => {
@@ -96,9 +97,14 @@ export default function MenuScreen() {
         await initializeLanguage();
         setCurrentLanguage(getCurrentLanguage());
         
-        const userData = await profileService.getUserProfile();
-        if (userData) {
-          setProfile(userData);
+        const authenticated = await AuthManager.isAuthenticated();
+        setIsAuthenticated(authenticated);
+
+        if (authenticated) {
+          const userData = await profileService.getUserProfile();
+          if (userData) {
+            setProfile(userData);
+          }
         }
       } catch (error) {
         console.error('Error loading profile for sharing:', error);
@@ -156,23 +162,24 @@ export default function MenuScreen() {
   };
 
   const handleMyAccount = () => {
-    setShowAccountSubMenu(!showAccountSubMenu);
+    if (isAuthenticated) {
+      setShowAccountSubMenu(!showAccountSubMenu);
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const handleCreateAccount = () => {
+    router.push('/Signup');
   };
 
   const handleProfile = () => {
     router.push("/profile");
   };
 
-  // const handleChangePassword = () => {
-  //   Alert.alert(
-  //     t('alerts.changePassword'),
-  //     t('alerts.changePasswordMessage')
-  //   );
-  // };
-
   const handleChangePassword = () => {
-  router.push('/menuscreens/changepassword');
-};
+    router.push('/menuscreens/changepassword');
+  };
 
   const handleNotifications = () => {
     Alert.alert(
@@ -295,11 +302,19 @@ export default function MenuScreen() {
 
           <MenuItem
             icon="person"
-            title={t('menu.myAccount')}
+            title={isAuthenticated ? t('menu.myAccount') : t('menu.login')}
             onPress={handleMyAccount}
           />
 
-          {showAccountSubMenu && (
+          {!isAuthenticated && (
+            <MenuItem
+              icon="person-add"
+              title={t('menu.createAccount')}
+              onPress={handleCreateAccount}
+            />
+          )}
+
+          {isAuthenticated && showAccountSubMenu && (
             <>
               <MenuItem
                 icon="person"
@@ -330,13 +345,15 @@ export default function MenuScreen() {
             onPress={handleCustomerSupport}
           />
 
-          <MenuItem 
-            icon="share" 
-            title={t('menu.share')} 
-            onPress={handleShare} 
-          />
+          {isAuthenticated && (
+            <MenuItem 
+              icon="share" 
+              title={t('menu.share')} 
+              onPress={handleShare} 
+            />
+          )}
 
-          {showShareSubMenu && (
+          {isAuthenticated && showShareSubMenu && (
             <>
               <ShareSubItem 
                 title={t('menu.shareApp')} 
@@ -367,19 +384,23 @@ export default function MenuScreen() {
             onPress={handleTermsAndConditions}
           />
 
-          <MenuItem
-            icon="log-out"
-            title={t('menu.logout')}
-            onPress={handleLogout}
-            isDestructive={true}
-          />
+          {isAuthenticated && (
+            <>
+              <MenuItem
+                icon="log-out"
+                title={t('menu.logout')}
+                onPress={handleLogout}
+                isDestructive={true}
+              />
 
-          <MenuItem
-            icon="trash"
-            title={t('menu.deleteAccount')}
-            onPress={handleDeleteAccount}
-            isDestructive={true}
-          />
+              <MenuItem
+                icon="trash"
+                title={t('menu.deleteAccount')}
+                onPress={handleDeleteAccount}
+                isDestructive={true}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

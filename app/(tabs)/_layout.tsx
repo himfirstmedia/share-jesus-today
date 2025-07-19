@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AuthManager from '../../utils/authManager'; // Import AuthManager
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 export default function TabLayout() {
   useEffect(() => {
@@ -231,18 +232,29 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
         }}
       />
-      <Tabs.Screen
-        name="post"
-        options={{
-          title: 'Post',
-        }}
-      />
+      <ProtectedRoute>
+        <Tabs.Screen
+          name="post"
+          options={{
+            title: 'Post',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
+            ),
+          }}
+        />
+      </ProtectedRoute>
       <Tabs.Screen
         name="menu"
         options={{
           title: 'Menu',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
+          ),
         }}
       />
     </Tabs>

@@ -1,13 +1,15 @@
 {
   "menu": {
-    "title": "Cardápio",
+    "title": "Menu",
     "about": "Sobre",
     "howItWorks": "Como funciona",
     "shareYourFaith": "Compartilhe sua fé",
-    "searchProfiles": "Procurar perfis",
+    "searchProfiles": "Pesquisar perfis",
     "myAccount": "Minha conta",
+    "login": "Conecte-se",
+    "createAccount": "Criar uma conta",
     "profile": "Perfil",
-    "changePassword": "Mudar senha",
+    "changePassword": "Alterar a senha",
     "notifications": "Ativar e desativar notificações",
     "customerSupport": "Suporte ao cliente",
     "share": "Compartilhar",

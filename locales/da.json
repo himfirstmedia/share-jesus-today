@@ -2,10 +2,12 @@
   "menu": {
     "title": "Menu",
     "about": "Om",
-    "howItWorks": "Sådan virker det",
+    "howItWorks": "Hvordan det virker",
     "shareYourFaith": "Del din tro",
     "searchProfiles": "Søg profiler",
     "myAccount": "Min konto",
+    "login": "Log ind",
+    "createAccount": "Opret konto",
     "profile": "Profil",
     "changePassword": "Skift adgangskode",
     "notifications": "Slå notifikationer til og fra",

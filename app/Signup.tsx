@@ -1,6 +1,5 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import apiService from '@/services/apiService';
-import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -24,37 +23,13 @@ export default function SignupScreen() {
     lastName: '',
     email: '',
     city: '',
-    country: '',
     state: '',
-    zipCode: '',
-    church: '',
-    biography: '',
-    dob: '',
-    gender: 'Select Gender',
-    howDidYouKnowAboutUs: 'How did you hear about us?',
-    otherSpecify: '',
-    churchFrom: '', // This will be set from radio buttons
   });
   const [loading, setLoading] = useState(false);
-  const [showOtherField, setShowOtherField] = useState(false);
-  const [emailPublic, setEmailPublic] = useState('');
   const colorScheme = useColorScheme();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Show/hide "Other" field based on selection
-    if (field === 'howDidYouKnowAboutUs') {
-      setShowOtherField(value === 'Other');
-      if (value !== 'Other') {
-        setFormData(prev => ({ ...prev, otherSpecify: '' }));
-      }
-    }
-  };
-
-  const handleRadioChange = (value: string) => {
-    setEmailPublic(value);
-    setFormData(prev => ({ ...prev, churchFrom: value }));
   };
 
   const validateForm = () => {
@@ -84,22 +59,6 @@ export default function SignupScreen() {
     return true;
   };
 
-  const formatDateToYYYYMMDD = (dateString: string): string => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      
-      return `${year}-${month}-${day}`;
-    } catch (error) {
-      return '';
-    }
-  };
-
   const handleSignup = async () => {
     if (!validateForm()) return;
   
@@ -107,24 +66,13 @@ export default function SignupScreen() {
     try {
       const signupData = {
         active: true,
-        address: '',
-        biography: formData.biography || '',
-        church: formData.church || '',
-        churchFrom: formData.churchFrom || '',
-        city: formData.city || '',
-        country: formData.country || '',
-        dob: formatDateToYYYYMMDD(formData.dob) || '',
         email: formData.email,
         firstName: formData.firstName,
-        gender: formData.gender.toLowerCase(),
         lastName: formData.lastName,
+        city: formData.city || '',
+        state: formData.state || '',
         otp: 0,
         otpVerified: true,
-        phone: '',
-        state: formData.state || '',
-        zipCode: formData.zipCode || '',
-        howDidYouKnowAboutUs: formData.howDidYouKnowAboutUs === 'How did you hear about us?' ? '' : formData.howDidYouKnowAboutUs,
-        otherSpecify: formData.otherSpecify || '',
       };
   
       console.log('Sending signup data:', signupData);
@@ -269,7 +217,7 @@ export default function SignupScreen() {
           </View>
 
           {/* Email Privacy Radio Buttons */}
-          <View style={styles.radioContainer}>
+          {/* <View style={styles.radioContainer}>
             <Text style={styles.radioLabel}>Do you want your email to be public?</Text>
             <View style={styles.radioOptions}>
               <TouchableOpacity 
@@ -292,7 +240,7 @@ export default function SignupScreen() {
                 <Text style={styles.radioText}>No</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </View> */}
 
           {/* Location Fields */}
           <View style={styles.row}>
@@ -322,7 +270,7 @@ export default function SignupScreen() {
           </View>
 
           {/* Church Field */}
-          <View style={styles.inputContainerFull}>
+          {/* <View style={styles.inputContainerFull}>
             <TextInput
               style={styles.input}
               value={formData.church}
@@ -332,10 +280,10 @@ export default function SignupScreen() {
               autoCapitalize="words"
               editable={!loading}
             />
-          </View>
+          </View> */}
 
           {/* Additional Fields (like Android) */}
-          <View style={styles.row}>
+          {/* <View style={styles.row}>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
@@ -358,10 +306,10 @@ export default function SignupScreen() {
                 editable={!loading}
               />
             </View>
-          </View>
+          </View> */}
 
           {/* Date of Birth */}
-          <View style={styles.inputContainerFull}>
+          {/* <View style={styles.inputContainerFull}>
             <TextInput
               style={styles.input}
               value={formData.dob}
@@ -370,10 +318,10 @@ export default function SignupScreen() {
               placeholderTextColor="#999"
               editable={!loading}
             />
-          </View>
+          </View> */}
 
           {/* Biography */}
-          <View style={styles.inputContainerFull}>
+          {/* <View style={styles.inputContainerFull}>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={formData.biography}
@@ -384,10 +332,10 @@ export default function SignupScreen() {
               numberOfLines={3}
               editable={!loading}
             />
-          </View>
+          </View> */}
 
           {/* Gender Picker */}
-          <View style={styles.pickerContainer}>
+          {/* <View style={styles.pickerContainer}>
             <Picker
               selectedValue={formData.gender}
               style={styles.picker}
@@ -398,10 +346,10 @@ export default function SignupScreen() {
               <Picker.Item label="Male" value="Male" />
               <Picker.Item label="Female" value="Female" />
             </Picker>
-          </View>
+          </View> */}
 
           {/* How did you hear about us Picker */}
-          <View style={styles.pickerContainer}>
+          {/* <View style={styles.pickerContainer}>
             <Picker
               selectedValue={formData.howDidYouKnowAboutUs}
               style={styles.picker}
@@ -418,10 +366,10 @@ export default function SignupScreen() {
               <Picker.Item label="My Church" value="My Church" />
               <Picker.Item label="Other" value="Other" />
             </Picker>
-          </View>
+          </View> */}
 
           {/* Other Specify Field (conditionally shown) */}
-          {showOtherField && (
+          {/* {showOtherField && (
             <View style={styles.inputContainerFull}>
               <TextInput
                 style={styles.input}
@@ -432,7 +380,7 @@ export default function SignupScreen() {
                 editable={!loading}
               />
             </View>
-          )}
+          )} */}
 
           {/* Submit Button */}
           <TouchableOpacity
@@ -443,7 +391,7 @@ export default function SignupScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Create Account</Text>
+              <Text style={styles.submitButtonText}>Next</Text>
             )}
           </TouchableOpacity>
 

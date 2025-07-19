@@ -1,11 +1,13 @@
 {
   "menu": {
     "title": "Menü",
-    "about": "Über uns",
+    "about": "Über",
     "howItWorks": "Wie es funktioniert",
     "shareYourFaith": "Teile deinen Glauben",
     "searchProfiles": "Profile suchen",
     "myAccount": "Mein Konto",
+    "login": "Anmeldung",
+    "createAccount": "Konto erstellen",
     "profile": "Profil",
     "changePassword": "Passwort ändern",
     "notifications": "Benachrichtigungen ein- und ausschalten",

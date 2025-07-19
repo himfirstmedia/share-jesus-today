@@ -46,7 +46,7 @@ interface VideoModalProps {
 // Logo Component
 export const LogoIcon = () => (
   <View >
-    <Image source={require('../assets/images/logo.png')} style={{ width: 300, height:200 }} />
+    <Image source={require('../assets/images/logo.png')} style={{ width: 300, height: 200 }} />
   </View>
 );
 
@@ -92,8 +92,8 @@ export const MenuIcon = () => (
 export const HeaderSection: React.FC<{
   onSearchProfiles: () => void;
   onPostVideo: () => void;
- 
-}> = ({ onSearchProfiles, onPostVideo}) => (
+
+}> = ({ onSearchProfiles, onPostVideo }) => (
   <View style={homeStyles.header}>
     <View style={homeStyles.logo}>
       <LogoIcon />
@@ -105,13 +105,16 @@ export const HeaderSection: React.FC<{
       <TouchableOpacity style={homeStyles.actionButton} onPress={onSearchProfiles}>
         <Text style={homeStyles.actionButtonText}>SEARCH PROFILES</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity style={homeStyles.actionButton} onPress={onPostVideo}>
         <Text style={homeStyles.actionButtonText}>POST VIDEO</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity style={homeStyles.actionButton} onPress={onWatchVideos}>
         <Text style={homeStyles.actionButtonText}>{t('home.watchVideos')}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push('/Signup')} style={homeStyles.actionButton}>
+        <Text style={homeStyles.actionButtonText}>CREATE ACCOUNT</Text>
       </TouchableOpacity>
     </View>
   </View>
