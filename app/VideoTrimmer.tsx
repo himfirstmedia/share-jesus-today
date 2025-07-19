@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -5,6 +6,7 @@ import {
   Alert,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
   type EventSubscription,
 } from 'react-native';
@@ -31,6 +33,8 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
   const callbackExecutedRef = useRef(false);
   const [status, setStatus] = useState<'loading' | 'ready' | 'processing' | 'saving' | 'error'>('loading');
   const [validatedVideoUri, setValidatedVideoUri] = useState<string>('');
+  const [progress, setProgress] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   // Function to verify and copy file if needed
   const validateAndPrepareVideo = useCallback(async (uri: string): Promise<string> => {
@@ -50,10 +54,10 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
       console.log('File info:', fileInfo);
       
       if (!fileInfo.exists) {
-        throw new Error(`Video file not found at: ${cleanUri}`);
+        throw new Error(`Video file not found at: ${cleanUri}. The file may have been moved or deleted.`);
       }
       
-      // Validate file properties - Expo FileSystem doesn't have isFile, check if it's NOT a directory
+      // Validate file properties
       if (fileInfo.isDirectory) {
         throw new Error('Path points to a directory, not a file');
       }
@@ -69,11 +73,18 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
       });
       
       // If file is in cache/temp directory, copy to a more permanent location
-      if (cleanUri.includes('cache') || cleanUri.includes('temp') || cleanUri.includes('tmp')) {
+      if (cleanUri.includes('cache') || cleanUri.includes('temp') || cleanUri.includes('tmp') || cleanUri.includes('DocumentPicker')) {
         console.log('File is in temporary location, copying to permanent location...');
         
+        // Create videos directory if it doesn't exist
+        const videoFilesDirectory = `${FileSystem.documentDirectory}videos/`;
+        const dirInfo = await FileSystem.getInfoAsync(videoFilesDirectory);
+        if (!dirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(videoFilesDirectory, { intermediates: true });
+        }
+        
         const fileName = `video_${Date.now()}.mp4`;
-        const permanentPath = `${FileSystem.documentDirectory}${fileName}`;
+        const permanentPath = `${videoFilesDirectory}${fileName}`;
         
         try {
           await FileSystem.copyAsync({
@@ -89,16 +100,17 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
             throw new Error('Failed to verify copied video file');
           }
           
-          return `file://${permanentPath}`;
+          return permanentPath;
         } catch (copyError) {
           console.error('Failed to copy file:', copyError);
-          // Fall back to original path if copy fails
-          console.log('Copy failed, using original path');
+          // If copy fails, try to use original path but warn user
+          console.log('Copy failed, attempting to use original path - this may cause issues');
+          return cleanUri;
         }
       }
       
-      // Return with file:// prefix for consistency
-      return cleanUri.startsWith('file://') ? cleanUri : `file://${cleanUri}`;
+      // Return with the cleaned path (without file:// prefix for the trimmer)
+      return cleanUri;
       
     } catch (error) {
       console.error('Video validation failed:', error);
@@ -151,225 +163,136 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
     }
   }, []);
 
-  // Create a safe wrapper for the onSave callback
-  const safeOnSave = useCallback(async (startTime: number, endTime: number, outputPath: string) => {
-    // Prevent multiple executions
-    if (callbackExecutedRef.current || processingRef.current) {
-      console.log('onSave already executed or processing, skipping...');
-      return;
-    }
-
-    callbackExecutedRef.current = true;
-    processingRef.current = true;
-    setStatus('saving');
-
-    // Add delay to ensure modal is dismissed and file is ready
-    setTimeout(async () => {
-      try {
-        console.log('Executing onSave callback safely:', { startTime, endTime, outputPath });
-        
-        // Validate parameters
-        if (!outputPath || typeof outputPath !== 'string') {
-          throw new Error('Invalid output path provided');
-        }
-
-        if (typeof startTime !== 'number' || typeof endTime !== 'number') {
-          throw new Error('Invalid time parameters provided');
-        }
-
-        // Validate and prepare the output file
-        const validatedOutputPath = await validateOutputFile(outputPath);
-        
-        console.log('Validated output path:', validatedOutputPath);
-
-        // Call the actual callback with validated path
-        await new Promise<void>((resolve, reject) => {
-          try {
-            const result = onSave(startTime, endTime, validatedOutputPath);
-
-            // Handle async callbacks
-            if (
-              result !== undefined &&
-              result !== null &&
-              typeof (result as Promise<void>).then === 'function'
-            ) {
-              (result as Promise<void>).then(resolve).catch(reject);
-            } else {
-              resolve();
-            }
-          } catch (error) {
-            reject(error);
-          }
-        });
-
-        console.log('onSave callback completed successfully');
-        
-      } catch (error) {
-        console.error('Error in onSave callback:', error);
-        
-        Alert.alert(
-          'Save Error',
-          'Failed to save the trimmed video. Please try selecting a different video.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (isMountedRef.current) {
-                  onCancel();
-                }
-              }
-            }
-          ]
-        );
-      } finally {
-        // Reset processing state after a delay
-        setTimeout(() => {
-          processingRef.current = false;
-          setStatus('ready');
-        }, 500);
-      }
-    }, 300);
-  }, [onSave, onCancel, validateOutputFile]);
-
+  // Safe callback execution
   const safeOnCancel = useCallback(() => {
-    if (callbackExecutedRef.current || processingRef.current) {
-      console.log('Already processing or callback executed, preventing cancel...');
-      return;
+    if (isMountedRef.current && !callbackExecutedRef.current) {
+      callbackExecutedRef.current = true;
+      onCancel();
     }
-
-    callbackExecutedRef.current = true;
-    processingRef.current = true;
-
-    setTimeout(() => {
-      try {
-        console.log('Executing onCancel callback safely');
-        onCancel();
-      } catch (error) {
-        console.error('Error in onCancel callback:', error);
-      } finally {
-        processingRef.current = false;
-      }
-    }, 100);
   }, [onCancel]);
 
+  const safeOnSave = useCallback(async (startTime: number, endTime: number, outputPath: string) => {
+    if (isMountedRef.current && !callbackExecutedRef.current) {
+      callbackExecutedRef.current = true;
+      try {
+        await onSave(startTime, endTime, outputPath);
+      } catch (error) {
+        console.error('Error in onSave callback:', error);
+      }
+    }
+  }, [onSave]);
+
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    console.log('VideoTrimmer - Cleaning up listeners');
+    
+    // Remove all event listeners
+    Object.values(listenerSubscription.current).forEach(subscription => {
+      try {
+        subscription?.remove();
+      } catch (error) {
+        console.log('Error removing subscription:', error);
+      }
+    });
+    
+    listenerSubscription.current = {};
+  }, []);
+
+  // Component cleanup on unmount
   useEffect(() => {
-    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      cleanup();
+    };
+  }, [cleanup]);
+
+  // Initialize trimmer
+  useEffect(() => {
+    if (!videoUri) {
+      console.error('VideoTrimmer - No video URI provided');
+      setStatus('error');
+      setErrorMessage('No video file provided');
+      return;
+    }
+
+    // Reset state for new video
+    setStatus('loading');
+    setProgress(0);
+    setErrorMessage('');
     callbackExecutedRef.current = false;
     processingRef.current = false;
-    setStatus('loading');
 
-    // Set up all the event listeners using the proper NativeVideoTrim API
-    listenerSubscription.current.onLoad = NativeVideoTrim.onLoad(
-      ({ duration }) => {
-        console.log('onLoad', duration);
+    // Setup event listeners
+    listenerSubscription.current.onProcessing = NativeVideoTrim.onProcessing(
+      ({ sessionId, progress }) => {
+        console.log('VideoTrim Processing', `sessionId: ${sessionId}, progress: ${progress}%`);
         if (isMountedRef.current) {
+          setProgress(progress);
+          setStatus('processing');
+        }
+      }
+    );
+
+    listenerSubscription.current.onCancel = NativeVideoTrim.onCancel(
+      ({ sessionId }) => {
+        console.log('VideoTrim Cancelled', `sessionId: ${sessionId}`);
+        if (isMountedRef.current && !callbackExecutedRef.current) {
           setStatus('ready');
+          setProgress(0);
+          // Don't call safeOnCancel here as this is just trimming cancellation
         }
       }
     );
 
-    listenerSubscription.current.onShow = NativeVideoTrim.onShow(() => {
-      console.log('onShow - Trimmer modal shown');
-      if (isMountedRef.current) {
-        setStatus('ready');
-      }
-    });
+    listenerSubscription.current.onSuccess = NativeVideoTrim.onSuccess(
+      async ({ sessionId, startTime, endTime, outputPath }) => {
+        console.log('VideoTrim Success', {
+          sessionId,
+          startTime,
+          endTime,
+          outputPath
+        });
 
-    listenerSubscription.current.onStartTrimming = NativeVideoTrim.onStartTrimming(() => {
-      console.log('onStartTrimming - Trimming process started');
-      if (isMountedRef.current) {
-        setStatus('processing');
-      }
-    });
-
-    listenerSubscription.current.onFinishTrimming = NativeVideoTrim.onFinishTrimming(
-      ({ outputPath, startTime, endTime, duration }) => {
-        console.log(
-          'onFinishTrimming',
-          `outputPath: ${outputPath}, startTime: ${startTime}, endTime: ${endTime}, duration: ${duration}`
-        );
-        
-        if (!isMountedRef.current || callbackExecutedRef.current) {
-          console.log('Component unmounted or callback already executed, ignoring finish event');
-          return;
-        }
-
-        // Validate the output
-        if (!outputPath || typeof outputPath !== 'string') {
-          console.error('Invalid output path received:', outputPath);
-          Alert.alert('Error', 'Failed to get valid trimmed video path.');
-          safeOnCancel();
-          return;
-        }
-
-        // Add a delay before calling the save callback to ensure the modal is fully dismissed
-        setTimeout(() => {
-          if (isMountedRef.current && !callbackExecutedRef.current) {
-            safeOnSave(startTime || 0, endTime || 0, outputPath);
+        if (isMountedRef.current && !callbackExecutedRef.current) {
+          setStatus('saving');
+          
+          try {
+            // Validate the output file
+            const validatedOutputPath = await validateOutputFile(outputPath);
+            console.log('VideoTrimmer - Validated output path:', validatedOutputPath);
+            
+            // Call the save callback with validated path
+            await safeOnSave(startTime, endTime, validatedOutputPath);
+          } catch (error) {
+            console.error('VideoTrimmer - Error processing output:', error);
+            
+            if (isMountedRef.current && !callbackExecutedRef.current) {
+              setStatus('error');
+              setErrorMessage('Failed to process trimmed video');
+              
+              Alert.alert(
+                'Processing Error',
+                'Failed to save the trimmed video. Please try again.',
+                [{ text: 'OK', onPress: () => safeOnCancel() }]
+              );
+            }
           }
-        }, 400); // Increased delay for modal dismissal
+        }
       }
     );
-
-    listenerSubscription.current.onCancelTrimming = NativeVideoTrim.onCancelTrimming(() => {
-      console.log('onCancelTrimming - User cancelled trimming');
-      
-      if (callbackExecutedRef.current) {
-        console.log('Callback already executed, ignoring cancel event');
-        return;
-      }
-
-      if (isMountedRef.current) {
-        setStatus('ready');
-        
-        // Add delay before cancel to ensure modal is dismissed
-        setTimeout(() => {
-          if (isMountedRef.current && !callbackExecutedRef.current) {
-            safeOnCancel();
-          }
-        }, 200);
-      }
-    });
-
-    listenerSubscription.current.onCancel = NativeVideoTrim.onCancel(() => {
-      console.log('onCancel - General cancel event');
-      
-      if (callbackExecutedRef.current) {
-        console.log('Callback already executed, ignoring cancel event');
-        return;
-      }
-
-      if (isMountedRef.current) {
-        setStatus('ready');
-        
-        setTimeout(() => {
-          if (isMountedRef.current && !callbackExecutedRef.current) {
-            safeOnCancel();
-          }
-        }, 200);
-      }
-    });
-
-    listenerSubscription.current.onHide = NativeVideoTrim.onHide(() => {
-      console.log('onHide - Trimmer modal hidden');
-      // Don't change status here as this might be called during normal operation
-    });
 
     listenerSubscription.current.onError = NativeVideoTrim.onError(
-      ({ message, errorCode }) => {
-        console.error('onError', `message: ${message}, errorCode: ${errorCode}`);
+      ({ sessionId, message }) => {
+        console.log('VideoTrim Error', `sessionId: ${sessionId}, message: ${message}`);
         
-        if (callbackExecutedRef.current) {
-          console.log('Callback already executed, ignoring error event');
-          return;
-        }
-
-        if (isMountedRef.current) {
+        if (isMountedRef.current && !callbackExecutedRef.current) {
           setStatus('error');
+          setProgress(0);
           
+          // Delay the alert to ensure proper UI state
           setTimeout(() => {
             if (isMountedRef.current && !callbackExecutedRef.current) {
-              let errorMessage = message || 'An error occurred during video trimming.';
+              let errorMessage = 'Failed to trim video. Please try again.';
               
               // Provide more specific error messages
               if (message && message.includes('No such file or directory')) {
@@ -441,121 +364,162 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
         // Show the editor with configuration
         await showEditor(preparedUri, trimmerConfig);
         
+        if (isMountedRef.current) {
+          setStatus('ready');
+        }
+        
       } catch (error) {
         console.error('Error initializing video trimmer:', error);
         
         if (isMountedRef.current && !callbackExecutedRef.current) {
           setStatus('error');
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          setErrorMessage(errorMessage);
           
           let userMessage = 'Failed to open video trimmer.';
-          if (errorMessage.includes('not found') || errorMessage.includes('No such file')) {
-            userMessage = 'Video file not found. Please select the video again.';
+          
+          if (errorMessage.includes('not found')) {
+            userMessage = 'Video file not found. The file may have been moved or deleted.';
+          } else if (errorMessage.includes('Invalid video file')) {
+            userMessage = 'Invalid video file format. Please select a different video.';
           } else if (errorMessage.includes('timeout')) {
-            userMessage = 'Video validation timed out. Please try again with a smaller video file.';
-          } else if (errorMessage.includes('Invalid') || errorMessage.includes('corrupted')) {
-            userMessage = 'The selected video file is not valid or supported. Please try a different video.';
-          } else if (errorMessage.includes('copy') || errorMessage.includes('permission')) {
-            userMessage = 'Unable to access the video file. Please check permissions and try again.';
+            userMessage = 'Video validation timed out. The file may be too large or corrupted.';
           }
           
-          Alert.alert('Error', userMessage, [
-            {
-              text: 'OK',
-              onPress: () => safeOnCancel()
-            }
-          ]);
+          Alert.alert(
+            'Video Trimmer Error',
+            userMessage,
+            [{ text: 'OK', onPress: () => safeOnCancel() }]
+          );
         }
       }
     };
 
-    // Initialize the trimmer
     initializeTrimmer();
+  }, [videoUri, maxDuration, validateAndPrepareVideo, validateOutputFile, safeOnCancel, safeOnSave]);
 
-    // Cleanup function
-    return () => {
-      console.log('VideoTrimmer cleanup initiated');
-      isMountedRef.current = false;
-      
-      // Clean up all subscriptions
-      Object.keys(listenerSubscription.current).forEach(key => {
-        try {
-          listenerSubscription.current[key]?.remove();
-          console.log(`Removed ${key} subscription`);
-        } catch (error) {
-          console.log(`Error removing ${key} subscription:`, error);
-        }
-      });
-      
-      // Clear the subscriptions object
-      listenerSubscription.current = {};
-      
-      // Clean up any temporary files we might have created
-      if (validatedVideoUri && validatedVideoUri.includes(FileSystem.documentDirectory || '')) {
-        const cleanPath = validatedVideoUri.replace(/^file:\/\//, '');
-        FileSystem.deleteAsync(cleanPath, { idempotent: true }).catch(err => 
-          console.log('Failed to cleanup temp video file:', err)
-        );
-      }
-    };
-  }, [videoUri, maxDuration, safeOnSave, safeOnCancel, validateAndPrepareVideo]);
-
-  // Final cleanup on unmount
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      callbackExecutedRef.current = false;
-      processingRef.current = false;
-      
-      // Final cleanup of any remaining subscriptions
-      Object.keys(listenerSubscription.current).forEach(key => {
-        try {
-          listenerSubscription.current[key]?.remove();
-        } catch (error) {
-          console.log(`Final cleanup error for ${key}:`, error);
-        }
-      });
-      
-      listenerSubscription.current = {};
-    };
-  }, []);
+  const handleCancel = () => {
+    console.log('VideoTrimmer - Manual cancel triggered');
+    safeOnCancel();
+  };
 
   const getStatusMessage = () => {
     switch (status) {
-      case 'loading': return 'Preparing video for trimming...';
-      case 'ready': return 'Ready to trim';
-      case 'processing': return 'Processing video...';
-      case 'saving': return 'Saving trimmed video...';
-      case 'error': return 'Error occurred';
-      default: return 'Loading...';
+      case 'loading':
+        return 'Preparing video...';
+      case 'ready':
+        return 'Video trimmer is ready. Use the controls to trim your video.';
+      case 'processing':
+        return `Processing video... ${Math.round(progress)}%`;
+      case 'saving':
+        return 'Saving trimmed video...';
+      case 'error':
+        return errorMessage || 'An error occurred';
+      default:
+        return 'Loading...';
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
-      case 'error': return '#ff0000';
-      case 'processing': return '#ff9500';
-      case 'saving': return '#007AFF';
-      default: return '#0000ff';
+      case 'loading':
+      case 'processing':
+      case 'saving':
+        return '#007AFF';
+      case 'ready':
+        return '#28a745';
+      case 'error':
+        return '#dc3545';
+      default:
+        return '#6c757d';
     }
   };
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={getStatusColor()} />
-      <Text style={[styles.statusText, { color: getStatusColor() }]}>
-        {getStatusMessage()}
-      </Text>
-      {status === 'saving' && (
-        <Text style={styles.warningText}>
-          Please wait, do not close the app...
-        </Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
+          <Ionicons name="close" size={24} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Trim Video</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Status Section */}
+      <View style={styles.statusSection}>
+        <View style={styles.statusContainer}>
+          {(status === 'loading' || status === 'processing' || status === 'saving') && (
+            <ActivityIndicator size="small" color={getStatusColor()} style={styles.statusIndicator} />
+          )}
+          {status === 'error' && (
+            <Ionicons name="alert-circle" size={20} color={getStatusColor()} style={styles.statusIndicator} />
+          )}
+          {status === 'ready' && (
+            <Ionicons name="checkmark-circle" size={20} color={getStatusColor()} style={styles.statusIndicator} />
+          )}
+          <Text style={[styles.statusText, { color: getStatusColor() }]}>
+            {getStatusMessage()}
+          </Text>
+        </View>
+        
+        {status === 'processing' && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            </View>
+            <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Instructions */}
+      <View style={styles.instructionsSection}>
+        <Text style={styles.instructionsTitle}>How to use the video trimmer:</Text>
+        <Text style={styles.instructionText}>• Drag the handles on the timeline to select the part you want to keep</Text>
+        <Text style={styles.instructionText}>• Maximum duration: {maxDuration} seconds</Text>
+        <Text style={styles.instructionText}>• Tap the play button to preview your selection</Text>
+        <Text style={styles.instructionText}>• Tap "Save" when you're satisfied with your trim</Text>
+      </View>
+
+      {/* Video Info */}
+      {validatedVideoUri && (
+        <View style={styles.videoInfoSection}>
+          <Text style={styles.videoInfoTitle}>Video File:</Text>
+          <Text style={styles.videoInfoPath} numberOfLines={2}>
+            {validatedVideoUri}
+          </Text>
+        </View>
       )}
-      {status === 'loading' && (
-        <Text style={styles.helpText}>
-          Validating video file and preparing trimmer...
+
+      {/* Main Content Area */}
+      <View style={styles.mainContent}>
+        {status === 'error' && (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={48} color="#dc3545" />
+            <Text style={styles.errorTitle}>Video Trimmer Error</Text>
+            <Text style={styles.errorMessage}>{errorMessage}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={handleCancel}>
+              <Text style={styles.retryButtonText}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {status !== 'error' && (
+          <View style={styles.trimmerPlaceholder}>
+            <Text style={styles.placeholderText}>
+              The native video trimmer will appear here once the video is loaded.
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Note: The trimmer interface is provided by the native video editing library.
         </Text>
-      )}
+      </View>
     </View>
   );
 };
@@ -563,28 +527,158 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  cancelButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
+  },
+  headerSpacer: {
+    width: 34, // Same width as cancel button to center title
+  },
+  statusSection: {
+    padding: 20,
+    backgroundColor: '#f8f9fa',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  statusIndicator: {
+    marginRight: 10,
   },
   statusText: {
-    marginTop: 16,
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '500',
+    flex: 1,
   },
-  warningText: {
-    marginTop: 8,
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#e9ecef',
+    borderRadius: 3,
+    marginRight: 10,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#007AFF',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 14,
+    color: '#6c757d',
+    minWidth: 40,
+  },
+  instructionsSection: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  instructionText: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 5,
+    lineHeight: 20,
+  },
+  videoInfoSection: {
+    padding: 20,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  videoInfoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  videoInfoPath: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: 'monospace',
+  },
+  mainContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#dc3545',
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#6c757d',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  trimmerPlaceholder: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  footer: {
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#6c757d',
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  helpText: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
   },
 });
 
