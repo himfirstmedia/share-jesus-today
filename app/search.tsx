@@ -287,11 +287,11 @@ export default function SearchScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#3260ad" />
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Search Profiles</Text>
         <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={20} color="#3260ad" />
+          <Ionicons name="refresh" size={20} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -368,7 +368,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#2c5599',
   },
   header: {
     flexDirection: 'row',
@@ -377,8 +377,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderBottomColor: '#2c5599',
+    backgroundColor: '#3260ad',
   },
   backButton: {
     padding: 5,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#3260ad',
+    color: 'white',
     flex: 1,
     textAlign: 'center',
   },

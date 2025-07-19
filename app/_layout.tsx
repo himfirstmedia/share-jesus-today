@@ -55,6 +55,9 @@ const InitialLayout = () => {
       'menuscreens/contactus',
       'menuscreens/Lang',
       'menuscreens/terms',
+      'userProfile',
+      'watchVideos',
+      'menuscreens/contactus',
     ];
 
     const isPublicRoute = publicRoutes.includes(path);

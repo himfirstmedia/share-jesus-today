@@ -105,7 +105,7 @@ export default function ShareFaithScreen() {
         <View style={styles.videoSection}>
           <Text style={styles.videoTitle}>Record Your Video Testimony</Text>
           <View style={styles.videoPlaceholder}>
-            <Ionicons name="videocam" size={48} color="#4A90E2" />
+            <Ionicons name="videocam" size={48} color="#3260ad" />
             <Text style={styles.videoPlaceholderText}>
               {isRecording ? "Recording..." : "Tap to start recording"}
             </Text>
@@ -127,7 +127,7 @@ export default function ShareFaithScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.uploadButton} onPress={handleUploadVideo}>
-              <Ionicons name="cloud-upload" size={20} color="#4A90E2" />
+              <Ionicons name="cloud-upload" size={20} color="#3260ad" />
               <Text style={styles.uploadButtonText}>Upload Video</Text>
             </TouchableOpacity>
           </View>
@@ -160,7 +160,7 @@ export default function ShareFaithScreen() {
               style={styles.quickShareItem} 
               onPress={() => handleQuickShare('App')}
             >
-              <Ionicons name="phone-portrait" size={24} color="#4A90E2" />
+              <Ionicons name="phone-portrait" size={24} color="#3260ad" />
               <Text style={styles.quickShareText}>Share App</Text>
             </TouchableOpacity>
             
@@ -168,7 +168,7 @@ export default function ShareFaithScreen() {
               style={styles.quickShareItem} 
               onPress={() => handleQuickShare('Profile')}
             >
-              <Ionicons name="person" size={24} color="#4A90E2" />
+              <Ionicons name="person" size={24} color="#3260ad" />
               <Text style={styles.quickShareText}>Share Profile</Text>
             </TouchableOpacity>
             
@@ -176,7 +176,7 @@ export default function ShareFaithScreen() {
               style={styles.quickShareItem} 
               onPress={() => handleQuickShare('Verse')}
             >
-              <Ionicons name="book" size={24} color="#4A90E2" />
+              <Ionicons name="book" size={24} color="#3260ad" />
               <Text style={styles.quickShareText}>Share Verse</Text>
             </TouchableOpacity>
             
@@ -184,7 +184,7 @@ export default function ShareFaithScreen() {
               style={styles.quickShareItem} 
               onPress={() => handleQuickShare('Prayer')}
             >
-              <Ionicons name="heart" size={24} color="#4A90E2" />
+              <Ionicons name="heart" size={24} color="#3260ad" />
               <Text style={styles.quickShareText}>Share Prayer</Text>
             </TouchableOpacity>
           </View>
@@ -194,19 +194,19 @@ export default function ShareFaithScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Tips for Sharing</Text>
           <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#4A90E2" />
+            <Ionicons name="checkmark-circle" size={20} color="#3260ad" />
             <Text style={styles.tipText}>Keep videos to 30 seconds or less</Text>
           </View>
           <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#4A90E2" />
+            <Ionicons name="checkmark-circle" size={20} color="#3260ad" />
             <Text style={styles.tipText}>Share genuine, personal experiences</Text>
           </View>
           <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#4A90E2" />
+            <Ionicons name="checkmark-circle" size={20} color="#3260ad" />
             <Text style={styles.tipText}>Focus on love and positive interactions</Text>
           </View>
           <View style={styles.tipItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#4A90E2" />
+            <Ionicons name="checkmark-circle" size={20} color="#3260ad" />
             <Text style={styles.tipText}>Respect others' privacy and consent</Text>
           </View>
         </View>
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#3260ad',
     paddingHorizontal: 20,
     paddingVertical: 15,
     flexDirection: 'row',
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   videoButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#3260ad',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     backgroundColor: 'white',
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: '#3260ad',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadButtonText: {
-    color: '#4A90E2',
+    color: '#3260ad',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     minHeight: 120,
   },
   shareButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#3260ad',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

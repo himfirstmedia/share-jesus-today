@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#3260ad',
     paddingHorizontal: 20,
     paddingVertical: 45,
     flexDirection: 'row',
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#3260ad',
     borderRadius: 1.5,
   },
   section: {

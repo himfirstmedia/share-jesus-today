@@ -8,6 +8,7 @@ import {
   FlatList,
   Modal,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -375,13 +376,14 @@ const WatchVideosScreen = () => {
   if (isLoading && allVideos.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ marginTop: 50 }} size="large" color="#0000ff" />
+        <ActivityIndicator style={{ marginTop: 50 }} size="large" color="#ffffff" />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#4472C4" barStyle="light-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -444,8 +446,8 @@ const WatchVideosScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e5e7ebff',
-    paddingTop: 1,
+    backgroundColor: '#fff',
+    paddingTop: 0,
   },
   header: {
     flexDirection: 'row',
@@ -479,12 +481,13 @@ const styles = StyleSheet.create({
   listContentContainer: {
     paddingHorizontal: 15,
     paddingBottom: 15,
+    backgroundColor: '#fff',
   },
   emptyListText: {
     textAlign: 'center',
     marginTop: 50,
     fontSize: 16,
-    color: '#666666',
+    color: '#ffffff',
   },
   // Block Menu Styles
   modalOverlay: {
