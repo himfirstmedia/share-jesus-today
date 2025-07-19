@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { t } from '@/utils/i18';
 import * as DocumentPicker from 'expo-document-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useState } from 'react';
@@ -74,7 +75,7 @@ const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
         setSelectedVideo(initialVideo);
       } else {
         console.error('VideoUploadInterface - Initial video has no URI:', initialVideo);
-        Alert.alert('Error', 'The provided video file has no valid URI');
+        Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertInvalidUri'));
       }
     }
   }, [initialVideo]);
@@ -153,7 +154,7 @@ React.useEffect(() => {
       }
     } catch (error) {
       console.error('VideoUploadInterface - Error selecting video:', error);
-      Alert.alert('Error', 'Failed to select video');
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertFailedSelectVideo'));
     }
   };
 
@@ -191,12 +192,12 @@ React.useEffect(() => {
 
   const handleSave = async () => {
     if (!videoTitle.trim()) {
-      Alert.alert('Error', 'Please enter a video title');
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertEnterTitle'));
       return;
     }
 
     if (!selectedVideo || !selectedVideo.uri) {
-      Alert.alert('Error', 'Please select a video with a valid URI');
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertSelectVideoUri'));
       return;
     }
 
@@ -228,15 +229,15 @@ React.useEffect(() => {
       const response = await videoApiService.uploadVideo(videoFile, metadata);
 
       if (response.success) {
-        Alert.alert('Success', 'Video uploaded successfully!', [
-          { text: 'OK', onPress: () => onComplete(response.data) }
+        Alert.alert(t('videoUploadInterface.alertSuccess'), t('videoUploadInterface.alertVideoUploaded'), [
+          { text: t('alerts.ok'), onPress: () => onComplete(response.data) }
         ]);
       } else {
-        Alert.alert('Error', response.error || 'Failed to upload video');
+        Alert.alert(t('videoUploadInterface.alertError'), response.error || t('videoUploadInterface.alertFailedUpload'));
       }
     } catch (error) {
       console.error('VideoUploadInterface - Upload error:', error);
-      Alert.alert('Error', 'Failed to upload video. Please try again.');
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertFailedUploadTryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +256,7 @@ React.useEffect(() => {
       return (
         <View style={styles.videoPlaceholder}>
           <Ionicons name="play-circle" size={80} color="#4A90E2" />
-          <Text style={styles.placeholderText}>No video selected</Text>
+          <Text style={styles.placeholderText}>{t('videoUploadInterface.noVideoSelected')}</Text>
         </View>
       );
     }
@@ -283,25 +284,19 @@ React.useEffect(() => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, isFromRecording && { justifyContent: 'center' }]}>
-        {!isFromRecording && (
-          <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
-        )}
+      <View style={[styles.header, { justifyContent: 'center' }]}>
         <Text style={styles.headerTitle}>
-          {isFromRecording ? 'POST VIDEO' : 'Select Video To Upload'}
+          {isFromRecording ? t('videoUploadInterface.postVideoTitle') : t('videoUploadInterface.selectVideoTitle')}
         </Text>
-        {!isFromRecording && <View style={styles.placeholder} />}
       </View>
 
       {isFromRecording && (
         <View style={styles.instructionsContainer}>
           <Text style={styles.instructionsText}>
-            To post your video, add a title and press the UPLOAD button.
+            {t('videoUploadInterface.instructions1')}
           </Text>
           <Text style={styles.instructionsText}>
-            To retake the video, press the RECORD AGAIN button.
+            {t('videoUploadInterface.instructions2')}
           </Text>
         </View>
       )}
@@ -315,7 +310,7 @@ React.useEffect(() => {
         {needsTrimming && !showTrimmer && (
           <View style={styles.warningContainer}>
             <Text style={styles.warningText}>
-              Video is longer than 30 seconds. Please trim.
+              {t('videoUploadInterface.videoTooLong')}
             </Text>
             <TouchableOpacity
               style={styles.trimButton}
@@ -324,28 +319,28 @@ React.useEffect(() => {
                   console.log('VideoUploadInterface - Opening trimmer for:', selectedVideo.uri);
                   setShowTrimmer(true);
                 } else {
-                  Alert.alert('Error', 'No valid video URI to trim');
+                  Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertNoValidUriToTrim'));
                 }
               }}
             >
-              <Text style={styles.trimButtonText}>TRIM VIDEO</Text>
+              <Text style={styles.trimButtonText}>{t('videoUploadInterface.trimVideo')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {!needsTrimming && videoDuration > 0 && (
           <Text style={styles.durationText}>
-            Duration: {Math.floor(videoDuration)}s ✓
+            {t('videoUploadInterface.duration')} {Math.floor(videoDuration)}s ✓
           </Text>
         )}
       </View>
 
       {/* Title Input */}
       <View style={styles.inputSection}>
-        <Text style={styles.inputLabel}>Title:</Text>
+        <Text style={styles.inputLabel}>{t('videoUploadInterface.titleLabel')}</Text>
         <TextInput
           style={styles.titleInput}
-          placeholder="Enter Title"
+          placeholder={t('videoUploadInterface.enterTitlePlaceholder')}
           value={videoTitle}
           onChangeText={setVideoTitle}
           editable={!isLoading}
@@ -382,7 +377,7 @@ React.useEffect(() => {
           ) : (
             <>
               <Ionicons name="cloud-upload-outline" size={24} color="white" style={styles.buttonIcon} />
-              <Text style={styles.uploadButtonText}>UPLOAD</Text>
+              <Text style={styles.uploadButtonText}>{t('videoUploadInterface.uploadButton')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -394,7 +389,7 @@ React.useEffect(() => {
             disabled={isLoading}
           >
             <Ionicons name="camera-outline" size={24} color="white" style={styles.buttonIcon} />
-            <Text style={styles.recordAgainButtonText}>RECORD AGAIN</Text>
+            <Text style={styles.recordAgainButtonText}>{t('videoUploadInterface.recordAgainButton')}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -403,7 +398,7 @@ React.useEffect(() => {
             disabled={isLoading}
           >
             <Ionicons name="folder-open-outline" size={24} color="white" style={styles.buttonIcon} />
-            <Text style={styles.selectDifferentVideoButtonBottomText}>SELECT DIFFERENT VIDEO</Text>
+            <Text style={styles.selectDifferentVideoButtonBottomText}>{t('videoUploadInterface.selectDifferentVideoButton')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -485,6 +480,7 @@ const styles = StyleSheet.create({
   previewSection: {
     marginHorizontal: 20,
     marginBottom: 20,
+    marginTop:20
   },
   videoContainer: {
     backgroundColor: 'white',
@@ -602,7 +598,7 @@ const styles = StyleSheet.create({
     gap: 10, // Add gap for spacing between buttons
   },
   uploadButton: {
-    backgroundColor: '##3260ad',
+    backgroundColor: '#3260ad',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
@@ -630,7 +626,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   selectDifferentVideoButtonBottom: {
-    backgroundColor: '#6c757d',
+    backgroundColor: '#3260ad',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',

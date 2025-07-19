@@ -146,9 +146,9 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       if (onRecordingComplete) {
         onRecordingComplete({ uri: compressedUri });
       } else {
-        router.push({
-          pathname: '/share/ShareVideo' as any,
-          params: { videoUri: compressedUri },
+        router.replace({
+          pathname: '/post',
+          params: { videoUri: compressedUri, videoName: `recorded_video_${Date.now()}.mp4`, videoType: 'video/mp4' },
         });
       }
     } catch (error: any) {
@@ -261,7 +261,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
   const handleBackPress = () => {
     if (recording) stopRecording();
-    onCancel ? onCancel() : router.back();
+    router.replace('/post');
   };
 
   // --- Render Logic ---

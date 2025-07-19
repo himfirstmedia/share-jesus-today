@@ -1,21 +1,20 @@
 // app/(tabs)/index.tsx - Updated with video navigation
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Linking,
+  Modal,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Modal,
-  StyleSheet,
-  TextInput
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
 
 import {
   EmptyState,
@@ -443,7 +442,7 @@ export default function HomeTabScreen() {
   };
 
   const navigateToPostVideo = () => {
-    router.push('/post');
+    router.push('/(tabs)/post');
   };
 
   const handleLoadMore = () => {

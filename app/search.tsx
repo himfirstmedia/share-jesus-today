@@ -1,5 +1,6 @@
 // app/search.tsx - Enhanced search screen matching Android functionality
 import { Ionicons } from '@expo/vector-icons';
+import { t } from '@/utils/i18';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -92,7 +93,7 @@ export default function SearchScreen() {
       }
     } catch (error) {
       console.error('Error fetching all profiles:', error);
-      Alert.alert('Error', 'Failed to load profiles. Please try again.');
+      Alert.alert(t('searchScreen.alertError'), t('searchScreen.alertFailedLoadProfiles'));
       setAllProfiles([]);
       setSearchResults([]);
       setNoResults(true);
@@ -154,7 +155,7 @@ export default function SearchScreen() {
       }
     } catch (error) {
       console.error('Error searching profiles:', error);
-      Alert.alert('Error', 'Search failed. Please try again.');
+      Alert.alert(t('searchScreen.alertError'), t('searchScreen.alertSearchFailed'));
       setSearchResults([]);
       setNoResults(true);
     } finally {
@@ -291,7 +292,7 @@ export default function SearchScreen() {
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Search Profiles</Text>
+        <Text style={styles.headerTitle}>{t('searchScreen.headerTitle')}</Text>
         <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
           <Ionicons name="refresh" size={20} color="white" />
         </TouchableOpacity>
@@ -305,7 +306,7 @@ export default function SearchScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={handleSearchChange}
-            placeholder="Search for believers by name, church, or location"
+            placeholder={t('searchScreen.searchPlaceholder')}
             placeholderTextColor="#666"
             returnKeyType="search"
             autoCorrect={false}
@@ -327,18 +328,18 @@ export default function SearchScreen() {
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#3260ad" />
-            <Text style={styles.loadingText}>Loading profiles...</Text>
+            <Text style={styles.loadingText}>{t('searchScreen.loadingProfiles')}</Text>
           </View>
         ) : noResults ? (
           <View style={styles.emptyState}>
             <Ionicons name="people-outline" size={64} color="#ccc" />
             <Text style={styles.emptyStateText}>
-              {searchQuery ? 'No profiles found' : 'No profiles available'}
+              {searchQuery ? t('searchScreen.noProfilesFound') : t('searchScreen.noProfilesAvailable')}
             </Text>
             <Text style={styles.emptyStateSubtext}>
               {searchQuery 
-                ? 'Try searching with different keywords'
-                : 'Check back later for new believers sharing Jesus'
+                ? t('searchScreen.tryDifferentKeywords')
+                : t('searchScreen.checkBackLater')
               }
             </Text>
             {searchQuery && (
@@ -346,7 +347,7 @@ export default function SearchScreen() {
                 style={styles.clearSearchButton}
                 onPress={() => handleSearchChange('')}
               >
-                <Text style={styles.clearSearchText}>Show All Profiles</Text>
+                <Text style={styles.clearSearchText}>{t('searchScreen.showAllProfiles')}</Text>
               </TouchableOpacity>
             )}
           </View>

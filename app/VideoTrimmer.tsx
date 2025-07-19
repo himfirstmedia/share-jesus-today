@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,7 +8,6 @@ import {
   View,
   type EventSubscription,
 } from 'react-native';
-import RNFS from 'react-native-fs';
 import NativeVideoTrim, { isValidFile, showEditor } from 'react-native-video-trim';
 
 interface VideoTrimmerProps {
@@ -37,47 +37,68 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
     try {
       console.log('Validating video file at:', uri);
       
-      // Clean the URI
-      const cleanUri = uri.replace(/^file:\/\//, '');
+      // Clean the URI - handle both file:// and plain paths
+      let cleanUri = uri;
+      if (uri.startsWith('file://')) {
+        cleanUri = uri.substring(7); // Remove 'file://' prefix
+      }
+      
       console.log('Cleaned URI:', cleanUri);
       
-      // Check if file exists
-      const fileExists = await RNFS.exists(cleanUri);
-      console.log('File exists:', fileExists);
+      // Check if file exists using Expo FileSystem
+      const fileInfo = await FileSystem.getInfoAsync(cleanUri);
+      console.log('File info:', fileInfo);
       
-      if (!fileExists) {
+      if (!fileInfo.exists) {
         throw new Error(`Video file not found at: ${cleanUri}`);
       }
       
-      // Get file stats to verify it's a valid file
-      const stats = await RNFS.stat(cleanUri);
-      console.log('File stats:', { size: stats.size, isFile: stats.isFile() });
-      
-      if (!stats.isFile() || stats.size === 0) {
-        throw new Error('Invalid video file: file is empty or not a regular file');
+      // Validate file properties - Expo FileSystem doesn't have isFile, check if it's NOT a directory
+      if (fileInfo.isDirectory) {
+        throw new Error('Path points to a directory, not a file');
       }
+      
+      if (!fileInfo.size || fileInfo.size === 0) {
+        throw new Error('Video file is empty');
+      }
+      
+      console.log('File validation passed:', { 
+        size: fileInfo.size, 
+        isDirectory: fileInfo.isDirectory,
+        exists: fileInfo.exists 
+      });
       
       // If file is in cache/temp directory, copy to a more permanent location
-      if (cleanUri.includes('cache') || cleanUri.includes('temp')) {
-        console.log('File is in cache/temp, copying to permanent location...');
+      if (cleanUri.includes('cache') || cleanUri.includes('temp') || cleanUri.includes('tmp')) {
+        console.log('File is in temporary location, copying to permanent location...');
         
         const fileName = `video_${Date.now()}.mp4`;
-        const permanentPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+        const permanentPath = `${FileSystem.documentDirectory}${fileName}`;
         
-        await RNFS.copyFile(cleanUri, permanentPath);
-        console.log('File copied to:', permanentPath);
-        
-        // Verify the copied file exists
-        const copiedExists = await RNFS.exists(permanentPath);
-        if (!copiedExists) {
-          throw new Error('Failed to copy video file to permanent location');
+        try {
+          await FileSystem.copyAsync({
+            from: cleanUri,
+            to: permanentPath,
+          });
+          
+          console.log('File copied to:', permanentPath);
+          
+          // Verify the copied file exists and is valid
+          const copiedFileInfo = await FileSystem.getInfoAsync(permanentPath);
+          if (!copiedFileInfo.exists || copiedFileInfo.isDirectory || !copiedFileInfo.size) {
+            throw new Error('Failed to verify copied video file');
+          }
+          
+          return `file://${permanentPath}`;
+        } catch (copyError) {
+          console.error('Failed to copy file:', copyError);
+          // Fall back to original path if copy fails
+          console.log('Copy failed, using original path');
         }
-        
-        return `file://${permanentPath}`;
       }
       
-      // File is already in a good location, return with file:// prefix
-      return `file://${cleanUri}`;
+      // Return with file:// prefix for consistency
+      return cleanUri.startsWith('file://') ? cleanUri : `file://${cleanUri}`;
       
     } catch (error) {
       console.error('Video validation failed:', error);
@@ -85,137 +106,130 @@ const VideoTrimmerComponent: React.FC<VideoTrimmerProps> = ({
     }
   }, []);
 
-  // Create a safe wrapper for the onSave callback
-// Fix for VideoTrimmer.tsx - in the safeOnSave callback
-
-const safeOnSave = useCallback(async (startTime: number, endTime: number, outputPath: string) => {
-  // Prevent multiple executions
-  if (callbackExecutedRef.current || processingRef.current) {
-    console.log('onSave already executed or processing, skipping...');
-    return;
-  }
-
-  callbackExecutedRef.current = true;
-  processingRef.current = true;
-  setStatus('saving');
-
-  setTimeout(async () => {
+  // Enhanced file validation for output
+  const validateOutputFile = useCallback(async (outputPath: string): Promise<string> => {
     try {
-      console.log('Executing onSave callback safely:', { startTime, endTime, outputPath });
+      // Clean the output path
+      let cleanPath = outputPath;
+      if (outputPath.startsWith('file://')) {
+        cleanPath = outputPath.substring(7);
+      }
       
-      // Validate parameters before calling
-      if (!outputPath || typeof outputPath !== 'string') {
-        throw new Error('Invalid output path provided');
-      }
-
-      if (typeof startTime !== 'number' || typeof endTime !== 'number') {
-        throw new Error('Invalid time parameters provided');
-      }
-
-      let finalOutputPath = outputPath;
+      console.log('Validating output file at:', cleanPath);
       
-      // ** FIX: Ensure proper file URI format and validation **
-      try {
-        // Remove file:// prefix for file system operations
-        const cleanPath = outputPath.replace(/^file:\/\//, '');
-        console.log('Checking trimmed file at:', cleanPath);
-        
-        const outputExists = await RNFS.exists(cleanPath);
-        if (!outputExists) {
-          throw new Error('File does not exist at output path');
-        }
-
-        // Get file stats to ensure it's valid
-        const stats = await RNFS.stat(cleanPath);
-        console.log('Trimmed file stats:', { size: stats.size, isFile: stats.isFile() });
-        
-        if (!stats.isFile() || stats.size === 0) {
-          throw new Error('Invalid trimmed file: file is empty or not a regular file');
-        }
-
-        // ** KEY FIX: Ensure consistent URI format **
-        // Always use file:// prefix format that matches camera recordings
-        if (!outputPath.startsWith('file://')) {
-          finalOutputPath = `file://${cleanPath}`;
-        } else {
-          finalOutputPath = outputPath;
-        }
-        
-        console.log('Final output path for upload:', finalOutputPath);
-        
-      } catch (e) {
-        console.log('File validation failed, attempting to copy from content URI');
-        
-        // If validation fails, copy to a known good location
-        const fileName = `trimmed_video_${Date.now()}.mp4`;
-        const permanentPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-        
-        try {
-          await RNFS.copyFile(outputPath.replace(/^file:\/\//, ''), permanentPath);
-          
-          // Verify the copied file
-          const copiedExists = await RNFS.exists(permanentPath);
-          if (!copiedExists) {
-            throw new Error('Failed to copy trimmed file to permanent location');
-          }
-          
-          finalOutputPath = `file://${permanentPath}`;
-          console.log('File copied to permanent location:', finalOutputPath);
-          
-        } catch (copyError) {
-          console.error('Failed to copy file:', copyError);
-          throw new Error('Could not access trimmed video file');
-        }
+      // Wait a bit for file to be written completely
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check if file exists
+      const fileInfo = await FileSystem.getInfoAsync(cleanPath);
+      console.log('Output file info:', fileInfo);
+      
+      if (!fileInfo.exists) {
+        throw new Error('Output file does not exist');
       }
-
-      // Call the actual callback with validated path
-      await new Promise<void>((resolve, reject) => {
-        try {
-          const result = onSave(startTime, endTime, finalOutputPath);
-
-          // Handle async callbacks
-          if (
-            result !== undefined &&
-            result !== null &&
-            typeof (result as Promise<void>).then === 'function'
-          ) {
-            (result as Promise<void>).then(resolve).catch(reject);
-          } else {
-            resolve();
-          }
-        } catch (error) {
-          reject(error);
-        }
+      
+      if (fileInfo.isDirectory) {
+        throw new Error('Output path is a directory, not a file');
+      }
+      
+      if (!fileInfo.size || fileInfo.size === 0) {
+        throw new Error('Output file is empty');
+      }
+      
+      console.log('Output file validation passed:', {
+        size: fileInfo.size,
+        isDirectory: fileInfo.isDirectory,
+        exists: fileInfo.exists
       });
-
-      console.log('onSave callback completed successfully');
+      
+      // Return with consistent file:// prefix
+      return cleanPath.startsWith('file://') ? cleanPath : `file://${cleanPath}`;
       
     } catch (error) {
-      console.error('Error in onSave callback:', error);
-      
-      Alert.alert(
-        'Save Error',
-        'Failed to save the trimmed video. Please try selecting a different video.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              if (isMountedRef.current) {
-                onCancel();
+      console.error('Output file validation failed:', error);
+      throw error;
+    }
+  }, []);
+
+  // Create a safe wrapper for the onSave callback
+  const safeOnSave = useCallback(async (startTime: number, endTime: number, outputPath: string) => {
+    // Prevent multiple executions
+    if (callbackExecutedRef.current || processingRef.current) {
+      console.log('onSave already executed or processing, skipping...');
+      return;
+    }
+
+    callbackExecutedRef.current = true;
+    processingRef.current = true;
+    setStatus('saving');
+
+    // Add delay to ensure modal is dismissed and file is ready
+    setTimeout(async () => {
+      try {
+        console.log('Executing onSave callback safely:', { startTime, endTime, outputPath });
+        
+        // Validate parameters
+        if (!outputPath || typeof outputPath !== 'string') {
+          throw new Error('Invalid output path provided');
+        }
+
+        if (typeof startTime !== 'number' || typeof endTime !== 'number') {
+          throw new Error('Invalid time parameters provided');
+        }
+
+        // Validate and prepare the output file
+        const validatedOutputPath = await validateOutputFile(outputPath);
+        
+        console.log('Validated output path:', validatedOutputPath);
+
+        // Call the actual callback with validated path
+        await new Promise<void>((resolve, reject) => {
+          try {
+            const result = onSave(startTime, endTime, validatedOutputPath);
+
+            // Handle async callbacks
+            if (
+              result !== undefined &&
+              result !== null &&
+              typeof (result as Promise<void>).then === 'function'
+            ) {
+              (result as Promise<void>).then(resolve).catch(reject);
+            } else {
+              resolve();
+            }
+          } catch (error) {
+            reject(error);
+          }
+        });
+
+        console.log('onSave callback completed successfully');
+        
+      } catch (error) {
+        console.error('Error in onSave callback:', error);
+        
+        Alert.alert(
+          'Save Error',
+          'Failed to save the trimmed video. Please try selecting a different video.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (isMountedRef.current) {
+                  onCancel();
+                }
               }
             }
-          }
-        ]
-      );
-    } finally {
-      // Reset processing state after a delay
-      setTimeout(() => {
-        processingRef.current = false;
-        setStatus('ready');
-      }, 500);
-    }
-  }, 300);
-}, [onSave, onCancel]);
+          ]
+        );
+      } finally {
+        // Reset processing state after a delay
+        setTimeout(() => {
+          processingRef.current = false;
+          setStatus('ready');
+        }, 500);
+      }
+    }, 300);
+  }, [onSave, onCancel, validateOutputFile]);
 
   const safeOnCancel = useCallback(() => {
     if (callbackExecutedRef.current || processingRef.current) {
@@ -477,9 +491,9 @@ const safeOnSave = useCallback(async (startTime: number, endTime: number, output
       listenerSubscription.current = {};
       
       // Clean up any temporary files we might have created
-      if (validatedVideoUri && validatedVideoUri.includes(RNFS.DocumentDirectoryPath)) {
+      if (validatedVideoUri && validatedVideoUri.includes(FileSystem.documentDirectory || '')) {
         const cleanPath = validatedVideoUri.replace(/^file:\/\//, '');
-        RNFS.unlink(cleanPath).catch(err => 
+        FileSystem.deleteAsync(cleanPath, { idempotent: true }).catch(err => 
           console.log('Failed to cleanup temp video file:', err)
         );
       }

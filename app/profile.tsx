@@ -13,6 +13,7 @@ import {
   RefreshControl,
   ScrollView,
   Share,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -465,6 +466,7 @@ export default function ProfileScreen() {
   // MAIN RENDER
   return (
     <SafeAreaView style={styles.container}>
+       <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />

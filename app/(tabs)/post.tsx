@@ -1,12 +1,12 @@
 // app/post.tsx - Updated to use VideoUploadInterface
 import { t } from '@/utils/i18';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CameraRecord from '../CameraRecord';
+import CameraRecord from '../camera';
 import VideoUploadInterface from '../VideoUploadInterface'; // Import the new component
-import { router } from 'expo-router';
 
 type PostMode = 'options' | 'upload' | 'record';
 
@@ -28,6 +28,17 @@ export default function PostVideoScreen() {
   const handleRecordAgain = () => {
     setVideoToUpload(null);
     setMode('record');
+  };
+
+  const handleUploadCancelled = () => {
+    setVideoToUpload(null);
+    setMode('options');
+  };
+
+  const handleUploadComplete = () => {
+    setVideoToUpload(null);
+    setMode('options');
+    router.push('/watchVideos'); // Navigate to watch videos screen after successful upload
   };
 
   const renderContent = () => {

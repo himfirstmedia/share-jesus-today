@@ -4,8 +4,12 @@ import { Tabs, usePathname } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AuthManager from '../../utils/authManager'; // Import AuthManager
 import ProtectedRoute from '../../components/ProtectedRoute';
+import AuthManager from '../../utils/authManager'; // Import AuthManager
+
+function TabBarIcon(props: { name: React.ComponentProps<typeof Ionicons>['name']; color: string }) {
+  return <Ionicons size={28} style={{ marginBottom: -3 }} {...props} />;
+}
 
 export default function TabLayout() {
   useEffect(() => {
