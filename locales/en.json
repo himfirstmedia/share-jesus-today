@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Select Language",
+    "instruction": "Choose your preferred language for the app",
+    "languageChangedAlertTitle": "Language Changed",
+    "languageChangedAlertMessage": "The app language has been changed. Please restart the app to see all changes.",
+    "languageChangeErrorAlertTitle": "Error",
+    "languageChangeErrorAlertMessage": "Failed to change language. Please try again.",
+    "okButton": "OK"
+  },
+  "videoCard": {
+    "postedBy": "Posted By:"
+  },
+  "postScreen": {
+    "title": "Video Options",
+    "notice1": "All videos uploaded can be a maximum length of 30 seconds.",
+    "notice2": "If video is longer you will be given option to trim to 30 seconds.",
+    "uploadButton": "Upload Video",
+    "recordButton": "Record Video"
   }
 }

@@ -25,18 +25,9 @@ export default function PostVideoScreen() {
     }
   };
 
-  const handleUploadCancelled = () => {
+  const handleRecordAgain = () => {
     setVideoToUpload(null);
-    setMode('options');
-  };
-
-  const handleUploadComplete = (uploadedVideoData?: any) => {
-    setVideoToUpload(null);
-    setMode('options');
-    if (uploadedVideoData) {
-      console.log('Video uploaded successfully:', uploadedVideoData);
-      router.replace('/watchVideos');
-    }
+    setMode('record');
   };
 
   const renderContent = () => {
@@ -44,20 +35,20 @@ export default function PostVideoScreen() {
       case 'options':
         return (
           <View style={styles.optionsContainer}>
-            <Text style={styles.title}>Video Options</Text>
+            <Text style={styles.title}>{t('postScreen.title')}</Text>
             
             <View style={styles.noticeContainer}>
               <Text style={styles.noticeText}>
-                All videos uploaded can be a maximum length of 30 seconds.
+                {t('postScreen.notice1')}
               </Text>
               <Text style={styles.noticeText}>
-                If video is longer you will be given option to trim to 30 seconds.
+                {t('postScreen.notice2')}
               </Text>
             </View>
             
             <View style={styles.buttonsContainer}>
               <OptionButton
-                title="Upload Video"
+                title={t('postScreen.uploadButton')}
                 iconName="cloud-upload-outline"
                 onPress={() => {
                   setVideoToUpload(null);
@@ -66,7 +57,7 @@ export default function PostVideoScreen() {
               />
               
               <OptionButton
-                title={t('post.recordVideo')}
+                title={t('postScreen.recordButton')}
                 iconName="camera-outline"
                 onPress={() => {
                   setVideoToUpload(null);
@@ -80,8 +71,9 @@ export default function PostVideoScreen() {
         return (
           <VideoUploadInterface
             initialVideo={videoToUpload} // Pass recorded video if available
-            onCancel={handleUploadCancelled}
+            onCancel={videoToUpload ? handleRecordAgain : handleUploadCancelled} // If from recording, allow retake
             onComplete={handleUploadComplete}
+            isFromRecording={!!videoToUpload} // Indicate that the video came from recording if videoToUpload is present
           />
         );
       case 'record':
@@ -101,6 +93,9 @@ export default function PostVideoScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
         {renderContent()}
       </View>
     </SafeAreaView>
@@ -132,6 +127,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+    paddingTop: 50, // Add padding to make space for the back button
   },
   fullScreenView: {
     flex: 1,
@@ -141,7 +137,6 @@ const styles = StyleSheet.create({
   optionsContainer: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 10,
     backgroundColor: '#ffffff',
   },
   title: {
@@ -188,5 +183,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#333333',
     fontWeight: '400',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+    zIndex: 1,
   },
 });

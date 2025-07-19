@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Välj språk",
+    "instruction": "Välj önskat språk för appen",
+    "languageChangedAlertTitle": "Språk ändrat",
+    "languageChangedAlertMessage": "Appens språk har ändrats. Starta om appen för att se alla ändringar.",
+    "languageChangeErrorAlertTitle": "Fel",
+    "languageChangeErrorAlertMessage": "Det gick inte att byta språk. Försök igen.",
+    "okButton": "OK"
+  },
+  "videoCard": {
+    "postedBy": "Postat av:"
+  },
+  "postScreen": {
+    "title": "Videoalternativ",
+    "notice1": "Alla uppladdade videor kan ha en maximal längd på 30 sekunder.",
+    "notice2": "Om videon är längre får du möjlighet att trimma den till 30 sekunder.",
+    "uploadButton": "Ladda upp video",
+    "recordButton": "Spela in video"
   }
 }

@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Seleccione el idioma",
+    "instruction": "Elige tu idioma preferido para la aplicación",
+    "languageChangedAlertTitle": "Idioma cambiado",
+    "languageChangedAlertMessage": "El idioma de la aplicación ha sido cambiado. Por favor, reinicia la aplicación para ver todos los cambios.",
+    "languageChangeErrorAlertTitle": "Error",
+    "languageChangeErrorAlertMessage": "No se pudo cambiar el idioma. Por favor, inténtalo de nuevo.",
+    "okButton": "Aceptar"
+  },
+  "videoCard": {
+    "postedBy": "Publicado por:"
+  },
+  "postScreen": {
+    "title": "Opciones de video",
+    "notice1": "Todos los videos subidos pueden tener una duración máxima de 30 segundos.",
+    "notice2": "Si el video es más largo, se le dará la opción de recortarlo a 30 segundos.",
+    "uploadButton": "Subir video",
+    "recordButton": "Grabar video"
   }
 }

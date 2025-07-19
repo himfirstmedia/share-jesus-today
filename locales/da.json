@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Vælg sprog",
+    "instruction": "Vælg dit foretrukne sprog til appen",
+    "languageChangedAlertTitle": "Sprog ændret",
+    "languageChangedAlertMessage": "Appens sprog er blevet ændret. Genstart venligst appen for at se alle ændringer.",
+    "languageChangeErrorAlertTitle": "Fejl",
+    "languageChangeErrorAlertMessage": "Kunne ikke ændre sprog. Prøv venligst igen.",
+    "okButton": "OK"
+  },
+  "videoCard": {
+    "postedBy": "Sendt af:"
+  },
+  "postScreen": {
+    "title": "Videoindstillinger",
+    "notice1": "Alle uploadede videoer kan have en maksimal længde på 30 sekunder.",
+    "notice2": "Hvis videoen er længere, får du mulighed for at trimme den til 30 sekunder.",
+    "uploadButton": "Upload video",
+    "recordButton": "Optag video"
   }
 }

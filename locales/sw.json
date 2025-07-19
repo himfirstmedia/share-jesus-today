@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Chagua Lugha",
+    "instruction": "Chagua lugha unayopendelea kwa programu",
+    "languageChangedAlertTitle": "Lugha Imebadilishwa",
+    "languageChangedAlertMessage": "Lugha ya programu imebadilishwa. Tafadhali anzisha upya programu ili kuona mabadiliko yote.",
+    "languageChangeErrorAlertTitle": "Hitilafu",
+    "languageChangeErrorAlertMessage": "Imeshindwa kubadilisha lugha. Tafadhali jaribu tena.",
+    "okButton": "Sawa"
+  },
+  "videoCard": {
+    "postedBy": "Imetumwa na:"
+  },
+  "postScreen": {
+    "title": "Chaguzi za Video",
+    "notice1": "Video zote zilizopakiwa zinaweza kuwa na urefu wa juu wa sekunde 30.",
+    "notice2": "Ikiwa video ni ndefu zaidi utapewa chaguo la kuipunguza hadi sekunde 30.",
+    "uploadButton": "Pakia Video",
+    "recordButton": "Rekodi Video"
   }
 }

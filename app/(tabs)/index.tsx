@@ -519,15 +519,15 @@ export default function HomeTabScreen() {
         {/* Video Section */}
         <View style={homeStyles.videoSection}>
           <Text style={homeStyles.sectionTitle}>
-            See Videos of People who Shared &quot;Jesus Loves You&quot; With Others
+            {t('home.videosTitle')}
           </Text>
 
           {/* Current Videos */}
           {isLoadingVideos ? (
-            <LoadingState text="Loading videos..." />
+            <LoadingState text={t('loading.loadingVideos')} />
           ) : videoList.length === 0 ? (
             <EmptyState
-              text="No videos available at the moment."
+              text={t('home.noVideos')}
               onRetry={fetchVideos}
             />
           ) : (

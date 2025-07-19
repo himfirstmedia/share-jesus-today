@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { VideoView, useVideoPlayer } from 'expo-video';
 import * as DocumentPicker from 'expo-document-picker';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,12 +30,14 @@ interface VideoUploadInterfaceProps {
   initialVideo?: VideoFile; // Video from camera recording
   onCancel: () => void;
   onComplete: (videoData?: any) => void;
+  isFromRecording?: boolean; // New prop to indicate if the video came from recording
 }
 
 const VideoUploadInterface: React.FC<VideoUploadInterfaceProps> = ({
   initialVideo,
   onCancel,
   onComplete,
+  isFromRecording = false, // Default to false
 }) => {
   const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(initialVideo || null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -281,24 +283,30 @@ React.useEffect(() => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Select Video To Upload</Text>
-        <View style={styles.placeholder} />
+      <View style={[styles.header, isFromRecording && { justifyContent: 'center' }]}>
+        {!isFromRecording && (
+          <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="#333" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.headerTitle}>
+          {isFromRecording ? 'POST VIDEO' : 'Select Video To Upload'}
+        </Text>
+        {!isFromRecording && <View style={styles.placeholder} />}
       </View>
 
-      {/* Select Video Button */}
-      <TouchableOpacity
-        style={styles.selectVideoButton}
-        onPress={handleSelectVideo}
-        disabled={isLoading}
-      >
-        <Text style={styles.selectVideoText}>
-          {selectedVideo ? 'SELECT DIFFERENT VIDEO' : 'SELECT VIDEO'}
-        </Text>
-      </TouchableOpacity>
+      {isFromRecording && (
+        <View style={styles.instructionsContainer}>
+          <Text style={styles.instructionsText}>
+            To post your video, add a title and press the UPLOAD button.
+          </Text>
+          <Text style={styles.instructionsText}>
+            To retake the video, press the RECORD AGAIN button.
+          </Text>
+        </View>
+      )}
+
+      
 
       {/* Video Preview */}
       <View style={styles.previewSection}>
@@ -360,7 +368,6 @@ React.useEffect(() => {
       </View>
       */}
 
-      {/* Upload Button */}
       <View style={styles.uploadSection}>
         <TouchableOpacity
           style={[
@@ -373,9 +380,32 @@ React.useEffect(() => {
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.uploadButtonText}>UPLOAD</Text>
+            <>
+              <Ionicons name="cloud-upload-outline" size={24} color="white" style={styles.buttonIcon} />
+              <Text style={styles.uploadButtonText}>UPLOAD</Text>
+            </>
           )}
         </TouchableOpacity>
+
+        {isFromRecording ? (
+          <TouchableOpacity
+            style={styles.recordAgainButton}
+            onPress={onCancel} // Go back to options to record again
+            disabled={isLoading}
+          >
+            <Ionicons name="camera-outline" size={24} color="white" style={styles.buttonIcon} />
+            <Text style={styles.recordAgainButtonText}>RECORD AGAIN</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.selectDifferentVideoButtonBottom}
+            onPress={handleSelectVideo}
+            disabled={isLoading}
+          >
+            <Ionicons name="folder-open-outline" size={24} color="white" style={styles.buttonIcon} />
+            <Text style={styles.selectDifferentVideoButtonBottomText}>SELECT DIFFERENT VIDEO</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Trimmer Modal - Show only if we have a valid video URI */}
@@ -421,6 +451,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+  },
+  instructionsContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#e9ecef',
+    borderBottomWidth: 1,
+    borderBottomColor: '#dee2e6',
+    marginBottom: 10,
+  },
+  instructionsText: {
+    fontSize: 14,
+    color: '#495057',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   placeholder: {
     width: 34, // Same width as close button for centering
@@ -555,17 +599,52 @@ const styles = StyleSheet.create({
   uploadSection: {
     marginHorizontal: 20,
     marginBottom: 20,
+    gap: 10, // Add gap for spacing between buttons
   },
   uploadButton: {
-    backgroundColor: '#4A90E0',
+    backgroundColor: '##3260ad',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   uploadButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 10,
+  },
+  recordAgainButton: {
+    backgroundColor: '#3260ad',
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  recordAgainButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  selectDifferentVideoButtonBottom: {
+    backgroundColor: '#6c757d',
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  selectDifferentVideoButtonBottomText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  buttonIcon: {
+    marginRight: 5,
   },
   disabledButton: {
     backgroundColor: '#bdc3c7',

@@ -27,15 +27,10 @@ export const homeStyles = StyleSheet.create({
 
   // Header Section - FIXED: Reduced excessive padding
   header: {
-    backgroundColor: 'white',
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingTop: 20, // CHANGED: Reduced from statusBarHeight + 10 to just 20
     paddingBottom:20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     zIndex: 5,
   },
   logo: {

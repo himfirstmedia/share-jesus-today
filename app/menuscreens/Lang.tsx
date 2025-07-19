@@ -11,7 +11,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { changeLanguage, getCurrentLanguage, supportedLanguages } from "../../utils/i18";
+import { changeLanguage, getCurrentLanguage, supportedLanguages, t } from "../../utils/i18";
 
 interface LanguageItemProps {
   code: string;
@@ -52,18 +52,21 @@ export default function LanguageSelectionScreen() {
       setSelectedLanguage(languageCode);
       
       Alert.alert(
-        "Language Changed",
-        "The app language has been changed. Please restart the app to see all changes.",
+        t("languageScreen.languageChangedAlertTitle"),
+        t("languageScreen.languageChangedAlertMessage"),
         [
           {
-            text: "OK",
+            text: t("languageScreen.okButton"),
             onPress: () => router.back(),
           },
         ]
       );
     } catch (error) {
       console.error("Error changing language:", error);
-      Alert.alert("Error", "Failed to change language. Please try again.");
+      Alert.alert(
+        t("languageScreen.languageChangeErrorAlertTitle"),
+        t("languageScreen.languageChangeErrorAlertMessage")
+      );
     }
   };
 
@@ -73,7 +76,7 @@ export default function LanguageSelectionScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Select Language</Text>
+        <Text style={styles.headerTitle}>{t("languageScreen.title")}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -83,7 +86,7 @@ export default function LanguageSelectionScreen() {
       >
         <View style={styles.languageContainer}>
           <Text style={styles.instruction}>
-            Choose your preferred language for the app
+            {t("languageScreen.instruction")}
           </Text>
           
           {supportedLanguages.map((language) => (

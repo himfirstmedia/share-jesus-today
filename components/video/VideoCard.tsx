@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Text, View } from 'react-native';
+import { t } from '../../utils/i18';
 import { type Video as VideoType } from '../../services/apiService';
 import { videoStyles } from '../../styles/VideoStyles';
 import { PlayButton } from './PlayButton';
@@ -35,7 +36,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => (
     <View style={videoStyles.videoInfo}>
       <Text style={videoStyles.videoTitle} numberOfLines={2}>{video.title}</Text>
       <Text style={videoStyles.videoAuthor}>
-        Posted By: {video.uploader?.firstName || 'Unknown'} {video.uploader?.lastName || ''}
+        {t('videoCard.postedBy')} {video.uploader?.firstName || 'Unknown'} {video.uploader?.lastName || ''}
       </Text>
       {/* <Text style={videoStyles.videoDate}>
         {new Date(video.createdTimestamp).toLocaleDateString()}

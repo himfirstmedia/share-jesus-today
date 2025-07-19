@@ -7,6 +7,7 @@ import {
   Alert,
   FlatList,
   Image,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -284,6 +285,7 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack} style={styles.backButton}>

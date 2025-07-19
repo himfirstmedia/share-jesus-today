@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "भाषा चुने",
+    "instruction": "ऐप के लिए अपनी पसंदीदा भाषा चुनें",
+    "languageChangedAlertTitle": "भाषा बदल गई है",
+    "languageChangedAlertMessage": "ऐप की भाषा बदल दी गई है। सभी परिवर्तनों को देखने के लिए कृपया ऐप को पुनरारंभ करें।",
+    "languageChangeErrorAlertTitle": "त्रुटि",
+    "languageChangeErrorAlertMessage": "भाषा बदलने में विफल। कृपया पुन: प्रयास करें।",
+    "okButton": "ठीक है"
+  },
+  "videoCard": {
+    "postedBy": "द्वारा पोस्ट किया गया:"
+  },
+  "postScreen": {
+    "title": "वीडियो विकल्प",
+    "notice1": "अपलोड किए गए सभी वीडियो की अधिकतम लंबाई 30 सेकंड हो सकती है।",
+    "notice2": "यदि वीडियो लंबा है तो आपको इसे 30 सेकंड तक ट्रिम करने का विकल्प दिया जाएगा।",
+    "uploadButton": "वीडियो अपलोड करें",
+    "recordButton": "वीडियो रिकॉर्ड करें"
   }
 }

@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Изберете език",
+    "instruction": "Изберете предпочитания от вас език за приложението",
+    "languageChangedAlertTitle": "Езикът е променен",
+    "languageChangedAlertMessage": "Езикът на приложението е променен. Моля, рестартирайте приложението, за да видите всички промени.",
+    "languageChangeErrorAlertTitle": "Грешка",
+    "languageChangeErrorAlertMessage": "Неуспешна промяна на езика. Моля, опитайте отново.",
+    "okButton": "Добре"
+  },
+  "videoCard": {
+    "postedBy": "Публикувано от:"
+  },
+  "postScreen": {
+    "title": "Опции за видео",
+    "notice1": "Всички качени видеоклипове могат да бъдат с максимална дължина 30 секунди.",
+    "notice2": "Ако видеото е по-дълго, ще ви бъде дадена опция да го отрежете до 30 секунди.",
+    "uploadButton": "Качване на видео",
+    "recordButton": "Запис на видео"
   }
 }

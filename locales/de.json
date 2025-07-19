@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Sprache auswählen",
+    "instruction": "Wählen Sie Ihre bevorzugte Sprache für die App",
+    "languageChangedAlertTitle": "Sprache geändert",
+    "languageChangedAlertMessage": "Die App-Sprache wurde geändert. Bitte starten Sie die App neu, um alle Änderungen zu sehen.",
+    "languageChangeErrorAlertTitle": "Fehler",
+    "languageChangeErrorAlertMessage": "Sprache konnte nicht geändert werden. Bitte versuchen Sie es erneut.",
+    "okButton": "OK"
+  },
+  "videoCard": {
+    "postedBy": "Gepostet von:"
+  },
+  "postScreen": {
+    "title": "Video-Optionen",
+    "notice1": "Alle hochgeladenen Videos dürfen maximal 30 Sekunden lang sein.",
+    "notice2": "Wenn das Video länger ist, haben Sie die Möglichkeit, es auf 30 Sekunden zu kürzen.",
+    "uploadButton": "Video hochladen",
+    "recordButton": "Video aufnehmen"
   }
 }

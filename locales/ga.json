@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Roghnaigh Teanga",
+    "instruction": "Roghnaigh an teanga is fearr leat don aip",
+    "languageChangedAlertTitle": "Teanga Athraithe",
+    "languageChangedAlertMessage": "Tá teanga an aip athraithe. Atosaigh an aip le do thoil chun na hathruithe go léir a fheiceáil.",
+    "languageChangeErrorAlertTitle": "Earráid",
+    "languageChangeErrorAlertMessage": "Theip ar an teanga a athrú. Bain triail eile as, le do thoil.",
+    "okButton": "Ceart go leor"
+  },
+  "videoCard": {
+    "postedBy": "Arna phostáil ag:"
+  },
+  "postScreen": {
+    "title": "Roghanna Físeáin",
+    "notice1": "Is é 30 soicind an t-uasmhéid fad is féidir a uaslódáil d'fhíseáin.",
+    "notice2": "Má tá an físeán níos faide, tabharfar rogha duit é a ghiorrú go 30 soicind.",
+    "uploadButton": "Uaslódáil Físeán",
+    "recordButton": "Taifead Físeán"
   }
 }

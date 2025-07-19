@@ -107,5 +107,24 @@
   },
   "common": {
     "version": "v13.2"
+  },
+  "languageScreen": {
+    "title": "Selecteer taal",
+    "instruction": "Kies uw voorkeurstaal voor de app",
+    "languageChangedAlertTitle": "Taal gewijzigd",
+    "languageChangedAlertMessage": "De app-taal is gewijzigd. Start de app opnieuw om alle wijzigingen te zien.",
+    "languageChangeErrorAlertTitle": "Fout",
+    "languageChangeErrorAlertMessage": "Kan taal niet wijzigen. Probeer het opnieuw.",
+    "okButton": "OK"
+  },
+  "videoCard": {
+    "postedBy": "Gepost door:"
+  },
+  "postScreen": {
+    "title": "Video-opties",
+    "notice1": "Alle geüploade video's mogen maximaal 30 seconden lang zijn.",
+    "notice2": "Als de video langer is, krijgt u de optie om deze tot 30 seconden in te korten.",
+    "uploadButton": "Video uploaden",
+    "recordButton": "Video opnemen"
   }
 }

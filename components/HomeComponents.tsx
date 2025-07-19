@@ -1,7 +1,7 @@
 // components/HomeComponents.tsx
 import { t } from '@/utils/i18';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import AuthManager from '../utils/authManager';
 import { type Video as VideoType } from '../services/apiService';
 import { homeStyles } from '../styles/HomeStyles';
 import HeroSlider from './HeroSlider';
@@ -64,7 +65,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ text, onRetry }) => (
     <Text style={homeStyles.emptyText}>{text}</Text>
     {onRetry && (
       <TouchableOpacity style={homeStyles.retryButton} onPress={onRetry}>
-        <Text style={homeStyles.retryButtonText}>Retry</Text>
+        <Text style={homeStyles.retryButtonText}>{t('loading.retryButton')}</Text>
       </TouchableOpacity>
     )}
   </View>
@@ -92,33 +93,53 @@ export const MenuIcon = () => (
 export const HeaderSection: React.FC<{
   onSearchProfiles: () => void;
   onPostVideo: () => void;
+}> = ({ onSearchProfiles, onPostVideo }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-}> = ({ onSearchProfiles, onPostVideo }) => (
-  <View style={homeStyles.header}>
-    <View style={homeStyles.logo}>
-      <LogoIcon />
-      {/* <Text style={homeStyles.appTitle}>SHARE JESUS</Text>
-      <Text style={homeStyles.appSubtitle}>Today</Text> */}
+  useEffect(() => {
+    const checkAuth = async () => {
+      await AuthManager.ensureInitialized();
+      setIsAuthenticated(AuthManager.isAuthenticated());
+    };
+
+    checkAuth();
+
+    const unsubscribe = AuthManager.subscribe(token => {
+      setIsAuthenticated(!!token);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <View style={homeStyles.header}>
+      <View style={homeStyles.logo}>
+        <LogoIcon />
+      </View>
+
+      <View style={homeStyles.mainButtons}>
+        <TouchableOpacity style={homeStyles.actionButton} onPress={onSearchProfiles}>
+          <Text style={homeStyles.actionButtonText}>{t('home.searchProfiles')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={homeStyles.actionButton} onPress={onPostVideo}>
+          <Text style={homeStyles.actionButtonText}>{t('home.postVideo')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={homeStyles.actionButton} onPress={onWatchVideos}>
+          <Text style={homeStyles.actionButtonText}>{t('home.watchVideos')}</Text>
+        </TouchableOpacity>
+        {!isAuthenticated && (
+          <TouchableOpacity onPress={() => router.push('/Signup')} style={homeStyles.actionButton}>
+            <Text style={homeStyles.actionButtonText}>{t('menu.createAccount')}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
-
-    <View style={homeStyles.mainButtons}>
-      <TouchableOpacity style={homeStyles.actionButton} onPress={onSearchProfiles}>
-        <Text style={homeStyles.actionButtonText}>SEARCH PROFILES</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={homeStyles.actionButton} onPress={onPostVideo}>
-        <Text style={homeStyles.actionButtonText}>POST VIDEO</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={homeStyles.actionButton} onPress={onWatchVideos}>
-        <Text style={homeStyles.actionButtonText}>{t('home.watchVideos')}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push('/Signup')} style={homeStyles.actionButton}>
-        <Text style={homeStyles.actionButtonText}>CREATE ACCOUNT</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
+  );
+};
 
 // Hero Section Component
 export const HeroSection = () => (
