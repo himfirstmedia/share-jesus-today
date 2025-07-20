@@ -1,6 +1,7 @@
 // services/videoCompressionService.js
 import * as FileSystem from 'expo-file-system';
 import * as VideoThumbnails from 'expo-video-thumbnails';
+import { Video } from 'react-native-compress';
 
 class VideoCompressionService {
   constructor() {
@@ -134,50 +135,70 @@ class VideoCompressionService {
   }
 
   /**
-   * Simple file size reduction by copying with different name
-   * Note: This is a placeholder for actual compression
+   * Compresses a video using react-native-compress.
    */
-  async createCompressedCopy(sourceUri, targetSizeMB = 15) {
+  async createCompressedCopy(sourceUri, options = {}) {
     try {
-      const sourceInfo = await this.getVideoInfo(sourceUri);
-      
-      if (!this.needsCompression(sourceInfo, targetSizeMB)) {
-        console.log('Video does not need compression');
+      const {
+        compressionMethod = 'auto', // 'auto', 'manual', or 'off'
+        maxSizeMB = 15,
+        minFileSizeForCompression = 1, // Don't compress files smaller than 1MB
+        progressCallback,
+      } = options;
+
+      if (compressionMethod === 'off') {
+        console.log('Compression is turned off.');
         return sourceUri;
       }
 
-      console.log(`Attempting to reduce file size from ${sourceInfo.sizeMB}MB to under ${targetSizeMB}MB`);
-
-      // For now, we'll just copy the file and hope the recording settings were sufficient
-      // In a production app, you'd use a proper video compression library like:
-      // - react-native-ffmpeg
-      // - react-native-video-processing
-      // - or a native module for video compression
-
-      const timestamp = Date.now();
-      const compressedFileName = `compressed_${timestamp}.mp4`;
-      const compressedUri = `${FileSystem.documentDirectory}${compressedFileName}`;
-
-      await FileSystem.copyAsync({
-        from: sourceUri,
-        to: compressedUri
-      });
-
-      // Validate the copy
-      const compressedInfo = await this.getVideoInfo(compressedUri);
+      const sourceInfo = await this.getVideoInfo(sourceUri);
+      if (!sourceInfo.exists) {
+        throw new Error('Source video file not found for compression.');
+      }
       
-      if (compressedInfo.sizeMB > targetSizeMB) {
-        console.warn(`Compression unsuccessful: ${compressedInfo.sizeMB}MB still over ${targetSizeMB}MB limit`);
-        // Could implement additional strategies here like:
-        // - Reducing resolution
-        // - Trimming video length
-        // - Further bitrate reduction
+      if (sourceInfo.sizeMB < minFileSizeForCompression) {
+        console.log(`Video size (${sourceInfo.sizeMB}MB) is below threshold (${minFileSizeForCompression}MB), skipping compression.`);
+        return sourceUri;
+      }
+
+      console.log(`Starting compression for: ${sourceUri} (${sourceInfo.sizeMB}MB)`);
+
+      const subscription = Video.compress(
+        sourceUri,
+        {
+          compressionMethod: 'auto',
+        },
+        (progress) => {
+          if (progressCallback) {
+            progressCallback(progress);
+          }
+          console.log('Compression Progress: ', progress);
+        }
+      );
+
+      const result = await subscription;
+
+
+      if (!result || !result.path) {
+        throw new Error('Video compression failed to return a valid path.');
+      }
+
+      const compressedUri = result.path;
+      const compressedInfo = await this.getVideoInfo(compressedUri);
+
+      console.log(`Compression successful: ${compressedUri} (${compressedInfo.sizeMB}MB)`);
+
+      // Optional: Delete the original file if it's in a temp directory
+      if (sourceUri.includes(FileSystem.cacheDirectory)) {
+        await FileSystem.deleteAsync(sourceUri, { idempotent: true });
+        console.log(`Deleted temporary source file: ${sourceUri}`);
       }
 
       return compressedUri;
     } catch (error) {
-      console.error('Compression failed:', error);
-      throw new Error(`Video compression failed: ${error.message}`);
+      console.error('Video compression failed:', error);
+      // Fallback to returning the original URI if compression fails
+      return sourceUri;
     }
   }
 

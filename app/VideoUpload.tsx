@@ -15,6 +15,7 @@ import {
   View
 } from 'react-native';
 import videoApiService from '../services/videoApiService';
+import VideoCompressionService from '../services/videoCompressionService';
 import { t } from '../utils/i18n';
 import VideoTrimmer from './VideoTrimmer';
 
@@ -186,6 +187,8 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
 
     setIsLoading(true);
     try {
+      const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri);
+
       const metadata = {
         name: selectedVideo.name!,
         title: videoTitle.trim(),
@@ -194,7 +197,9 @@ const VideoUpload: React.FC<VideoUploadProps> = ({
         wasTrimmed: hasBeenTrimmed,
       };
 
-      const response = await videoApiService.uploadVideo(selectedVideo, metadata);
+      const videoToUpload = { ...selectedVideo, uri: compressedUri };
+
+      const response = await videoApiService.uploadVideo(videoToUpload, metadata);
       if (response.success) {
         Alert.alert('Success', 'Video uploaded successfully!', [
           { text: 'OK', onPress: () => onComplete(response.data) }
