@@ -146,9 +146,8 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       if (onRecordingComplete) {
         onRecordingComplete({ uri: compressedUri });
       } else {
-        // Fixed the navigation logic
-        router.push({
-          pathname: '/(tabs)/post',
+        router.replace({
+          pathname: '/CameraUpload',
           params: { 
             videoUri: compressedUri, 
             videoName: `recorded_video_${Date.now()}.mp4`, 

@@ -1,10 +1,13 @@
-// Fixed VideoUpload.tsx with proper URI handling
+// Enhanced VideoUpload.tsx optimized for expo-video
+import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
-import React, { useEffect, useState } from 'react';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  Alert,
+  Dimensions,
   StyleSheet,
   Text,
   TextInput,
@@ -12,558 +15,323 @@ import {
   View
 } from 'react-native';
 import videoApiService from '../services/videoApiService';
-import VideoTrimmerComponent from './VideoTrimmer';
+import { t } from '../utils/i18n';
+import VideoTrimmer from './VideoTrimmer';
 
-// Standardized VideoFile interface
+const { width, height } = Dimensions.get('window');
+const MAX_VIDEO_DURATION = 30; // 30 seconds
+
+// --- Utility Functions ---
+
+const initializeVideoFilesDirectory = async () => {
+  try {
+    const videoFilesDirectory = `${FileSystem.documentDirectory}videofiles/`;
+    await FileSystem.makeDirectoryAsync(videoFilesDirectory, { intermediates: true });
+    return videoFilesDirectory;
+  } catch (error) {
+    console.error('ERROR: Failed to initialize videofiles directory:', error);
+    throw error;
+  }
+};
+
+const ensureVideoIsPersistent = async (temporaryUri: string): Promise<string> => {
+  try {
+    const videoFilesDirectory = await initializeVideoFilesDirectory();
+    const fileName = `video_${Date.now()}.mp4`;
+    const permanentUri = `${videoFilesDirectory}${fileName}`;
+    
+    await FileSystem.copyAsync({ from: temporaryUri, to: permanentUri });
+
+    const fileInfo = await FileSystem.getInfoAsync(permanentUri, { size: true });
+    if (!fileInfo.exists || !fileInfo.size) {
+      throw new Error('Failed to copy video to persistent storage.');
+    }
+    return permanentUri;
+  } catch (error) {
+    console.error('ERROR: Failed to make video persistent:', error);
+    throw error;
+  }
+};
+
+// --- Interfaces ---
+
 interface VideoFile {
   uri: string;
   name?: string;
   type?: string;
+  mimeType?: string;
 }
 
 interface VideoUploadProps {
-  initialFile?: VideoFile;
-  onUploadComplete?: (videoData: any) => void;
   onCancel?: () => void;
+  onComplete: (videoData?: any) => void;
 }
 
-const VideoUpload: React.FC<VideoUploadProps> = ({
-  initialFile,
-  onUploadComplete,
-  onCancel,
+// --- Component ---
+
+const VideoUpload: React.FC<VideoUploadProps> = ({ 
+  onCancel, 
+  onComplete 
 }) => {
-  const [selectedFile, setSelectedFile] = useState<VideoFile | null>(initialFile || null);
-  const [title, setTitle] = useState('');
-  const [name, setName] = useState('');
-  const [caption, setCaption] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [isTrimming, setIsTrimming] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(null);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [showTrimmer, setShowTrimmer] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [needsTrimming, setNeedsTrimming] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [hasBeenTrimmed, setHasBeenTrimmed] = useState(false);
+  const [originalDuration, setOriginalDuration] = useState(0);
+  
+  const player = useVideoPlayer(selectedVideo?.uri || '', (player) => {
+    player.loop = false;
+    player.muted = false;
+  });
 
-  // Debug logging to track the file state
   useEffect(() => {
-    console.log('VideoUpload - selectedFile state:', selectedFile);
-    if (selectedFile) {
-      console.log('VideoUpload - selectedFile.uri:', selectedFile.uri);
-    }
-  }, [selectedFile]);
+    if (!player || !selectedVideo || showTrimmer) return;
 
-  // Initialize with initial file if provided
-  useEffect(() => {
-    if (initialFile) {
-      console.log('VideoUpload - Setting initial file:', initialFile);
-      setSelectedFile(initialFile);
-    }
-  }, [initialFile]);
+    const subscription = player.addListener('statusChange', (status) => {
+      if (status.status === 'readyToPlay' && !videoLoaded && !showTrimmer) {
+        setVideoLoaded(true);
+        const durationSeconds = player.duration || 0;
+        setVideoDuration(durationSeconds);
+        
+        if (!hasBeenTrimmed && durationSeconds > MAX_VIDEO_DURATION + 0.1) {
+          setOriginalDuration(durationSeconds);
+          setNeedsTrimming(true);
+        } else if (!hasBeenTrimmed) {
+          setOriginalDuration(durationSeconds);
+          setNeedsTrimming(false);
+        }
+      }
+    });
 
-  const resetForm = (): void => {
-    setSelectedFile(initialFile || null);
-    setTitle('');
-    setName('');
-    setCaption('');
-    setMessage('');
-    setVideoDuration(0);
-    setIsTrimming(false);
-  };
+    return () => subscription?.remove();
+  }, [player, videoLoaded, hasBeenTrimmed, originalDuration, selectedVideo, showTrimmer]);
 
-  const handleSelectFile = async (): Promise<void> => {
+  const handleSelectVideo = async () => {
     try {
-      setMessage('');
-      console.log('VideoUpload - Starting file selection...');
-      
       const result = await DocumentPicker.getDocumentAsync({
         type: 'video/*',
         copyToCacheDirectory: true,
       });
 
-      console.log('VideoUpload - DocumentPicker result:', result);
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
+      if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
-        console.log('VideoUpload - Selected asset:', asset);
+        if (!asset.uri) throw new Error('No URI in selected video');
 
-        // Ensure we have a valid URI
-        if (!asset.uri) {
-          throw new Error('No URI in selected file');
-        }
-
-        const permanentUri = await copyToPermanentDirectory(asset.uri);
-
+        const persistentUri = await ensureVideoIsPersistent(asset.uri);
         const videoFile: VideoFile = {
-          uri: permanentUri,
+          uri: persistentUri,
           name: asset.name || `video_${Date.now()}.mp4`,
           type: asset.mimeType || 'video/mp4',
         };
 
-        console.log('VideoUpload - Setting video file:', videoFile);
-        setSelectedFile(videoFile);
-        setMessage('File selected successfully!');
-      } else {
-        console.log('VideoUpload - File selection cancelled or failed');
-        setMessage('File selection was cancelled.');
+        setHasBeenTrimmed(false);
+        setOriginalDuration(0);
+        setNeedsTrimming(false);
+        setVideoLoaded(false);
+        setVideoDuration(0);
+        setSelectedVideo(videoFile);
       }
     } catch (error) {
-      console.error('VideoUpload - Error selecting file:', error);
-      setMessage('Failed to select file. Please try again.');
+      Alert.alert('Error', 'Failed to select video. Please try again.');
     }
   };
 
-  const getFileExtension = (uri: string): string => {
-    try {
-      const parts = uri.split('.');
-      return parts.length > 1 ? parts[parts.length - 1] : 'mp4';
-    } catch {
-      return 'mp4';
+  const handleTrimSave = async (startTime: number, endTime: number, outputPath: string) => {
+    if (!outputPath) {
+      Alert.alert('Error', 'Trimming failed to produce an output file.');
+      setShowTrimmer(false);
+      return;
+    }
+    
+    if (selectedVideo) {
+      const updatedVideo: VideoFile = {
+        ...selectedVideo,
+        uri: outputPath,
+      };
+      
+      setHasBeenTrimmed(true);
+      setNeedsTrimming(false);
+      setShowTrimmer(false);
+      setVideoLoaded(false);
+      
+      // Let the player determine the new duration upon reload
+      setVideoDuration(0); 
+      
+      setSelectedVideo(updatedVideo);
     }
   };
 
-  const copyToPermanentDirectory = async (uri: string) => {
-    try {
-      const timestamp = Date.now();
-      const fileName = `video_${timestamp}.mp4`;
-      const permanentUri = `${FileSystem.documentDirectory}${fileName}`;
-      
-      console.log('Copying file from:', uri);
-      console.log('Copying file to:', permanentUri);
-      
-      await FileSystem.copyAsync({
-        from: uri,
-        to: permanentUri
-      });
-      
-      // Verify the copy was successful
-      const fileInfo = await FileSystem.getInfoAsync(permanentUri);
-      if (!fileInfo.exists || fileInfo.size === 0) {
-        throw new Error('File copy failed or resulted in empty file');
-      }
-      
-      console.log('File copied successfully:', fileInfo);
-      return permanentUri;
-    } catch (error) {
-      console.error('Error copying file:', error);
-      throw error;
-    }
+  const handleTrimCancel = () => {
+    setShowTrimmer(false);
   };
 
-  const validateInputs = (): boolean => {
-    if (!selectedFile) {
-      setMessage('Please select or record a video file first.');
-      return false;
-    }
-    if (!selectedFile.uri) {
-      setMessage('Selected file has no valid URI.');
-      return false;
-    }
-    if (!title.trim()) {
-      setMessage('Please enter a title for your video.');
-      return false;
-    }
-    return true;
-  };
+  const handlePlayPause = useCallback(() => {
+    if (!player) return;
+    player.playing ? player.pause() : player.play();
+  }, [player]);
 
-  const handleUpload = async (): Promise<void> => {
-    if (!validateInputs()) {
+  const handleSave = async () => {
+    if (!videoTitle.trim()) {
+      Alert.alert('Error', 'Please enter a video title.');
+      return;
+    }
+    if (!selectedVideo || !selectedVideo.uri) {
+      Alert.alert('Error', 'Please select a video.');
       return;
     }
 
     setIsLoading(true);
-    setMessage('Uploading...');
-
     try {
-      const extension = getFileExtension(selectedFile!.uri);
-      const fileName = selectedFile!.name || `video-${Date.now()}.${extension}`;
-
-      const permanentUri = await copyToPermanentDirectory(selectedFile!.uri);
-
-      const fileToUpload = {
-        uri: permanentUri,
-        name: fileName,
-        type: selectedFile!.type || 'video/mp4',
-      };
-
       const metadata = {
-        name: name.trim() || title.trim(),
-        title: title.trim(),
-        caption: caption.trim(),
+        name: selectedVideo.name!,
+        title: videoTitle.trim(),
+        caption: '',
+        originalDuration: originalDuration || videoDuration,
+        wasTrimmed: hasBeenTrimmed,
       };
 
-      console.log('VideoUpload - Uploading file:', fileToUpload);
-      console.log('VideoUpload - With metadata:', metadata);
-
-      const response = await videoApiService.uploadVideo(fileToUpload, metadata);
-      setIsLoading(false);
-
+      const response = await videoApiService.uploadVideo(selectedVideo, metadata);
       if (response.success) {
-        const videoData = response.data;
-        setMessage(`Upload successful! Video uploaded.`);
-        resetForm();
-        setTimeout(() => {
-          if (onUploadComplete) {
-            onUploadComplete(videoData);
-          }
-        }, 2000);
+        Alert.alert('Success', 'Video uploaded successfully!', [
+          { text: 'OK', onPress: () => onComplete(response.data) }
+        ]);
       } else {
-        const errorMessage = response.error || 'Unknown error occurred';
-        if (errorMessage.includes('unsupported format')) {
-          setMessage('Upload failed: Video format not supported. Please use MP4, MOV, or MP2T format.');
-        } else if (errorMessage.includes('File is empty')) {
-          setMessage('Upload failed: The selected file appears to be empty.');
-        } else {
-          setMessage(`Upload failed: ${errorMessage}`);
-        }
+        Alert.alert('Error', response.error || 'Failed to upload video.');
       }
-    } catch (error: any) {
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred during upload.');
+    } finally {
       setIsLoading(false);
-      console.error('VideoUpload - Upload error:', error);
-      if (error.message && error.message.includes('Network request failed')) {
-        setMessage('Upload failed: Network connection error. Please check your internet connection.');
-      } else if (error.message && error.message.includes('413')) {
-        setMessage('Upload failed: File too large. Please select a smaller video file.');
-      } else {
-        setMessage(`Upload failed: ${error.message || 'Network error or server unavailable'}`);
-      }
     }
   };
 
-  const handleCancel = (): void => {
-    resetForm();
-    if (onCancel) {
-      onCancel();
-    }
-  };
-
-  // Fixed trim-related handlers with proper logging
-  const handleTrimChange = (startTime: number, endTime: number): void => {
-    console.log('VideoUpload - Trim change:', startTime, endTime);
-    setVideoDuration(endTime - startTime);
-  };
-
-  const handleTrimSave = async (startTime: number, endTime: number, outputPath: string): Promise<void> => {
-    console.log('VideoUpload - Trim save invoked with:', { startTime, endTime, outputPath });
-
-    if (outputPath && selectedFile) {
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(outputPath);
-        console.log('VideoUpload - Trimmed file info:', fileInfo);
-
-        if (!fileInfo.exists) {
-          console.error('VideoUpload - Trimmed file does not exist at outputPath:', outputPath);
-          setMessage('Error: Trimmed file not found. Please try again.');
-          setIsTrimming(false);
-          return;
-        }
-
-        if (fileInfo.isDirectory) {
-          console.error('VideoUpload - outputPath is a directory, not a file:', outputPath);
-          setMessage('Error: Trimmed output is a directory. Please try again.');
-          setIsTrimming(false);
-          return;
-        }
-
-        if (fileInfo.size === 0) {
-          console.warn('VideoUpload - Trimmed file is empty:', outputPath);
-          // Optionally, inform the user or handle as an error
-          // setMessage('Warning: Trimmed file appears to be empty.');
-        }
-
-        const updatedFile: VideoFile = {
-          ...selectedFile,
-          uri: outputPath, // Using the direct outputPath
-          name: `trimmed_${selectedFile.name || `video_${Date.now()}.${getFileExtension(outputPath)}`}`,
-          type: selectedFile.type || `video/${getFileExtension(outputPath)}`, // Attempt to retain original or derive
-        };
-        
-        console.log('VideoUpload - Updated file after trim:', updatedFile);
-        setSelectedFile(updatedFile);
-        setVideoDuration(endTime - startTime);
-        setMessage('Video trimmed successfully!');
-      } catch (error) {
-        console.error('VideoUpload - Error getting file info for trimmed video:', error);
-        setMessage('Failed to process trimmed video. Please try again.');
-      } finally {
-        setIsTrimming(false);
-      }
-    } else {
-      console.error('VideoUpload - Trim save failed: outputPath or selectedFile is missing.', { outputPath, selectedFile });
-      setMessage('Failed to trim video. Output path or original file is missing.');
-      setIsTrimming(false);
-    }
-  };
-
-  const handleTrimCancel = (): void => {
-    console.log('VideoUpload - Trim cancelled');
-    setIsTrimming(false);
-  };
-
-  // Render trimmer if trimming and we have a valid file with URI
-  if (isTrimming && selectedFile && selectedFile.uri) {
-    console.log('VideoUpload - Rendering trimmer with URI:', selectedFile.uri);
-    return (
-      <VideoTrimmerComponent
-        videoUri={selectedFile.uri}
-        videoDuration={videoDuration || 60} // Provide default duration
-        maxDuration={60}
-        onCancel={handleTrimCancel}
-        onSave={handleTrimSave}
-        onTrimChange={handleTrimChange}
-      />
-    );
-  }
-
-  // Main upload interface
-  return (
-    <View style={styles.scrollContainer}>
-      <ScrollView 
-        style={styles.scrollView}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.container}>
-          <Text style={styles.header}>
-            {initialFile ? 'Upload Recorded Video' : 'Upload Video'}
-          </Text>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>Selected File:</Text>
-            <Text style={styles.fileName}>
-              {selectedFile ? selectedFile.name || 'Video File' : 'No file selected'}
-            </Text>
-            {selectedFile && selectedFile.uri && (
-              <Text style={styles.uriText} numberOfLines={1}>
-                URI: {selectedFile.uri}
-              </Text>
-            )}
-            
-            {(!selectedFile || !initialFile) && (
-              <TouchableOpacity
-                style={[
-                  styles.selectFileButton,
-                  isLoading && styles.disabledButton
-                ]}
-                onPress={handleSelectFile}
-                disabled={isLoading}
-              >
-                <Text style={styles.selectFileButtonText}>
-                  {selectedFile ? 'Select Different Video' : 'Select Video File'}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {selectedFile && selectedFile.uri && (
-              <TouchableOpacity
-                style={[styles.trimButton, isLoading && styles.disabledButton]}
-                onPress={() => {
-                  console.log('VideoUpload - Starting trim for:', selectedFile.uri);
-                  setIsTrimming(true);
-                }}
-                disabled={isLoading}
-              >
-                <Text style={styles.trimButtonText}>Trim Video</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>Title *:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter video title"
-              value={title}
-              onChangeText={setTitle}
-              editable={!isLoading}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>Name (optional):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter video name"
-              value={name}
-              onChangeText={setName}
-              editable={!isLoading}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.label}>Caption (optional):</Text>
-            <TextInput
-              style={[styles.input, styles.captionInput]}
-              placeholder="Enter video caption"
-              value={caption}
-              onChangeText={setCaption}
-              editable={!isLoading}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-
-          {message ? (
-            <View style={styles.messageContainer}>
-              <Text style={[
-                styles.message,
-                message.includes('successful') ? styles.successMessage : styles.errorMessage
-              ]}>
-                {message}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={handleCancel}
-              disabled={isLoading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.button,
-                styles.uploadButton,
-                (!selectedFile || !selectedFile.uri || !title.trim() || isLoading) && styles.disabledButton
-              ]}
-              onPress={handleUpload}
-              disabled={!selectedFile || !selectedFile.uri || !title.trim() || isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.uploadButtonText}>Upload</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+  const renderVideoPreview = () => {
+    if (!selectedVideo) {
+      return (
+        <View style={styles.videoPlaceholder}>
+          <Ionicons name="play-circle" size={80} color="#4A90E2" />
+          <Text style={styles.placeholderText}>No video selected</Text>
         </View>
-      </ScrollView>
+      );
+    }
+
+    return (
+      <View style={styles.videoContainer}>
+        <VideoView style={styles.video} player={player} contentFit="contain" />
+        <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+          <Ionicons name={player?.playing ? "pause" : "play"} size={40} color="white" />
+        </TouchableOpacity>
+        {!videoLoaded && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#4A90E2" />
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {onCancel && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Upload Video</Text>
+          <View style={styles.placeholder} />
+        </View>
+      )}
+
+      <TouchableOpacity style={styles.selectVideoButton} onPress={handleSelectVideo} disabled={isLoading}>
+        <Text style={styles.selectVideoText}>{selectedVideo ? 'SELECT A DIFFERENT VIDEO' : 'SELECT VIDEO FROM LIBRARY'}</Text>
+      </TouchableOpacity>
+
+      {selectedVideo && (
+        <>
+          <View style={styles.previewSection}>
+            {renderVideoPreview()}
+            {videoDuration > 0 && (
+              needsTrimming ? (
+                <View style={styles.warningContainer}>
+                  <Text style={styles.warningText}>Video is longer than {MAX_VIDEO_DURATION}s. Please trim.</Text>
+                  <TouchableOpacity style={styles.trimButton} onPress={() => setShowTrimmer(true)}>
+                    <Text style={styles.trimButtonText}>TRIM VIDEO</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <Text style={styles.durationText}>
+                  Duration: {Math.floor(videoDuration)}s ✓ {hasBeenTrimmed && '(Trimmed)'}
+                </Text>
+              )
+            )}
+          </View>
+
+          <View style={styles.inputSection}>
+            <Text style={styles.inputLabel}>Title:</Text>
+            <TextInput
+              style={styles.titleInput}
+              placeholder="Enter a title for your video"
+              value={videoTitle}
+              onChangeText={setVideoTitle}
+              editable={!isLoading}
+            />
+          </View>
+
+          <View style={styles.uploadSection}>
+            <TouchableOpacity 
+              style={[styles.uploadButton, (!videoTitle.trim() || isLoading || needsTrimming) && styles.disabledButton]}
+              onPress={handleSave}
+              disabled={!videoTitle.trim() || isLoading || needsTrimming}
+            >
+              {isLoading ? <ActivityIndicator color="white" /> : <Text style={styles.uploadButtonText}>UPLOAD VIDEO</Text>}
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      {showTrimmer && selectedVideo && (
+        <VideoTrimmer
+          videoUri={selectedVideo.uri}
+          maxDuration={MAX_VIDEO_DURATION}
+          onCancel={handleTrimCancel}
+          onSave={handleTrimSave}
+        />
+      )}
     </View>
   );
 };
-
+// Add styles here...
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#333',
-  },
-  section: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  fileName: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
-    fontStyle: 'italic',
-  },
-  uriText: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 10,
-    fontFamily: 'monospace',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: 'white',
-  },
-  captionInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  selectFileButton: {
-    backgroundColor: '3260ad',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  selectFileButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  trimButton: {
-    backgroundColor: '#FF6B35',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  trimButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  messageContainer: {
-    marginBottom: 20,
-  },
-  message: {
-    fontSize: 14,
-    textAlign: 'center',
-    padding: 10,
-    borderRadius: 6,
-  },
-  successMessage: {
-    color: '#4CAF50',
-    backgroundColor: '#E8F5E8',
-  },
-  errorMessage: {
-    color: '#F44336',
-    backgroundColor: '#FFEBEE',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 8,
-  },
-  cancelButton: {
-    backgroundColor: '#95a5a6',
-  },
-  cancelButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  uploadButton: {
-    backgroundColor: '#3260ad',
-  },
-  uploadButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  disabledButton: {
-    backgroundColor: '#bdc3c7',
-    opacity: 0.7,
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  closeButton: { padding: 5 },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
+  placeholder: { width: 34 },
+  selectVideoButton: { backgroundColor: '#4A90E2', marginHorizontal: 20, marginVertical: 20, paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
+  selectVideoText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  previewSection: { marginHorizontal: 20, marginBottom: 20 },
+  videoContainer: { backgroundColor: 'white', borderRadius: 12, overflow: 'hidden', position: 'relative' },
+  video: { width: '100%', height: 200, backgroundColor: '#000' },
+  videoPlaceholder: { backgroundColor: 'white', borderRadius: 12, height: 200, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e0e0e0', borderStyle: 'dashed' },
+  placeholderText: { marginTop: 10, color: '#666', fontSize: 16 },
+  playButton: { position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }], backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 25, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  warningContainer: { backgroundColor: '#fff3cd', borderColor: '#ffeaa7', borderWidth: 1, borderRadius: 8, padding: 15, marginBottom: 15 },
+  warningText: { color: '#856404', fontSize: 14, textAlign: 'center', marginBottom: 10 },
+  durationText: { color: '#28a745', fontSize: 14, textAlign: 'center', backgroundColor: '#d4edda', borderColor: '#c3e6cb', borderWidth: 1, borderRadius: 8, padding: 10 },
+  trimButton: { backgroundColor: '#FF6B35', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 6, alignItems: 'center' },
+  trimButtonText: { color: 'white', fontSize: 14, fontWeight: '600' },
+  inputSection: { marginHorizontal: 20, marginBottom: 20 },
+  inputLabel: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8 },
+  titleInput: { backgroundColor: 'white', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, borderWidth: 1, borderColor: '#e0e0e0' },
+  uploadSection: { marginHorizontal: 20, marginBottom: 20 },
+  uploadButton: { backgroundColor: '#4A90E0', paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
+  uploadButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  disabledButton: { backgroundColor: '#bdc3c7', opacity: 0.7 },
 });
 
 export default VideoUpload;
