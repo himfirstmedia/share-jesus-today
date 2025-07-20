@@ -142,7 +142,7 @@ export default function SignupScreen() {
     }
   };
   const handleBackPress = () => {
-    router.back();
+    router.canGoBack() ? router.back() : router.replace('/login');
   };
 
   return (

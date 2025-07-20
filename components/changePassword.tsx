@@ -166,7 +166,7 @@ export default function ChangePassword({ onBack, onSuccess }: ChangePasswordProp
     if (onBack) {
       onBack();
     } else {
-      router.back();
+      router.canGoBack() ? router.back() : router.replace('/(tabs)/menu');
     }
   };
 

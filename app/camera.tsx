@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
-import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 // Import the actual VideoCompressionService
 import VideoCompressionService from '../services/videoCompressionService';
 
@@ -146,9 +146,14 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       if (onRecordingComplete) {
         onRecordingComplete({ uri: compressedUri });
       } else {
-        router.replace({
-          pathname: '/post',
-          params: { videoUri: compressedUri, videoName: `recorded_video_${Date.now()}.mp4`, videoType: 'video/mp4' },
+        // Fixed the navigation logic
+        router.push({
+          pathname: '/(tabs)/post',
+          params: { 
+            videoUri: compressedUri, 
+            videoName: `recorded_video_${Date.now()}.mp4`, 
+            videoType: 'video/mp4' 
+          },
         });
       }
     } catch (error: any) {
@@ -261,7 +266,11 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
   const handleBackPress = () => {
     if (recording) stopRecording();
-    router.replace('/post');
+    if (onCancel) {
+      onCancel();
+    } else {
+      router.replace('/(tabs)/post');
+    }
   };
 
   // --- Render Logic ---

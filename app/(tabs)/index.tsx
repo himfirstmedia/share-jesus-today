@@ -25,7 +25,7 @@ import {
 import { VideoCard } from '@/components/video/VideoCard';
 import { VideoModal } from '@/components/video/VideoModal';
 import apiService, { type ApiResponse, type Video } from '@/services/apiService';
-import { t } from '@/utils/i18';
+import { t } from '@/utils/i18n';
 import { homeStyles } from '../../styles/HomeStyles';
 
 // Blocked Content Management

@@ -87,12 +87,12 @@ export default function EditProfileScreen() {
         });
       } else {
         Alert.alert('Error', 'Could not load profile data. Please try logging in again.');
-        router.back();
+        router.canGoBack() ? router.back() : router.replace('/(tabs)');
       }
     } catch (error) {
       console.error('Failed to load profile data:', error);
       Alert.alert('Error', 'Failed to load profile data. Please try again.');
-      router.back();
+      router.canGoBack() ? router.back() : router.replace('/(tabs)');
     } finally {
       setLoading(false);
     }
@@ -274,7 +274,7 @@ export default function EditProfileScreen() {
           [
             {
               text: 'OK',
-              onPress: () => router.back()
+              onPress: () => router.canGoBack() ? router.back() : router.replace('/(tabs)')
             }
           ]
         );
@@ -330,7 +330,7 @@ export default function EditProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} disabled={saving}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} disabled={saving}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -348,7 +348,7 @@ export default function EditProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} disabled={saving}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} disabled={saving}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -378,7 +378,7 @@ export default function EditProfileScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} disabled={saving}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} disabled={saving}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>

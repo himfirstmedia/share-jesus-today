@@ -1,5 +1,5 @@
 // app/post.tsx - Updated to use VideoUploadInterface
-import { t } from '@/utils/i18';
+import { t } from '@/utils/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';

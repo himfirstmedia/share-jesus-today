@@ -1,4 +1,5 @@
 // services/videoApiService.ts - Updated with Progress Tracking Support
+import 'react-native-url-polyfill/auto';
 import { ReactNode } from "react";
 import AuthManager from '../utils/authManager';
 
@@ -7,22 +8,6 @@ interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   message?: string;
-}
-
-interface Video {
-  duration: any;
-  description: ReactNode;
-  id: string;
-  title: string;
-  url: string;
-  thumbnailUrl?: string;
-  uploader?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    profilePicture?: string;
-  };
-  createdTimestamp: string;
 }
 
 interface VideoUploadMetadata {
@@ -46,6 +31,7 @@ interface UploadProgressEvent {
 interface UploadOptions {
   onUploadProgress?: (progressEvent: UploadProgressEvent) => void;
   onStateChange?: (state: 'preparing' | 'uploading' | 'processing' | 'complete') => void;
+  timeout?: number;
 }
 
 export interface UploaderProfile {
@@ -63,14 +49,15 @@ export interface VideoModel {
   duration?: number;
   createdTimestamp: string;
   uploader: UploaderProfile;
+  description: ReactNode;
 }
 
 export interface VideoPage {
-  data: Video[];
+  data: VideoModel[];
   totalPages: number;
   totalElements: number;
-  size?: number; 
-  number?: number; 
+  size: number; 
+  number: number; 
 }
 
 class VideoApiService {
@@ -119,7 +106,7 @@ class VideoApiService {
       } else {
         console.warn('VideoAPI: No auth token available for request');
         
-        // For debugging, show auth status
+        // For debugging, show auth status only in development mode
         if (__DEV__) {
           await AuthManager.debugAuthStatus();
         }
@@ -172,9 +159,15 @@ class VideoApiService {
       };
     } catch (error) {
       console.error('VideoAPI: Network error:', error);
+      if (error instanceof Error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error occurred',
+        error: 'Network error occurred',
       };
     }
   }
@@ -184,7 +177,7 @@ class VideoApiService {
     url: string,
     formData: FormData,
     options: UploadOptions = {}
-  ): Promise<ApiResponse<any>> {
+  ): Promise<ApiResponse<VideoModel>> {
     return new Promise(async (resolve) => {
       try {
         const token = await this.getAuthToken();
@@ -307,7 +300,7 @@ class VideoApiService {
 
         // Configure and send request
         xhr.open('POST', url);
-        xhr.timeout = 300000; // 5 minutes timeout
+        xhr.timeout = options.timeout || 300000; // 5 minutes timeout by default
 
         // Set auth header if available
         if (token) {
@@ -320,9 +313,15 @@ class VideoApiService {
 
       } catch (error) {
         console.error('VideoAPI: Upload setup error:', error);
+        if (error instanceof Error) {
+          resolve({
+            success: false,
+            error: error.message
+          });
+        }
         resolve({
           success: false,
-          error: error instanceof Error ? error.message : 'Upload setup failed'
+          error: 'Upload setup failed'
         });
       }
     });
@@ -333,7 +332,7 @@ class VideoApiService {
     videoFile: VideoFile,
     metadata: VideoUploadMetadata,
     options: UploadOptions = {}
-  ): Promise<ApiResponse<any>> {
+  ): Promise<ApiResponse<VideoModel>> {
     try {
       // Check authentication first
       if (!this.isAuthenticated()) {
@@ -392,9 +391,15 @@ class VideoApiService {
 
     } catch (error) {
       console.error('VideoAPI: Upload error:', error);
+      if (error instanceof Error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Upload failed',
+        error: 'Upload failed',
       };
     }
   }
@@ -435,7 +440,7 @@ class VideoApiService {
   }
 
   // Get user's videos
-  async getMyVideos(page: number = 0, size: number = 10): Promise<ApiResponse<Video[]>> {
+  async getMyVideos(page: number = 0, size: number = 10): Promise<ApiResponse<VideoModel[]>> {
     if (!this.isAuthenticated()) {
       return {
         success: false,
@@ -443,7 +448,7 @@ class VideoApiService {
       };
     }
 
-    return this.makeRequest<Video[]>(`/api/v1/video/my-videos?page=${page}&size=${size}`, {
+    return this.makeRequest<VideoModel[]>(`/api/v1/video/my-videos?page=${page}&size=${size}`, {
       method: 'GET',
     });
   }

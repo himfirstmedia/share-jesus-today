@@ -1,5 +1,5 @@
 // components/HomeComponents.tsx
-import { t } from '@/utils/i18';
+import { t } from '@/utils/i18n';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -10,9 +10,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import AuthManager from '../utils/authManager';
 import { type Video as VideoType } from '../services/apiService';
 import { homeStyles } from '../styles/HomeStyles';
+import AuthManager from '../utils/authManager';
 import HeroSlider from './HeroSlider';
 
 // Props interfaces
@@ -133,7 +133,7 @@ export const HeaderSection: React.FC<{
         </TouchableOpacity>
         {!isAuthenticated && (
           <TouchableOpacity onPress={() => router.push('/Signup')} style={homeStyles.actionButton}>
-            <Text style={homeStyles.actionButtonText}>{t('menu.createAccount')}</Text>
+            <Text style={homeStyles.actionButtonText}>{t('home.createAccount')}</Text>
           </TouchableOpacity>
         )}
       </View>

@@ -3,18 +3,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { profileService } from "../../services/profileService";
 import AuthManager from "../../utils/authManager";
-import { getCurrentLanguage, initializeLanguage, t } from "../../utils/i18";
+import { getCurrentLanguage, initializeLanguage, t } from "../../utils/i18n";
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;

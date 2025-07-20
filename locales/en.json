@@ -96,7 +96,8 @@
     "watchAllVideos": "Watch All Videos",
     "searchProfiles": "SEARCH PROFILES",
     "postVideo": "POST VIDEO",
-    "watchVideos": "WATCH VIDEOS"
+    "watchVideos": "WATCH VIDEOS",
+    "createAccount": "CREATE ACCOUNT"
   },
   "post": {
     "videoOptions": "Video Options",

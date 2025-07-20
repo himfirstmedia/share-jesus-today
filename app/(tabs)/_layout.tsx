@@ -241,17 +241,15 @@ export default function TabLayout() {
           ),
         }}
       />
-      <ProtectedRoute>
-        <Tabs.Screen
-          name="post"
-          options={{
-            title: 'Post',
-            tabBarIcon: ({ color, focused }) => (
-              <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
-            ),
-          }}
-        />
-      </ProtectedRoute>
+      <Tabs.Screen
+        name="post"
+        options={{
+          title: 'Post',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="menu"
         options={{

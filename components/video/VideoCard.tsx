@@ -1,8 +1,8 @@
 import React from 'react';
 import { Image, Text, View } from 'react-native';
-import { t } from '../../utils/i18';
 import { type Video as VideoType } from '../../services/apiService';
 import { videoStyles } from '../../styles/VideoStyles';
+import { t } from '../../utils/i18n';
 import { PlayButton } from './PlayButton';
 
 interface VideoCardProps {

@@ -11,7 +11,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { changeLanguage, getCurrentLanguage, supportedLanguages, t } from "../../utils/i18";
+import { changeLanguage, getCurrentLanguage, supportedLanguages, t } from "../../utils/i18n";
 
 interface LanguageItemProps {
   code: string;

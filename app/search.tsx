@@ -1,19 +1,19 @@
 // app/search.tsx - Enhanced search screen matching Android functionality
+import { t } from '@/utils/i18n';
 import { Ionicons } from '@expo/vector-icons';
-import { t } from '@/utils/i18';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiService from '../services/apiService';
@@ -275,7 +275,7 @@ export default function SearchScreen() {
 
   // Handle back press (like Android)
   const handleBack = () => {
-    router.back();
+    router.canGoBack() ? router.back() : router.replace('/(tabs)');
   };
 
   // Pull to refresh functionality

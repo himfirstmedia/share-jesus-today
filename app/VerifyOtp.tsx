@@ -44,7 +44,7 @@ const OTPVerification = () => {
     // If no email, go back
     if (!email) {
       console.error('No email provided, going back');
-      router.back();
+      router.canGoBack() ? router.back() : router.replace('/login');
     }
   }, [email, router]);
 
@@ -170,7 +170,7 @@ const OTPVerification = () => {
   };
 
   const handleBack = () => {
-    router.back();
+    router.canGoBack() ? router.back() : router.replace('/login');
   };
 
   return (
