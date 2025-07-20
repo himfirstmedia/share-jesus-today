@@ -1,7 +1,7 @@
 // services/videoCompressionService.js
 import * as FileSystem from 'expo-file-system';
 import * as VideoThumbnails from 'expo-video-thumbnails';
-import { Video } from 'react-native-compress';
+import { Video } from 'react-native-compressor';
 
 class VideoCompressionService {
   constructor() {
@@ -135,7 +135,7 @@ class VideoCompressionService {
   }
 
   /**
-   * Compresses a video using react-native-compress.
+   * Compresses a video using react-native-compressor.
    */
   async createCompressedCopy(sourceUri, options = {}) {
     try {
@@ -163,7 +163,7 @@ class VideoCompressionService {
 
       console.log(`Starting compression for: ${sourceUri} (${sourceInfo.sizeMB}MB)`);
 
-      const subscription = Video.compress(
+      const result = await Video.compress(
         sourceUri,
         {
           compressionMethod: 'auto',
@@ -176,14 +176,12 @@ class VideoCompressionService {
         }
       );
 
-      const result = await subscription;
 
-
-      if (!result || !result.path) {
+      if (!result) {
         throw new Error('Video compression failed to return a valid path.');
       }
 
-      const compressedUri = result.path;
+      const compressedUri = result;
       const compressedInfo = await this.getVideoInfo(compressedUri);
 
       console.log(`Compression successful: ${compressedUri} (${compressedInfo.sizeMB}MB)`);
