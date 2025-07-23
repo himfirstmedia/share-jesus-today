@@ -242,5 +242,10 @@
     "subtitle3": "Build a community of believers",
     "title4": "GROW IN FAITH",
     "subtitle4": "Strengthen your relationship with God"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "post": "Post",
+    "menu": "Menu"
   }
 }

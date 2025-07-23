@@ -1,4 +1,5 @@
 // app/(tabs)/_layout.tsx
+import i18n from '@/utils/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, usePathname } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -142,7 +143,7 @@ export default function TabLayout() {
                 color={currentRoute === leftTabName ? 'white' : '#cbd5e1'}
               />
               <Text style={[styles.tabLabel, currentRoute === leftTabName && styles.tabLabelActive]}>
-                Home
+                {i18n.t('bottomNav.home')}
               </Text>
             </TouchableOpacity>
 
@@ -165,7 +166,7 @@ export default function TabLayout() {
                 color={currentRoute === rightTabName ? 'white' : '#cbd5e1'}
               />
               <Text style={[styles.tabLabel, currentRoute === rightTabName && styles.tabLabelActive]}>
-                Menu
+                {i18n.t('bottomNav.menu')}
               </Text>
             </TouchableOpacity>
           </View>

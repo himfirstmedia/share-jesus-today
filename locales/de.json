@@ -1,3 +1,4 @@
+
 {
   "menu": {
     "title": "Menü",
@@ -222,5 +223,10 @@
     "subtitle3": "Baut eine Gemeinschaft von Gläubigen auf",
     "title4": "WACHSE IM GLAUBEN",
     "subtitle4": "Stärke deine Beziehung zu Gott"
+  },
+  "bottomNav": {
+    "home": "Startseite",
+    "post": "Post",
+    "menu": "Menü"
   }
 }
