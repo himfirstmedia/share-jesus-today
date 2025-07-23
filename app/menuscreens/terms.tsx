@@ -11,6 +11,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../../utils/i18n';
 
 export default function TermsAndConditionsScreen() {
   const handleBackPress = () => {
@@ -20,7 +21,7 @@ export default function TermsAndConditionsScreen() {
   const handleEmailPress = () => {
     const email = 'support@sharejesustoday.org';
     Linking.openURL(`mailto:${email}`).catch(() => {
-      Alert.alert('Error', 'Unable to open email client');
+      Alert.alert(t('common.error'), t('termsScreen.emailError'));
     });
   };
 
@@ -30,9 +31,9 @@ export default function TermsAndConditionsScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="chevron-back" size={20} color="#1e1b1b" />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Terms & Conditions</Text>
+        <Text style={styles.headerTitle}>{t('termsScreen.title')}</Text>
       </View>
 
       {/* Content */}
@@ -41,130 +42,130 @@ export default function TermsAndConditionsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
-        <Text style={styles.mainTitle}>Terms and Conditions for Share Jesus Today App</Text>
-        <Text style={styles.lastUpdated}>Last Updated: 10th March 2025</Text>
+        <Text style={styles.mainTitle}>{t('termsScreen.mainTitle')}</Text>
+        <Text style={styles.lastUpdated}>{t('termsScreen.lastUpdated')}</Text>
 
         {/* Section 1 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.acceptanceTitle')}</Text>
           <Text style={styles.sectionText}>
-            By accessing or using the Share Jesus Today App (the &apos;App&apos;), you agree to be bound by these Terms and Conditions (&apos;Terms&apos;). If you do not agree with any of these Terms, you must immediately stop using the App and uninstall it. These Terms form a binding legal agreement between you and the developer of the App.
+            {t('termsScreen.acceptanceText')}
           </Text>
         </View>
 
         {/* Section 2 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. User Eligibility</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.eligibilityTitle')}</Text>
           <Text style={styles.sectionText}>
-            You must be at least 13 years old to use the Share Jesus Today App. If you are under the age of 13, you are prohibited from using the App. By using the App, you represent and warrant that you are at least 13 years old and have the legal authority to enter into this agreement.
+            {t('termsScreen.eligibilityText')}
           </Text>
         </View>
 
         {/* Section 3 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. Account Registration</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.registrationTitle')}</Text>
           <Text style={styles.sectionText}>
-            To access certain features of the App, you may be required to create an account. You agree to provide accurate, complete, and up-to-date information when registering for an account. You are responsible for maintaining the confidentiality of your account and password. If you suspect unauthorized access to your account, you agree to notify us immediately.
+            {t('termsScreen.registrationText')}
           </Text>
         </View>
 
         {/* Section 4 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. Prohibited Content and Conduct</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.prohibitedTitle')}</Text>
           <Text style={styles.sectionText}>
-            You agree to not post, share, or transmit any content or engage in any conduct that is unlawful, harmful, offensive, defamatory, harassing, or otherwise objectionable. Specifically, you may not:
+            {t('termsScreen.prohibitedText')}
           </Text>
-          <Text style={styles.bulletPoint}>- Post content that is abusive, discriminatory, offensive, or inflammatory.</Text>
-          <Text style={styles.bulletPoint}>- Share obscene, pornographic, or sexually explicit material.</Text>
-          <Text style={styles.bulletPoint}>- Engage in harassment, bullying, or discriminatory behavior.</Text>
-          <Text style={styles.bulletPoint}>- Use hate speech, threats, or language that promotes violence or harm.</Text>
-          <Text style={styles.bulletPoint}>- Post content that violates the intellectual property rights of others.</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.prohibitedItem1')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.prohibitedItem2')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.prohibitedItem3')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.prohibitedItem4')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.prohibitedItem5')}</Text>
         </View>
 
         {/* Section 5 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. Content Moderation and Reporting</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.moderationTitle')}</Text>
           <Text style={styles.sectionText}>
-            We employ a system to moderate content within the App. This includes both automated tools and human moderation to identify, report, and remove harmful content. While we strive to ensure the App remains safe and welcoming, we cannot guarantee that all objectionable content will be removed immediately.
+            {t('termsScreen.moderationText')}
           </Text>
         </View>
 
         {/* Section 6 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. User Flagging and Reporting Mechanism</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.reportingTitle')}</Text>
           <Text style={styles.sectionText}>
-            The App provides a reporting feature for users to flag content they believe violates these Terms. If you come across objectionable content, you may report it as follows:
+            {t('termsScreen.reportingText')}
           </Text>
-          <Text style={styles.bulletPoint}>- Tap the &apos;Flag&apos; or &apos;Report&apos; button next to the offending content.</Text>
-          <Text style={styles.bulletPoint}>- Provide a description of the issue and why the content violates the Terms.</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.reportingItem1')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.reportingItem2')}</Text>
         </View>
 
         {/* Section 7 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>7. Blocking Abusive Users</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.blockingTitle')}</Text>
           <Text style={styles.sectionText}>
-            If you encounter an abusive user, you have the ability to block them within the App. Blocking a user prevents them from interacting with you, sending you messages, or accessing your content. If you believe a user is violating these Terms, you may also report them for further action.
+            {t('termsScreen.blockingText')}
           </Text>
         </View>
 
         {/* Section 8 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>8. Actions on Objectionable Content</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.actionsTitle')}</Text>
           <Text style={styles.sectionText}>
-            We take reports of objectionable content seriously. When a report is received, we aim to review and resolve the issue within 24 hours. Our actions may include:
+            {t('termsScreen.actionsText')}
           </Text>
-          <Text style={styles.bulletPoint}>- Removing the offending content.</Text>
-          <Text style={styles.bulletPoint}>- Suspending or terminating the user&apos;s account.</Text>
-          <Text style={styles.bulletPoint}>- Taking additional measures as necessary to maintain the safety and integrity of the App.</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.actionsItem1')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.actionsItem2')}</Text>
+          <Text style={styles.bulletPoint}>{t('termsScreen.actionsItem3')}</Text>
         </View>
 
         {/* Section 9 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>9. Privacy and Data Collection</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.privacyTitle')}</Text>
           <Text style={styles.sectionText}>
-            Your privacy is important to us. Please refer to our Privacy Policy for detailed information on how we collect, use, and protect your personal data. By using the App, you consent to the collection and use of your data as described in the Privacy Policy.
+            {t('termsScreen.privacyText')}
           </Text>
         </View>
 
         {/* Section 10 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>10. Termination of Account</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.terminationTitle')}</Text>
           <Text style={styles.sectionText}>
-            We may suspend or terminate your account if you are found to be in violation of these Terms. In the event of termination, you will lose access to the App, and your account and associated content may be deleted. You may also terminate your account at any time by contacting us or through the App&apos;s settings.
+            {t('termsScreen.terminationText')}
           </Text>
         </View>
 
         {/* Section 11 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>11. Limitation of Liability</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.liabilityTitle')}</Text>
           <Text style={styles.sectionText}>
-            To the maximum extent permitted by law, Share Jesus Today, its affiliates, and its employees are not liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the App. This includes any loss of data, revenue, profits, or other damages incurred as a result of using the App or relying on its features.
+            {t('termsScreen.liabilityText')}
           </Text>
         </View>
 
         {/* Section 12 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>12. Governing Law and Dispute Resolution</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.governingLawTitle')}</Text>
           <Text style={styles.sectionText}>
-            These Terms are governed by and construed in accordance with the laws of [Your Jurisdiction]. Any disputes arising from these Terms will be resolved in the courts of [Your Jurisdiction]. You agree to resolve any disputes through binding arbitration, with the arbitration location being [Your Jurisdiction].
+            {t('termsScreen.governingLawText')}
           </Text>
         </View>
 
         {/* Section 13 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>13. Modifications to Terms</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.modificationsTitle')}</Text>
           <Text style={styles.sectionText}>
-            We reserve the right to modify these Terms at any time. Any changes to these Terms will be posted on this page with an updated &apos;Last Updated&apos; date. You are responsible for reviewing the Terms regularly. Your continued use of the App after changes have been posted constitutes your acceptance of the new Terms.
+            {t('termsScreen.modificationsText')}
           </Text>
         </View>
 
         {/* Section 14 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>14. Contact Information</Text>
+          <Text style={styles.sectionTitle}>{t('termsScreen.contactTitle')}</Text>
           <Text style={styles.sectionText}>
-            If you have any questions, concerns, or feedback regarding these Terms, please contact us at:
+            {t('termsScreen.contactText')}
           </Text>
-          <Text style={styles.contactLabel}>Email:</Text>
+          <Text style={styles.contactLabel}>{t('termsScreen.emailLabel')}</Text>
           <TouchableOpacity onPress={handleEmailPress}>
             <Text style={styles.emailLink}>support@sharejesustoday.org</Text>
           </TouchableOpacity>

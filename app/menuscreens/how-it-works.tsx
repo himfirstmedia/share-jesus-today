@@ -12,6 +12,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../../utils/i18n';
 
 const { width } = Dimensions.get('window');
 
@@ -92,9 +93,9 @@ export default function HowItWorksScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>How It Works</Text>
+        <Text style={styles.headerTitle}>{t('howItWorksScreen.title')}</Text>
       </View>
 
       {/* Content */}
@@ -166,16 +167,16 @@ export default function HowItWorksScreen() {
 
         {/* Content Sections */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Getting Started:</Text>
+          <Text style={styles.sectionTitle}>{t('howItWorksScreen.gettingStartedTitle')}</Text>
           <Text style={styles.sectionText}>
-            Start an account so you can upload your video testimonies. Record your 30 second video telling how you touched someone in Love with the Name of Jesus and how they responded. You can even include the person touched in your video, if they are agreeable. Click the share button and your video is shared to the world!
+            {t('howItWorksScreen.gettingStartedText')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sharing Made Simple:</Text>
+          <Text style={styles.sectionTitle}>{t('howItWorksScreen.sharingSimpleTitle')}</Text>
           <Text style={styles.sectionText}>
-            Sharing the Love of Jesus every day fulfills the great commission, fills you and others with the Joy of learning or being reminded of his great love for us all! With just a few taps, you can record, upload and share your personal experiences with a world-wide community of people who would also like to share Jesus&apos; love today and every day!
+            {t('howItWorksScreen.sharingSimpleText')}
           </Text>
         </View>
       </ScrollView>

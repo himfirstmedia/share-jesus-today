@@ -9,6 +9,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../../utils/i18n';
 
 export default function ShareFaithScreen() {
   const handleBackPress = () => {
@@ -21,9 +22,9 @@ export default function ShareFaithScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Share Your Faith</Text>
+        <Text style={styles.headerTitle}>{t('shareFaithScreen.title')}</Text>
       </View>
 
       {/* Content */}
@@ -33,23 +34,23 @@ export default function ShareFaithScreen() {
         contentContainerStyle={styles.contentContainer}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Why Share The Love of Jesus:</Text>
+          <Text style={styles.sectionTitle}>{t('shareFaithScreen.whyShareTitle')}</Text>
           <Text style={styles.sectionText}>
-            Sharing the Love of Jesus and showing the positive effect His Love has on others will help embolden more people to do the same. As we lift Jesus in Love, He promises to draw both us and the listeners closer to himself.
+            {t('shareFaithScreen.whyShareText')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How Can You Share:</Text>
+          <Text style={styles.sectionTitle}>{t('shareFaithScreen.howToShareTitle')}</Text>
           <Text style={styles.sectionText}>
-            Record and upload a video through the App or the website and share it with your friends, family and beyond. Just a few clicks and you will make a difference in the lives of others around the world.
+            {t('shareFaithScreen.howToShareText')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Be The Light:</Text>
+          <Text style={styles.sectionTitle}>{t('shareFaithScreen.beTheLightTitle')}</Text>
           <Text style={styles.sectionText}>
-            By speaking the Love of Jesus (the Light) to others you open the door for the Holy Spirit to draw them to Jesus. Just like turning the light on in a dark room, when you shine the Love of Jesus, Darkness must flee!
+            {t('shareFaithScreen.beTheLightText')}
           </Text>
         </View>
       </ScrollView>

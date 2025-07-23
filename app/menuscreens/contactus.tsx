@@ -12,6 +12,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../../utils/i18n';
 
 export default function ContactUsScreen() {
   const [name, setName] = useState('');
@@ -26,14 +27,14 @@ export default function ContactUsScreen() {
 
   const handleSubmit = async () => {
     if (!name.trim() || !email.trim() || !message.trim()) {
-      Alert.alert('Error', 'Please fill in all required fields (Name, Email, and Message)');
+      Alert.alert(t('common.error'), t('contactUsScreen.fillAllFields'));
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert(t('common.error'), t('contactUsScreen.invalidEmail'));
       return;
     }
 
@@ -41,7 +42,7 @@ export default function ContactUsScreen() {
     if (phone.trim()) {
       const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
       if (!phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
-        Alert.alert('Error', 'Please enter a valid phone number');
+        Alert.alert(t('common.error'), t('contactUsScreen.invalidPhone'));
         return;
       }
     }
@@ -67,11 +68,11 @@ export default function ContactUsScreen() {
       if (response.ok) {
         const responseData = await response.json();
         Alert.alert(
-          'Message Sent',
-          'Thank you for contacting us! We will get back to you soon.',
+          t('contactUsScreen.messageSentTitle'),
+          t('contactUsScreen.messageSentText'),
           [
             {
-              text: 'OK',
+              text: t('common.ok'),
               onPress: () => {
                 // Clear form
                 setName('');
@@ -89,9 +90,9 @@ export default function ContactUsScreen() {
       }
     } catch (error) {
       Alert.alert(
-        'Error',
-        'Form submission failed. Please try again later. Thank you for your patience.',
-        [{ text: 'OK' }]
+        t('common.error'),
+        t('contactUsScreen.submissionFailed'),
+        [{ text: t('common.ok') }]
       );
       console.log(error);
       
@@ -106,7 +107,7 @@ export default function ContactUsScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#1e1b1b" />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -117,24 +118,24 @@ export default function ContactUsScreen() {
         contentContainerStyle={styles.contentContainer}
       >
         {/* Title */}
-        <Text style={styles.title}>Customer Support</Text>
+        <Text style={styles.title}>{t('contactUsScreen.title')}</Text>
 
         {/* Form */}
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Name*</Text>
+          <Text style={styles.label}>{t('contactUsScreen.nameLabel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="john black"
+            placeholder={t('contactUsScreen.namePlaceholder')}
             value={name}
             onChangeText={setName}
             placeholderTextColor="#1e1b1b"
             editable={!isLoading}
           />
 
-          <Text style={styles.label}>Email Address*</Text>
+          <Text style={styles.label}>{t('contactUsScreen.emailLabel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="k@jo.com"
+            placeholder={t('contactUsScreen.emailPlaceholder')}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -143,10 +144,10 @@ export default function ContactUsScreen() {
             editable={!isLoading}
           />
 
-          <Text style={styles.label}>Phone Number</Text>
+          <Text style={styles.label}>{t('contactUsScreen.phoneLabel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your phone number"
+            placeholder={t('contactUsScreen.phonePlaceholder')}
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -154,10 +155,10 @@ export default function ContactUsScreen() {
             editable={!isLoading}
           />
 
-          <Text style={styles.label}>Message*</Text>
+          <Text style={styles.label}>{t('contactUsScreen.messageLabel')}</Text>
           <TextInput
             style={[styles.input, styles.messageInput]}
-            placeholder="Enter your Message"
+            placeholder={t('contactUsScreen.messagePlaceholder')}
             value={message}
             onChangeText={setMessage}
             multiline={true}
@@ -175,7 +176,7 @@ export default function ContactUsScreen() {
             {isLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>SUBMIT</Text>
+              <Text style={styles.submitButtonText}>{t('contactUsScreen.submitButton')}</Text>
             )}
           </TouchableOpacity>
         </View>

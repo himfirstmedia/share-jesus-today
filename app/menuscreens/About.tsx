@@ -9,6 +9,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../../utils/i18n';
 
 export default function AboutScreen() {
   const handleBackPress = () => {
@@ -21,9 +22,9 @@ export default function AboutScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="white" />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>About Us</Text>
+        <Text style={styles.headerTitle}>{t('aboutScreen.title')}</Text>
       </View>
 
       {/* Content */}
@@ -33,23 +34,23 @@ export default function AboutScreen() {
         contentContainerStyle={styles.contentContainer}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Welcome to Share Jesus Today</Text>
+          <Text style={styles.sectionTitle}>{t('aboutScreen.welcomeTitle')}</Text>
           <Text style={styles.sectionText}>
-            The Share Jesus Today App provides video testimonies of how easy and fun it is to share the love of Jesus with people God puts in your path every day. You can even share your own video testimonies on the App so others can see how easy it is and be motivated by your experience!
+            {t('aboutScreen.welcomeText')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Our Mission</Text>
+          <Text style={styles.sectionTitle}>{t('aboutScreen.missionTitle')}</Text>
           <Text style={styles.sectionText}>
-            Our mission is to inspire and equip people to spread the message of Jesus love Billions of times daily all around the world so Jesus can draw us all closer to Himself. Jesus himself said, &quot;And I, if I am lifted up, will draw all people to myself.&quot; WHEN WE LIFT – HE DRAWS!!!
+            {t('aboutScreen.missionText')}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>What We Offer</Text>
+          <Text style={styles.sectionTitle}>{t('aboutScreen.offerTitle')}</Text>
           <Text style={styles.sectionText}>
-            The App provides video testimonies so we can all experience the powerful impact of Lifting the Name of Jesus in Love Today and Every Day. You see, every person we meet each day is an appointment by God, not a coincidence!
+            {t('aboutScreen.offerText')}
           </Text>
         </View>
 
