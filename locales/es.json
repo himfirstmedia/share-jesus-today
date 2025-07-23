@@ -222,5 +222,21 @@
     "subtitle3": "Construye una comunidad de creyentes",
     "title4": "CRECE EN LA FE",
     "subtitle4": "Fortalece tu relación con Dios"
+  },
+  "aboutScreen": {
+    "title": "Sobre nosotros",
+    "welcomeTitle": "Bienvenido a Comparte a Jesús Hoy",
+    "welcomeText": "La aplicación Comparte a Jesús Hoy ofrece testimonios en video sobre lo fácil y divertido que es compartir el amor de Jesús con las personas que Dios pone en tu camino cada día. ¡Incluso puedes compartir tus propios testimonios en video en la aplicación para que otros vean lo fácil que es y se sientan motivados por tu experiencia!",
+    "missionTitle": "Nuestra Misión",
+    "missionText": "Nuestra misión es inspirar y equipar a las personas para difundir el mensaje del amor de Jesús miles de millones de veces al día en todo el mundo para que Jesús pueda atraernos a todos más cerca de Él. Jesús mismo dijo: 'Y yo, si soy levantado de la tierra, atraeré a todos hacia mí'. ¡CUANDO LEVANTAMOS, ÉL ATRAE!",
+    "offerTitle": "Lo que ofrecemos",
+    "offerText": "La aplicación ofrece testimonios en video para que todos podamos experimentar el poderoso impacto de levantar el Nombre de Jesús en Amor hoy y todos los días. Verás, ¡cada persona que conocemos cada día es una cita de Dios, no una coincidencia!"
+  },
+  "howItWorksScreen": {
+    "title": "Cómo funciona",
+    "gettingStartedTitle": "Primeros pasos:",
+    "gettingStartedText": "Crea una cuenta para poder subir tus testimonios en video. Graba un video de 30 segundos contando cómo tocaste a alguien con amor en el nombre de Jesús y cómo respondieron. ¡Incluso puedes incluir a la persona que tocaste en tu video, si está de acuerdo! Haz clic en el botón de compartir y tu video se compartirá con el mundo.",
+    "sharingSimpleTitle": "Compartir es simple:",
+    "sharingSimpleText": "¡Compartir el amor de Jesús todos los días cumple la gran comisión, te llena a ti y a los demás de la alegría de aprender o de que se les recuerde su gran amor por todos nosotros! Con solo unos pocos toques, puedes grabar, subir y compartir tus experiencias personales con una comunidad mundial de personas a las que también les gustaría compartir el amor de Jesús hoy y todos los días."
   }
 }

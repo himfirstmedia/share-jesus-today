@@ -223,5 +223,21 @@
     "subtitle3": "Construisez une communauté de croyants",
     "title4": "GRANDISSEZ DANS LA FOI",
     "subtitle4": "Renforcez votre relation avec Dieu"
+  },
+  "aboutScreen": {
+    "title": "À propos de nous",
+    "welcomeTitle": "Bienvenue sur Partagez Jésus Aujourd'hui",
+    "welcomeText": "L'application Partagez Jésus Aujourd'hui fournit des témoignages vidéo sur la facilité et le plaisir de partager l'amour de Jésus avec les personnes que Dieu met sur votre chemin chaque jour. Vous pouvez même partager vos propres témoignages vidéo sur l'application afin que d'autres puissent voir à quel point c'est facile et être motivés par votre expérience !",
+    "missionTitle": "Notre Mission",
+    "missionText": "Notre mission est d'inspirer et d'équiper les gens à répandre le message de l'amour de Jésus des milliards de fois par jour dans le monde entier afin que Jésus puisse nous attirer tous plus près de Lui. Jésus lui-même a dit : 'Et moi, quand j'aurai été élevé de la terre, j'attirerai tous les hommes à moi.' QUAND NOUS ÉLEVONS - IL ATTIRE !!!",
+    "offerTitle": "Ce que nous offrons",
+    "offerText": "L'application fournit des témoignages vidéo afin que nous puissions tous expérimenter l'impact puissant de l'élévation du Nom de Jésus dans l'Amour aujourd'hui et chaque jour. Vous voyez, chaque personne que nous rencontrons chaque jour est un rendez-vous de Dieu, pas une coïncidence !"
+  },
+  "howItWorksScreen": {
+    "title": "Comment ça marche",
+    "gettingStartedTitle": "Pour commencer :",
+    "gettingStartedText": "Créez un compte pour pouvoir télécharger vos témoignages vidéo. Enregistrez votre vidéo de 30 secondes racontant comment vous avez touché quelqu'un avec amour au nom de Jésus et comment il a réagi. Vous pouvez même inclure la personne touchée dans votre vidéo, si elle est d'accord. Cliquez sur le bouton de partage et votre vidéo sera partagée avec le monde entier !",
+    "sharingSimpleTitle": "Le partage simplifié :",
+    "sharingSimpleText": "Partager l'amour de Jésus chaque jour accomplit la grande commission, vous remplit, vous et les autres, de la joie d'apprendre ou de vous souvenir de son grand amour pour nous tous ! En quelques clics, vous pouvez enregistrer, télécharger et partager vos expériences personnelles avec une communauté mondiale de personnes qui aimeraient aussi partager l'amour de Jésus aujourd'hui et chaque jour !"
   }
 }

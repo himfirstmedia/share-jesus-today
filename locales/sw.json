@@ -222,5 +222,21 @@
     "subtitle3": "Jenga jumuiya ya waumini",
     "title4": "KUA KATIKA IMANI",
     "subtitle4": "Imarisha uhusiano wako na Mungu"
+  },
+  "aboutScreen": {
+    "title": "Kuhusu sisi",
+    "welcomeTitle": "Karibu kwenye Shiriki Yesu Leo",
+    "welcomeText": "Programu ya Shiriki Yesu Leo hutoa shuhuda za video za jinsi ilivyo rahisi na ya kufurahisha kushiriki upendo wa Yesu na watu ambao Mungu huwaweka kwenye njia yako kila siku. Unaweza hata kushiriki shuhuda zako za video kwenye programu ili wengine waone jinsi ilivyo rahisi na wahamasishwe na uzoefu wako!",
+    "missionTitle": "Ujumbe wetu",
+    "missionText": "Ujumbe wetu ni kuhamasisha na kuwaandaa watu kueneza ujumbe wa upendo wa Yesu mabilioni ya mara kila siku ulimwenguni kote ili Yesu aweze kutuvuta sote karibu Naye. Yesu mwenyewe alisema, 'Nami, nikiinuliwa kutoka duniani, nitawavuta wote kwangu.' TUNAPOINUA - YEYE huvuta!!!",
+    "offerTitle": "Tunachotoa",
+    "offerText": "Programu hutoa shuhuda za video ili sote tuweze kupata uzoefu wa athari kubwa ya kuliinua Jina la Yesu kwa Upendo leo na kila siku. Unaona, kila mtu tunayekutana naye kila siku ni miadi ya Mungu, sio sadfa!"
+  },
+  "howItWorksScreen": {
+    "title": "Jinsi Inavyofanya Kazi",
+    "gettingStartedTitle": "Kuanza:",
+    "gettingStartedText": "Fungua akaunti ili uweze kupakia shuhuda zako za video. Rekodi video yako ya sekunde 30 ukielezea jinsi ulivyomgusa mtu kwa Upendo kwa Jina la Yesu na jinsi walivyoitikia. Unaweza hata kumjumuisha mtu uliyemgusa kwenye video yako, ikiwa atakubali. Bonyeza kitufe cha kushiriki na video yako itashirikiwa na ulimwengu!",
+    "sharingSimpleTitle": "Kushiriki Kumerahisishwa:",
+    "sharingSimpleText": "Kushiriki Upendo wa Yesu kila siku kunatimiza agizo kuu, kunawajaza ninyi na wengine furaha ya kujifunza au kukumbushwa juu ya upendo wake mkuu kwetu sote! Kwa kugonga mara chache tu, unaweza kurekodi, kupakia na kushiriki uzoefu wako wa kibinafsi na jamii ya ulimwengu ya watu ambao pia wangependa kushiriki upendo wa Yesu leo na kila siku!"
   }
 }

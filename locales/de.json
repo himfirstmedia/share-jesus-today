@@ -228,5 +228,21 @@
     "home": "Startseite",
     "post": "Post",
     "menu": "Menü"
+  },
+  "aboutScreen": {
+    "title": "Über uns",
+    "welcomeTitle": "Willkommen bei Teile Jesus Heute",
+    "welcomeText": "Die 'Teile Jesus Heute'-App bietet Video-Zeugnisse darüber, wie einfach und unterhaltsam es ist, die Liebe Jesu mit den Menschen zu teilen, die Gott Ihnen täglich in den Weg stellt. Sie können sogar Ihre eigenen Video-Zeugnisse in der App teilen, damit andere sehen können, wie einfach es ist, und von Ihrer Erfahrung motiviert werden!",
+    "missionTitle": "Unsere Mission",
+    "missionText": "Unsere Mission ist es, Menschen zu inspirieren und auszustatten, die Botschaft der Liebe Jesu milliardenfach täglich auf der ganzen Welt zu verbreiten, damit Jesus uns alle näher zu sich ziehen kann. Jesus selbst sagte: 'Und ich, wenn ich von der Erde erhöht bin, werde alle zu mir ziehen.' WENN WIR ERHÖHEN - ZIEHT ER!!!",
+    "offerTitle": "Was wir anbieten",
+    "offerText": "Die App bietet Video-Zeugnisse, damit wir alle die kraftvolle Wirkung erfahren können, den Namen Jesu heute und jeden Tag in Liebe zu erheben. Sehen Sie, jede Person, die wir jeden Tag treffen, ist eine Verabredung von Gott, kein Zufall!"
+  },
+  "howItWorksScreen": {
+    "title": "Wie es funktioniert",
+    "gettingStartedTitle": "Erste Schritte:",
+    "gettingStartedText": "Erstellen Sie ein Konto, damit Sie Ihre Video-Zeugnisse hochladen können. Nehmen Sie Ihr 30-Sekunden-Video auf, in dem Sie erzählen, wie Sie jemanden in Liebe mit dem Namen Jesu berührt haben und wie er reagiert hat. Sie können die berührte Person sogar in Ihr Video aufnehmen, wenn sie einverstanden ist. Klicken Sie auf die Schaltfläche 'Teilen' und Ihr Video wird mit der Welt geteilt!",
+    "sharingSimpleTitle": "Teilen leicht gemacht:",
+    "sharingSimpleText": "Die Liebe Jesu jeden Tag zu teilen, erfüllt den Missionsbefehl und erfüllt Sie und andere mit der Freude, seine große Liebe für uns alle zu lernen oder daran erinnert zu werden! Mit nur wenigen Fingertipps können Sie Ihre persönlichen Erfahrungen aufnehmen, hochladen und mit einer weltweiten Gemeinschaft von Menschen teilen, die ebenfalls die Liebe Jesu heute und jeden Tag teilen möchten!"
   }
 }

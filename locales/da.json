@@ -228,5 +228,21 @@
     "home": "Hjem",
     "post": "Post",
     "menu": "Menu"
+  },
+  "aboutScreen": {
+    "title": "Om os",
+    "welcomeTitle": "Velkommen til Del Jesus I Dag",
+    "welcomeText": "Del Jesus I Dag-appen giver vidnesbyrd på video om, hvor let og sjovt det er at dele Jesu kærlighed med de mennesker, Gud sætter på din vej hver dag. Du kan endda dele dine egne videovidnesbyrd i appen, så andre kan se, hvor let det er, og blive motiveret af din oplevelse!",
+    "missionTitle": "Vores mission",
+    "missionText": "Vores mission er at inspirere og udruste folk til at sprede budskabet om Jesu kærlighed milliarder af gange dagligt over hele verden, så Jesus kan drage os alle tættere på sig selv. Jesus sagde selv: 'Og når jeg er blevet løftet op fra jorden, vil jeg drage alle til mig.' NÅR VI LØFTER - DRAGER HAN!!!",
+    "offerTitle": "Hvad vi tilbyder",
+    "offerText": "Appen giver videovidnesbyrd, så vi alle kan opleve den stærke virkning af at løfte Jesu navn i kærlighed i dag og hver dag. Ser du, enhver person, vi møder hver dag, er en aftale med Gud, ikke en tilfældighed!"
+  },
+  "howItWorksScreen": {
+    "title": "Sådan fungerer det",
+    "gettingStartedTitle": "Kom i gang:",
+    "gettingStartedText": "Opret en konto, så du kan uploade dine videovidnesbyrd. Optag din 30 sekunders video, der fortæller, hvordan du rørte nogen i kærlighed med Jesu navn, og hvordan de reagerede. Du kan endda inkludere den person, du rørte, i din video, hvis de er enige. Klik på deleknappen, og din video deles med verden!",
+    "sharingSimpleTitle": "Deling gjort enkelt:",
+    "sharingSimpleText": "At dele Jesu kærlighed hver dag opfylder den store befaling, fylder dig og andre med glæden ved at lære eller blive mindet om hans store kærlighed til os alle! Med blot et par tryk kan du optage, uploade og dele dine personlige oplevelser med et verdensomspændende fællesskab af mennesker, der også gerne vil dele Jesu kærlighed i dag og hver dag!"
   }
 }

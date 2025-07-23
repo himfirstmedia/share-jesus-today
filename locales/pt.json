@@ -222,5 +222,21 @@
     "subtitle3": "Construa uma comunidade de crentes",
     "title4": "CRESÇA NA FÉ",
     "subtitle4": "Fortaleça seu relacionamento com Deus"
+  },
+  "aboutScreen": {
+    "title": "Sobre nós",
+    "welcomeTitle": "Bem-vindo ao Compartilhe Jesus Hoje",
+    "welcomeText": "O aplicativo Compartilhe Jesus Hoje fornece depoimentos em vídeo de como é fácil e divertido compartilhar o amor de Jesus com as pessoas que Deus coloca em seu caminho todos os dias. Você pode até mesmo compartilhar seus próprios depoimentos em vídeo no aplicativo para que outros possam ver como é fácil e se sentirem motivados por sua experiência!",
+    "missionTitle": "Nossa missão",
+    "missionText": "Nossa missão é inspirar e equipar as pessoas a espalhar a mensagem do amor de Jesus bilhões de vezes por dia em todo o mundo para que Jesus possa atrair todos nós para mais perto de Si. O próprio Jesus disse: 'E eu, quando for levantado da terra, atrairei todos a mim.' QUANDO NÓS LEVANTAMOS - ELE ATRAI!!!",
+    "offerTitle": "O que nós oferecemos",
+    "offerText": "O aplicativo fornece depoimentos em vídeo para que todos nós possamos experimentar o poderoso impacto de exaltar o Nome de Jesus em Amor hoje e todos os dias. Veja, cada pessoa que encontramos todos os dias é um encontro marcado por Deus, não uma coincidência!"
+  },
+  "howItWorksScreen": {
+    "title": "Como funciona",
+    "gettingStartedTitle": "Primeiros passos:",
+    "gettingStartedText": "Crie uma conta para poder carregar os seus testemunhos em vídeo. Grave o seu vídeo de 30 segundos a contar como tocou alguém em Amor com o Nome de Jesus e como essa pessoa reagiu. Pode até incluir a pessoa que tocou no seu vídeo, se ela concordar. Clique no botão de partilha e o seu vídeo será partilhado com o mundo!",
+    "sharingSimpleTitle": "Partilhar de forma simples:",
+    "sharingSimpleText": "Partilhar o Amor de Jesus todos os dias cumpre a grande comissão, enche-o a si e aos outros com a alegria de aprender ou de serem lembrados do seu grande amor por todos nós! Com apenas alguns toques, pode gravar, carregar e partilhar as suas experiências pessoais com uma comunidade mundial de pessoas que também gostariam de partilhar o amor de Jesus hoje e todos os dias!"
   }
 }

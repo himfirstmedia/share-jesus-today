@@ -222,5 +222,21 @@
     "subtitle3": "Bygg en gemenskap av troende",
     "title4": "VÄX I TRON",
     "subtitle4": "Stärk din relation med Gud"
+  },
+  "aboutScreen": {
+    "title": "Om oss",
+    "welcomeTitle": "Välkommen till Dela Jesus Idag",
+    "welcomeText": "Dela Jesus Idag-appen ger videovittnesbörd om hur enkelt och roligt det är att dela Jesu kärlek med människor som Gud sätter i din väg varje dag. Du kan till och med dela dina egna videovittnesbörd i appen så att andra kan se hur enkelt det är och bli motiverade av din upplevelse!",
+    "missionTitle": "Vårt uppdrag",
+    "missionText": "Vårt uppdrag är att inspirera och utrusta människor att sprida budskapet om Jesu kärlek miljarder gånger dagligen över hela världen så att Jesus kan dra oss alla närmare sig själv. Jesus sa själv: 'Och jag, när jag har blivit upphöjd från jorden, ska dra alla till mig.' NÄR VI LYFTER - DRAR HAN!!!",
+    "offerTitle": "Vad vi erbjuder",
+    "offerText": "Appen ger videovittnesbörd så att vi alla kan uppleva den kraftfulla effekten av att lyfta Jesu namn i kärlek idag och varje dag. Du förstår, varje person vi möter varje dag är ett möte av Gud, inte en tillfällighet!"
+  },
+  "howItWorksScreen": {
+    "title": "Hur det fungerar",
+    "gettingStartedTitle": "Komma igång:",
+    "gettingStartedText": "Skapa ett konto så att du kan ladda upp dina videovittnesbörd. Spela in din 30-sekundersvideo som berättar hur du berörde någon i kärlek med Jesu namn och hur de reagerade. Du kan till och med inkludera den berörda personen i din video, om de samtycker. Klicka på dela-knappen och din video delas med världen!",
+    "sharingSimpleTitle": "Delning på ett enkelt sätt:",
+    "sharingSimpleText": "Att dela Jesu kärlek varje dag uppfyller det stora uppdraget, fyller dig och andra med glädjen att lära sig eller bli påmind om hans stora kärlek till oss alla! Med bara några få tryck kan du spela in, ladda upp och dela dina personliga erfarenheter med en världsomspännande gemenskap av människor som också vill dela Jesu kärlek idag och varje dag!"
   }
 }

@@ -222,5 +222,21 @@
     "subtitle3": "Tóg pobal de chreidmhigh",
     "title4": "FÁS SA CHREIDEAMH",
     "subtitle4": "Neartaigh do chaidreamh le Dia"
+  },
+  "aboutScreen": {
+    "title": "Fúinn",
+    "welcomeTitle": "Fáilte go Comhroinn Íosa Inniu",
+    "welcomeText": "Soláthraíonn an aip Comhroinn Íosa Inniu teistiméireachtaí físe ar cé chomh héasca agus spraíúil is atá sé grá Íosa a roinnt le daoine a chuireann Dia ar do chosán gach lá. Is féidir leat fiú do theistiméireachtaí físe féin a roinnt ar an aip ionas go bhfeicfidh daoine eile cé chomh héasca is atá sé agus go mbeidh siad spreagtha ag do thaithí!",
+    "missionTitle": "Ár Misean",
+    "missionText": "Is é ár misean daoine a spreagadh agus a threalmhú chun teachtaireacht ghrá Íosa a scaipeadh na billiúin uair go laethúil ar fud an domhain ionas gur féidir le hÍosa sinn go léir a tharraingt níos gaire dó féin. Dúirt Íosa féin, 'Agus mise, má ardaítear aníos ón talamh mé, tarraingeoidh mé gach duine chugam.' NUAIR A ARDAÍMID - TARRAINGÍONN SÉ!!!",
+    "offerTitle": "An Rud a Thairgimid",
+    "offerText": "Soláthraíonn an aip teistiméireachtaí físe ionas gur féidir linn go léir taithí a fháil ar an tionchar cumhachtach a bhaineann le hAinm Íosa a ardú i nGrá inniu agus gach lá. Feiceann tú, is coinní le Dia gach duine a mbuailimid leo gach lá, ní comhtharlú!"
+  },
+  "howItWorksScreen": {
+    "title": "Conas a Oibríonn Sé",
+    "gettingStartedTitle": "Ag Tosú:",
+    "gettingStartedText": "Tosaigh cuntas ionas gur féidir leat do theistiméireachtaí físe a uaslódáil. Taifead do fhíseán 30 soicind ag insint conas a chuaigh tú i dteagmháil le duine i nGrá le hAinm Íosa agus conas a d'fhreagair siad. Is féidir leat an duine ar chuir tú i dteagmháil leis a áireamh i do fhíseán, má tá siad toilteanach. Cliceáil ar an gcnaipe comhroinnte agus déantar do fhíseán a chomhroinnt leis an domhan!",
+    "sharingSimpleTitle": "Comhroinnt Déanta Simplí:",
+    "sharingSimpleText": "Comhlíonann Comhroinnt Ghrá Íosa gach lá an coimisiún mór, líonann tú féin agus daoine eile le lúcháir na foghlama nó meabhrú a ghrá mór dúinn go léir! Le cúpla sconna, is féidir leat do thaithí phearsanta a thaifeadadh, a uaslódáil agus a chomhroinnt le pobal domhanda daoine ar mhaith leo freisin grá Íosa a chomhroinnt inniu agus gach lá!"
   }
 }

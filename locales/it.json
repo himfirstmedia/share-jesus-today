@@ -222,5 +222,21 @@
     "subtitle3": "Costruisci una comunità di credenti",
     "title4": "CRESCI NELLA FEDE",
     "subtitle4": "Rafforza il tuo rapporto con Dio"
+  },
+  "aboutScreen": {
+    "title": "Chi siamo",
+    "welcomeTitle": "Benvenuti in Condividi Gesù Oggi",
+    "welcomeText": "L'app Condividi Gesù Oggi fornisce testimonianze video su quanto sia facile e divertente condividere l'amore di Gesù con le persone che Dio mette sul tuo cammino ogni giorno. Puoi anche condividere le tue testimonianze video sull'app in modo che altri possano vedere quanto è facile ed essere motivati dalla tua esperienza!",
+    "missionTitle": "La nostra missione",
+    "missionText": "La nostra missione è ispirare e preparare le persone a diffondere il messaggio dell'amore di Gesù miliardi di volte al giorno in tutto il mondo, in modo che Gesù possa attirarci tutti più vicino a Sé. Gesù stesso ha detto: 'E io, quando sarò innalzato dalla terra, attirerò tutti a me'. QUANDO NOI INNALZIAMO - LUI ATTIRA!!!",
+    "offerTitle": "Cosa offriamo",
+    "offerText": "L'app fornisce testimonianze video in modo che tutti possiamo sperimentare il potente impatto di elevare il Nome di Gesù nell'Amore oggi e ogni giorno. Vedi, ogni persona che incontriamo ogni giorno è un appuntamento di Dio, non una coincidenza!"
+  },
+  "howItWorksScreen": {
+    "title": "Come funziona",
+    "gettingStartedTitle": "Per iniziare:",
+    "gettingStartedText": "Crea un account per poter caricare le tue testimonianze video. Registra il tuo video di 30 secondi che racconta come hai toccato qualcuno nell'Amore con il Nome di Gesù e come ha risposto. Puoi anche includere la persona toccata nel tuo video, se è d'accordo. Clicca sul pulsante di condivisione e il tuo video sarà condiviso con il mondo!",
+    "sharingSimpleTitle": "Condivisione semplificata:",
+    "sharingSimpleText": "Condividere l'Amore di Gesù ogni giorno adempie al grande mandato, riempie te e gli altri della gioia di imparare o di ricordare il suo grande amore per tutti noi! Con pochi tocchi, puoi registrare, caricare e condividere le tue esperienze personali con una comunità mondiale di persone che vorrebbero anche condividere l'amore di Gesù oggi e ogni giorno!"
   }
 }
