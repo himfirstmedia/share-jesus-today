@@ -71,7 +71,7 @@
     "failedDeleteVideo": "Impossibile eliminare il video",
     "failedLoadProfile": "Impossibile caricare i dati del profilo",
     "authRequired": "Autenticazione richiesta",
-    "loginToViewVideos": "Per favore, accedi per visualizzare i tuoi video.",
+    "loginToViewVideos": "Per favor, accedi per visualizzare i tuoi video.",
     "login": "Accedi",
     "profileDataMissing": "Dati del profilo mancanti",
     "profileIncomplete": "Le tue informazioni del profilo sono incomplete. Per favore, disconnettiti e accedi di nuovo per ripristinare i tuoi dati.",
@@ -408,4 +408,5 @@
   "dobInFuture": "La data di nascita non può essere nel futuro",
   "invalidDobRange": "Inserisci una data di nascita valida"
 }
+
 }

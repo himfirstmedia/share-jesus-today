@@ -1,11 +1,11 @@
-// app/camera.tsx - Fixed permission handling
+// app/camera.tsx - Fixed permission handling with big countdown
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import VideoCompressionService from '../services/videoCompressionService';
 import { t } from '../utils/i18n';
 
@@ -83,9 +83,15 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingText, setProcessingText] = useState<string>(t('cameraScreen.processing'));
   const [countdown, setCountdown] = useState<number>(30);
+  const [showBigCountdown, setShowBigCountdown] = useState<boolean>(false);
+  const [bigCountdownValue, setBigCountdownValue] = useState<number>(5);
+  
   const cameraRef = useRef<CameraView>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
+  
+  // Animated value for the big countdown animation
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // --- Effects ---
   useEffect(() => {
@@ -112,6 +118,25 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       }
     };
   }, []);
+
+  // Animation effect for big countdown
+  useEffect(() => {
+    if (showBigCountdown) {
+      // Scale animation for each countdown number
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.3,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [bigCountdownValue, showBigCountdown]);
 
   const processVideo = async (originalUri: string) => {
     setIsProcessing(true);
@@ -253,13 +278,24 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
     setRecording(true);
     setCountdown(30);
+    setShowBigCountdown(false);
+    setBigCountdownValue(5);
+    
     intervalRef.current = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) {
+        const newValue = prev - 1;
+        
+        // Show big countdown when 5 seconds or less remain
+        if (newValue <= 5 && newValue > 0) {
+          setShowBigCountdown(true);
+          setBigCountdownValue(newValue);
+        } else if (newValue <= 0) {
+          setShowBigCountdown(false);
           stopRecording();
           return 0;
         }
-        return prev - 1;
+        
+        return newValue;
       });
     }, 1000);
 
@@ -293,6 +329,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       }
       setRecording(false);
       setCountdown(30);
+      setShowBigCountdown(false);
     }
   };
 
@@ -308,6 +345,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       
       setRecording(false);
       setCountdown(30);
+      setShowBigCountdown(false);
     }
   };
 
@@ -372,6 +410,15 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
           setIsCameraReady(true);
         }}
       />
+
+      {/* Big Countdown Overlay */}
+      {showBigCountdown && (
+        <View style={styles.bigCountdownOverlay}>
+          <Animated.View style={[styles.bigCountdownContainer, { transform: [{ scale: scaleAnim }] }]}>
+            <Text style={styles.bigCountdownText}>{bigCountdownValue}</Text>
+          </Animated.View>
+        </View>
+      )}
 
       <View style={styles.controlsContainer}>
         {recording && (
@@ -460,6 +507,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     fontWeight: 'bold',
+  },
+  // Big countdown styles
+  bigCountdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    zIndex: 1000,
+  },
+  bigCountdownContainer: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'white',
+  },
+  bigCountdownText: {
+    fontSize: 80,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
   },
 });
 
