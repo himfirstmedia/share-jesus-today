@@ -203,7 +203,7 @@
   "cameraUpload": {
     "error": "Errore",
     "noVideoProvided": "Nessun video fornito.",
-    "enterVideoTitle": "Per favore, inserisci un titolo per il video.",
+    "enterVideoTitle": "Per favor, inserisci un titolo per il video.",
     "noValidVideoToUpload": "Nessun video valido da caricare.",
     "success": "Successo",
     "videoUploadedSuccessfully": "Video caricato con successo!",
@@ -239,6 +239,15 @@
     "gettingStartedText": "Crea un account per poter caricare le tue testimonianze video. Registra il tuo video di 30 secondi che racconta come hai toccato qualcuno nell'Amore con il Nome di Gesù e come ha risposto. Puoi anche includere la persona toccata nel tuo video, se è d'accordo. Clicca sul pulsante di condivisione e il tuo video sarà condiviso con il mondo!",
     "sharingSimpleTitle": "Condivisione semplificata:",
     "sharingSimpleText": "Condividere l'Amore di Gesù ogni giorno adempie al grande mandato, riempie te e gli altri della gioia di imparare o di ricordare il suo grande amore per tutti noi! Con pochi tocchi, puoi registrare, caricare e condividere le tue esperienze personali con una comunità mondiale di persone che vorrebbero anche condividere l'amore di Gesù oggi e ogni giorno!"
+  },
+  "shareFaithScreen": {
+    "title": "Condividi la tua fede",
+    "whyShareTitle": "Perché condividere l'amore di Gesù:",
+    "whyShareText": "Condividere l'amore di Gesù e mostrare l'effetto positivo che il suo amore ha sugli altri aiuterà a incoraggiare più persone a fare lo stesso. Mentre eleviamo Gesù nell'amore, Egli promette di avvicinare a sé sia noi che gli ascoltatori.",
+    "howToShareTitle": "Come puoi condividere:",
+    "howToShareText": "Registra e carica un video tramite l'app o il sito web e condividilo con i tuoi amici, la tua famiglia e oltre. Bastano pochi clic per fare la differenza nella vita degli altri in tutto il mondo.",
+    "beTheLightTitle": "Sii la luce:",
+    "beTheLightText": "Parlando dell'amore di Gesù (la Luce) agli altri, apri la porta allo Spirito Santo per attirarli a Gesù. Proprio come accendere la luce in una stanza buia, quando fai risplendere l'amore di Gesù, le tenebre devono fuggire!"
   },
   "videoActions": {
     "reportAndBlock": "Segnala e Blocca",

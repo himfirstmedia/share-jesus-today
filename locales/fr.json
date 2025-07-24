@@ -1,4 +1,3 @@
-
 {
   "menu": {
     "title": "Menu",
@@ -240,6 +239,15 @@
     "gettingStartedText": "Créez un compte pour pouvoir télécharger vos témoignages vidéo. Enregistrez votre vidéo de 30 secondes racontant comment vous avez touché quelqu'un avec amour au nom de Jésus et comment il a réagi. Vous pouvez même inclure la personne touchée dans votre vidéo, si elle est d'accord. Cliquez sur le bouton de partage et votre vidéo sera partagée avec le monde entier !",
     "sharingSimpleTitle": "Le partage simplifié :",
     "sharingSimpleText": "Partager l'amour de Jésus chaque jour accomplit la grande commission, vous remplit, vous et les autres, de la joie d'apprendre ou de vous souvenir de son grand amour pour nous tous ! En quelques clics, vous pouvez enregistrer, télécharger et partager vos expériences personnelles avec une communauté mondiale de personnes qui aimeraient aussi partager l'amour de Jésus aujourd'hui et chaque jour !"
+  },
+  "shareFaithScreen": {
+    "title": "Partagez votre foi",
+    "whyShareTitle": "Pourquoi partager l'amour de Jésus :",
+    "whyShareText": "Partager l'amour de Jésus et montrer l'effet positif que son amour a sur les autres aidera à encourager plus de gens à faire de même. Alors que nous élevons Jésus dans l'amour, il promet de nous attirer, nous et les auditeurs, plus près de lui.",
+    "howToShareTitle": "Comment pouvez-vous partager :",
+    "howToShareText": "Enregistrez et téléchargez une vidéo via l'application ou le site Web et partagez-la avec vos amis, votre famille et au-delà. Quelques clics suffisent pour faire une différence dans la vie des autres à travers le monde.",
+    "beTheLightTitle": "Soyez la lumière :",
+    "beTheLightText": "En parlant de l'amour de Jésus (la Lumière) aux autres, vous ouvrez la porte au Saint-Esprit pour les attirer à Jésus. Tout comme allumer la lumière dans une pièce sombre, lorsque vous faites briller l'amour de Jésus, les ténèbres doivent fuir !"
   },
   "videoActions": {
     "reportAndBlock": "Signaler et Bloquer",

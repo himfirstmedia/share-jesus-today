@@ -46,7 +46,7 @@
     "logoutError": "Earráid Logála Amach",
     "logoutErrorMessage": "Tharla earráid gan choinne le linn logála amach.",
     "changePassword": "Athraigh Pasfhocal",
-    "changePasswordMessage": "Gné athraithe pasfhocail ag teacht go luath...",
+    "changePasswordMessage": "Gné athraithe pasfhocal ag teacht go luath...",
     "notifications": "Fógraí",
     "notificationsMessage": "Socruithe fógraí ag teacht go luath...",
     "shareApp": "Roinn Aip",
@@ -239,6 +239,15 @@
     "gettingStartedText": "Tosaigh cuntas ionas gur féidir leat do theistiméireachtaí físe a uaslódáil. Taifead do fhíseán 30 soicind ag insint conas a chuaigh tú i dteagmháil le duine i nGrá le hAinm Íosa agus conas a d'fhreagair siad. Is féidir leat an duine ar chuir tú i dteagmháil leis a áireamh i do fhíseán, má tá siad toilteanach. Cliceáil ar an gcnaipe comhroinnte agus déantar do fhíseán a chomhroinnt leis an domhan!",
     "sharingSimpleTitle": "Comhroinnt Déanta Simplí:",
     "sharingSimpleText": "Comhlíonann Comhroinnt Ghrá Íosa gach lá an coimisiún mór, líonann tú féin agus daoine eile le lúcháir na foghlama nó meabhrú a ghrá mór dúinn go léir! Le cúpla sconna, is féidir leat do thaithí phearsanta a thaifeadadh, a uaslódáil agus a chomhroinnt le pobal domhanda daoine ar mhaith leo freisin grá Íosa a chomhroinnt inniu agus gach lá!"
+  },
+  "shareFaithScreen": {
+    "title": "Roinn Do Chreideamh",
+    "whyShareTitle": "Cén Fáth Grá Íosa a Roinnt:",
+    "whyShareText": "Trí Ghrá Íosa a roinnt agus an tionchar dearfach a bhíonn ag a Ghrá ar dhaoine eile a thaispeáint, cabhrófar le níos mó daoine a spreagadh chun an rud céanna a dhéanamh. Agus muid ag ardú Íosa i nGrá, geallann Sé sinn féin agus na héisteoirí a tharraingt níos gaire dó féin.",
+    "howToShareTitle": "Conas is Féidir Leat a Roinnt:",
+    "howToShareText": "Déan físeán a thaifeadadh agus a uaslódáil tríd an Aip nó an suíomh Gréasáin agus é a roinnt le do chairde, do theaghlach agus níos faide i gcéin. Níl ort ach cúpla cad a tharlaíonn agus déanfaidh tú difríocht i saol daoine eile ar fud an domhain.",
+    "beTheLightTitle": "Bí i do Sholas:",
+    "beTheLightText": "Trí Ghrá Íosa (an Solas) a labhairt le daoine eile, osclaíonn tú an doras don Spiorad Naomh iad a tharraingt chuig Íosa. Díreach mar a chasann tú an solas air i seomra dorcha, nuair a shoilsíonn tú Grá Íosa, caithfidh an Dorchadas teitheadh!"
   },
   "videoActions": {
     "reportAndBlock": "Tuairiscigh & Blocáil",

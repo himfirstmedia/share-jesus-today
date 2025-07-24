@@ -193,7 +193,6 @@
     "recording": "Optager...",
     "retake": "Tag igen",
     "useVideo": "Brug video",
-    
     "alertFailedToStartCamera": "Kunne ikke starte kamera.",
     "alertCameraPermissionDenied": "Kameraadgang nægtet.",
     "alertVideoSaved": "Video gemt succesfuldt!",
@@ -245,6 +244,15 @@
     "gettingStartedText": "Opret en konto, så du kan uploade dine videovidnesbyrd. Optag din 30 sekunders video, der fortæller, hvordan du rørte nogen i kærlighed med Jesu navn, og hvordan de reagerede. Du kan endda inkludere den person, du rørte, i din video, hvis de er enige. Klik på deleknappen, og din video deles med verden!",
     "sharingSimpleTitle": "Deling gjort enkelt:",
     "sharingSimpleText": "At dele Jesu kærlighed hver dag opfylder den store befaling, fylder dig og andre med glæden ved at lære eller blive mindet om hans store kærlighed til os alle! Med blot et par tryk kan du optage, uploade og dele dine personlige oplevelser med et verdensomspændende fællesskab af mennesker, der også gerne vil dele Jesu kærlighed i dag og hver dag!"
+  },
+  "shareFaithScreen": {
+    "title": "Del din tro",
+    "whyShareTitle": "Hvorfor dele Jesu kærlighed:",
+    "whyShareText": "At dele Jesu kærlighed og vise den positive effekt, Hans kærlighed har på andre, vil hjælpe med at opmuntre flere mennesker til at gøre det samme. Når vi løfter Jesus i kærlighed, lover Han at drage både os og lytterne tættere på sig selv.",
+    "howToShareTitle": "Hvordan kan du dele:",
+    "howToShareText": "Optag og upload en video via appen eller hjemmesiden og del den med dine venner, familie og ud over. Blot et par klik, og du vil gøre en forskel i andres liv rundt om i verden.",
+    "beTheLightTitle": "Vær lyset:",
+    "beTheLightText": "Ved at tale om Jesu kærlighed (lyset) til andre åbner du døren for, at Helligånden kan drage dem til Jesus. Ligesom at tænde lyset i et mørkt rum, når du skinner Jesu kærlighed, må mørket flygte!"
   },
   "videoActions": {
     "reportAndBlock": "Rapportér & Bloker",

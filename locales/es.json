@@ -240,6 +240,15 @@
     "sharingSimpleTitle": "Compartir es simple:",
     "sharingSimpleText": "¡Compartir el amor de Jesús todos los días cumple la gran comisión, te llena a ti y a los demás de la alegría de aprender o de que se les recuerde su gran amor por todos nosotros! Con solo unos pocos toques, puedes grabar, subir y compartir tus experiencias personales con una comunidad mundial de personas a las que también les gustaría compartir el amor de Jesús hoy y todos los días."
   },
+  "shareFaithScreen": {
+    "title": "Comparte tu fe",
+    "whyShareTitle": "Por qué compartir el amor de Jesús:",
+    "whyShareText": "Compartir el amor de Jesús y mostrar el efecto positivo que su amor tiene en los demás ayudará a animar a más personas a hacer lo mismo. A medida que levantamos a Jesús en amor, Él promete atraernos tanto a nosotros como a los oyentes más cerca de sí mismo.",
+    "howToShareTitle": "Cómo puedes compartir:",
+    "howToShareText": "Graba y sube un video a través de la aplicación o el sitio web y compártelo con tus amigos, familiares y más allá. Solo unos pocos clics y marcarás la diferencia en la vida de otros en todo el mundo.",
+    "beTheLightTitle": "Sé la luz:",
+    "beTheLightText": "Al hablar del amor de Jesús (la Luz) a los demás, abres la puerta para que el Espíritu Santo los atraiga a Jesús. Al igual que encender la luz en una habitación oscura, cuando brillas el amor de Jesús, ¡la oscuridad debe huir!"
+  },
   "videoActions": {
     "reportAndBlock": "Reportar y Bloquear",
     "blockThisVideo": "Bloquear este video",

@@ -13,7 +13,8 @@ import { t } from '../../utils/i18n';
 
 export default function ShareFaithScreen() {
   const handleBackPress = () => {
-    router.back();
+    // router.back();
+    router.push('/(tabs)/menu')
   };
 
   return (

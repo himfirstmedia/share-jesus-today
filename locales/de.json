@@ -1,4 +1,3 @@
-
 {
   "menu": {
     "title": "Menü",
@@ -245,6 +244,15 @@
     "gettingStartedText": "Erstellen Sie ein Konto, damit Sie Ihre Video-Zeugnisse hochladen können. Nehmen Sie Ihr 30-Sekunden-Video auf, in dem Sie erzählen, wie Sie jemanden in Liebe mit dem Namen Jesu berührt haben und wie er reagiert hat. Sie können die berührte Person sogar in Ihr Video aufnehmen, wenn sie einverstanden ist. Klicken Sie auf die Schaltfläche 'Teilen' und Ihr Video wird mit der Welt geteilt!",
     "sharingSimpleTitle": "Teilen leicht gemacht:",
     "sharingSimpleText": "Die Liebe Jesu jeden Tag zu teilen, erfüllt den Missionsbefehl und erfüllt Sie und andere mit der Freude, seine große Liebe für uns alle zu lernen oder daran erinnert zu werden! Mit nur wenigen Fingertipps können Sie Ihre persönlichen Erfahrungen aufnehmen, hochladen und mit einer weltweiten Gemeinschaft von Menschen teilen, die ebenfalls die Liebe Jesu heute und jeden Tag teilen möchten!"
+  },
+  "shareFaithScreen": {
+    "title": "Teile deinen Glauben",
+    "whyShareTitle": "Warum die Liebe Jesu teilen:",
+    "whyShareText": "Die Liebe Jesu zu teilen und die positive Wirkung zu zeigen, die seine Liebe auf andere hat, wird dazu beitragen, mehr Menschen zu ermutigen, dasselbe zu tun. Wenn wir Jesus in Liebe erheben, verspricht er, uns und die Zuhörer näher an sich zu ziehen.",
+    "howToShareTitle": "Wie kannst du teilen:",
+    "howToShareText": "Nehmen Sie ein Video über die App oder die Website auf, laden Sie es hoch und teilen Sie es mit Ihren Freunden, Ihrer Familie und darüber hinaus. Nur ein paar Klicks und Sie werden das Leben anderer auf der ganzen Welt verändern.",
+    "beTheLightTitle": "Sei das Licht:",
+    "beTheLightText": "Indem Sie anderen von der Liebe Jesu (dem Licht) erzählen, öffnen Sie dem Heiligen Geist die Tür, sie zu Jesus zu ziehen. Genau wie das Einschalten des Lichts in einem dunklen Raum, wenn Sie die Liebe Jesu leuchten lassen, muss die Dunkelheit fliehen!"
   },
   "videoActions": {
     "reportAndBlock": "Melden & Blockieren",

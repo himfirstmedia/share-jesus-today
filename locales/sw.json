@@ -119,7 +119,7 @@
   "post": {
     "videoOptions": "Chaguzi za Video",
     "maxVideoLength": "Video zote zilizopakiwa zinaweza kuwa na urefu wa juu wa sekunde 30.",
-    "trimVideoOption": "Ikiwa video ni ndefu utapewa fursa ya kuipunguza hadi sekunde 30.",
+    "trimVideoOption": "Ikiwa video ni ndefu utapewa fursa ya kuiunguza hadi sekunde 30.",
     "uploadVideo": "Pakia Video",
     "recordVideo": "Rekodi Video"
   },
@@ -142,7 +142,7 @@
   "postScreen": {
     "title": "Chaguzi za Video",
     "notice1": "Video zote zilizopakiwa zinaweza kuwa na urefu wa juu wa sekunde 30.",
-    "notice2": "Ikiwa video ni ndefu utapewa fursa ya kuipunguza hadi sekunde 30.",
+    "notice2": "Ikiwa video ni ndefu utapewa fursa ya kuiunguza hadi sekunde 30.",
     "uploadButton": "Pakia Video",
     "recordButton": "Rekodi Video"
   },
@@ -239,6 +239,15 @@
     "gettingStartedText": "Fungua akaunti ili uweze kupakia shuhuda zako za video. Rekodi video yako ya sekunde 30 ukielezea jinsi ulivyomgusa mtu kwa Upendo kwa Jina la Yesu na jinsi walivyoitikia. Unaweza hata kumjumuisha mtu uliyemgusa kwenye video yako, ikiwa atakubali. Bonyeza kitufe cha kushiriki na video yako itashirikiwa na ulimwengu!",
     "sharingSimpleTitle": "Kushiriki Kumerahisishwa:",
     "sharingSimpleText": "Kushiriki Upendo wa Yesu kila siku kunatimiza agizo kuu, kunawajaza ninyi na wengine furaha ya kujifunza au kukumbushwa juu ya upendo wake mkuu kwetu sote! Kwa kugonga mara chache tu, unaweza kurekodi, kupakia na kushiriki uzoefu wako wa kibinafsi na jamii ya ulimwengu ya watu ambao pia wangependa kushiriki upendo wa Yesu leo na kila siku!"
+  },
+  "shareFaithScreen": {
+    "title": "Shiriki Imani Yako",
+    "whyShareTitle": "Kwa nini Shiriki Upendo wa Yesu:",
+    "whyShareText": "Kushiriki Upendo wa Yesu na kuonyesha athari chanya ambayo Upendo Wake unayo kwa wengine kutasaidia kuwatia moyo watu wengi zaidi kufanya vivyo hivyo. Tunapomwinua Yesu kwa Upendo, Anaahidi kutuvuta sisi na wasikilizaji karibu naye.",
+    "howToShareTitle": "Unawezaje Kushiriki:",
+    "howToShareText": "Rekodi na upakie video kupitia Programu au tovuti na uishiriki na marafiki, familia yako na kwingineko. Mibofyo michache tu na utafanya mabadiliko katika maisha ya wengine ulimwenguni kote.",
+    "beTheLightTitle": "Kuwa Nuru:",
+    "beTheLightText": "Kwa kusema Upendo wa Yesu (Nuru) kwa wengine unafungua mlango kwa Roho Mtakatifu kuwavuta kwa Yesu. Kama vile kuwasha taa katika chumba chenye giza, unapoangaza Upendo wa Yesu, Giza lazima likimbie!"
   },
   "videoActions": {
     "reportAndBlock": "Ripoti & Zuia",
