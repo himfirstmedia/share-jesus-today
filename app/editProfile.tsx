@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { profileService } from '../services/profileService';
+import i18n from '../utils/i18n';
 
 interface UserProfileForm {
   id: string;
@@ -101,12 +102,12 @@ export default function EditProfileScreen() {
           createdTimestamp: userData.createdtimestamp || userData.createdTimestamp || '',
         });
       } else {
-        Alert.alert('Error', 'Could not load profile data. Please try logging in again.');
+        Alert.alert(i18n.t('editProfileScreen.errorTitle'), i18n.t('editProfileScreen.profileNotFoundMessage'));
         router.canGoBack() ? router.back() : router.replace('/(tabs)');
       }
     } catch (error) {
       console.error('Failed to load profile data:', error);
-      Alert.alert('Error', 'Failed to load profile data. Please try again.');
+      Alert.alert(i18n.t('editProfileScreen.errorTitle'), i18n.t('editProfileScreen.errorMessage'));
       router.canGoBack() ? router.back() : router.replace('/(tabs)');
     } finally {
       setLoading(false);
@@ -134,11 +135,11 @@ export default function EditProfileScreen() {
   };
 
   const formatDateForDisplay = (dateString: string): string => {
-    if (!dateString) return 'Select date of birth';
+    if (!dateString) return i18n.t('editProfileScreen.dobPlaceholder');
     
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Select date of birth';
+      if (isNaN(date.getTime())) return i18n.t('editProfileScreen.dobPlaceholder');
       
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -146,7 +147,7 @@ export default function EditProfileScreen() {
         day: 'numeric'
       });
     } catch {
-      return 'Select date of birth';
+      return i18n.t('editProfileScreen.dobPlaceholder');
     }
   };
 
@@ -154,17 +155,17 @@ export default function EditProfileScreen() {
     const newErrors: {[key: string]: string} = {};
 
     if (!profile?.email?.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = i18n.t('editProfileScreen.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(profile.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = i18n.t('editProfileScreen.invalidEmail');
     }
 
     if (!profile?.firstName?.trim()) {
-      newErrors.firstName = 'First name is required';
+      newErrors.firstName = i18n.t('editProfileScreen.firstNameRequired');
     }
 
     if (!profile?.lastName?.trim()) {
-      newErrors.lastName = 'Last name is required';
+      newErrors.lastName = i18n.t('editProfileScreen.lastNameRequired');
     }
 
     // Validate date of birth
@@ -173,11 +174,11 @@ export default function EditProfileScreen() {
       const today = new Date();
       
       if (isNaN(dobDate.getTime())) {
-        newErrors.dob = 'Please select a valid date';
+        newErrors.dob = i18n.t('editProfileScreen.invalidDob');
       } else if (dobDate > today) {
-        newErrors.dob = 'Date of birth cannot be in the future';
+        newErrors.dob = i18n.t('editProfileScreen.dobInFuture');
       } else if (today.getFullYear() - dobDate.getFullYear() > 120) {
-        newErrors.dob = 'Please enter a valid date of birth';
+        newErrors.dob = i18n.t('editProfileScreen.invalidDobRange');
       }
     }
 
@@ -262,12 +263,12 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!profile) {
-      Alert.alert('Error', 'No profile data to save.');
+      Alert.alert(i18n.t('editProfileScreen.errorTitle'), i18n.t('editProfileScreen.noProfileError'));
       return;
     }
 
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors before saving.');
+      Alert.alert(i18n.t('editProfileScreen.validationErrorTitle'), i18n.t('editProfileScreen.validationErrorMessage'));
       return;
     }
 
@@ -319,8 +320,8 @@ export default function EditProfileScreen() {
       
       if (success) {
         Alert.alert(
-          'Success', 
-          'Profile updated successfully.',
+          i18n.t('editProfileScreen.successTitle'), 
+          i18n.t('editProfileScreen.successMessage'),
           [
             {
               text: 'OK',
@@ -329,11 +330,11 @@ export default function EditProfileScreen() {
           ]
         );
       } else {
-        Alert.alert('Error', 'Failed to update profile. Please try again.');
+        Alert.alert(i18n.t('editProfileScreen.errorTitle'), i18n.t('editProfileScreen.errorMessage'));
       }
     } catch (error) {
       console.error('Failed to update profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      Alert.alert(i18n.t('editProfileScreen.errorTitle'), i18n.t('editProfileScreen.errorMessage'));
     } finally {
       setSaving(false);
     }
@@ -378,7 +379,7 @@ export default function EditProfileScreen() {
 
   const renderDatePicker = () => (
     <View style={styles.inputGroup}>
-      <Text style={styles.label}>Date of Birth</Text>
+      <Text style={styles.label}>{i18n.t('editProfileScreen.dobLabel')}</Text>
       <TouchableOpacity
         style={[
           styles.datePickerButton,
@@ -430,12 +431,12 @@ export default function EditProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} disabled={saving}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={styles.headerTitle}>{i18n.t('editProfileScreen.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3260AD" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>{i18n.t('editProfileScreen.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -448,20 +449,20 @@ export default function EditProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} disabled={saving}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={styles.headerTitle}>{i18n.t('editProfileScreen.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-          <Text style={styles.errorTitle}>Profile Not Found</Text>
+          <Text style={styles.errorTitle}>{i18n.t('editProfileScreen.profileNotFound')}</Text>
           <Text style={styles.errorMessage}>
-            Could not load profile data. Please try logging in again.
+            {i18n.t('editProfileScreen.profileNotFoundMessage')}
           </Text>
           <TouchableOpacity 
             style={styles.retryButton}
             onPress={loadProfileData}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{i18n.t('editProfileScreen.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -478,7 +479,7 @@ export default function EditProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} disabled={saving}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={styles.headerTitle}>{i18n.t('editProfileScreen.title')}</Text>
           <TouchableOpacity onPress={handleSave} disabled={saving}>
             {saving ? (
               <ActivityIndicator size="small" color="#3260AD" />
@@ -496,20 +497,20 @@ export default function EditProfileScreen() {
           <View style={styles.form}>
             {/* Required Fields Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Required Information</Text>
+              <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.requiredInfo')}</Text>
               
-              {renderInputField('Email', 'email', 'Enter email address', {
+              {renderInputField(i18n.t('editProfileScreen.emailLabel'), 'email', i18n.t('editProfileScreen.emailPlaceholder'), {
                 required: true,
                 keyboardType: 'email-address',
                 autoCapitalize: 'none'
               })}
 
-              {renderInputField('First Name', 'firstName', 'Enter first name', {
+              {renderInputField(i18n.t('editProfileScreen.firstNameLabel'), 'firstName', i18n.t('editProfileScreen.firstNamePlaceholder'), {
                 required: true,
                 autoCapitalize: 'words'
               })}
 
-              {renderInputField('Last Name', 'lastName', 'Enter last name', {
+              {renderInputField(i18n.t('editProfileScreen.lastNameLabel'), 'lastName', i18n.t('editProfileScreen.lastNamePlaceholder'), {
                 required: true,
                 autoCapitalize: 'words'
               })}
@@ -517,64 +518,64 @@ export default function EditProfileScreen() {
 
             {/* Personal Information Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
+              <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.personalInfo')}</Text>
               
-              {renderInputField('Gender', 'gender', 'e.g., Male, Female, Other')}
+              {renderInputField(i18n.t('editProfileScreen.genderLabel'), 'gender', i18n.t('editProfileScreen.genderPlaceholder'))}
 
               {renderDatePicker()}
 
-              {renderInputField('Phone Number', 'phone', 'Enter phone number', {
+              {renderInputField(i18n.t('editProfileScreen.phoneLabel'), 'phone', i18n.t('editProfileScreen.phonePlaceholder'), {
                 keyboardType: 'phone-pad'
               })}
 
-              {renderInputField('Biography', 'biography', 'Tell us a bit about yourself...', {
+              {renderInputField(i18n.t('editProfileScreen.bioLabel'), 'biography', i18n.t('editProfileScreen.bioPlaceholder'), {
                 multiline: true
               })}
             </View>
 
             {/* Location Information Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Location Information</Text>
+              <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.locationInfo')}</Text>
               
-              {renderInputField('Country', 'country', 'Enter country', {
+              {renderInputField(i18n.t('editProfileScreen.countryLabel'), 'country', i18n.t('editProfileScreen.countryPlaceholder'), {
                 autoCapitalize: 'words'
               })}
 
-              {renderInputField('State/Province', 'state', 'Enter state or province', {
+              {renderInputField(i18n.t('editProfileScreen.stateLabel'), 'state', i18n.t('editProfileScreen.statePlaceholder'), {
                 autoCapitalize: 'words'
               })}
 
-              {renderInputField('City', 'city', 'Enter city', {
+              {renderInputField(i18n.t('editProfileScreen.cityLabel'), 'city', i18n.t('editProfileScreen.cityPlaceholder'), {
                 autoCapitalize: 'words'
               })}
 
-              {renderInputField('Zip/Postal Code', 'zipCode', 'Enter zip or postal code', {
+              {renderInputField(i18n.t('editProfileScreen.zipLabel'), 'zipCode', i18n.t('editProfileScreen.zipPlaceholder'), {
                 keyboardType: 'numeric'
               })}
 
-              {renderInputField('Address', 'address', 'Enter full address', {
+              {renderInputField(i18n.t('editProfileScreen.addressLabel'), 'address', i18n.t('editProfileScreen.addressPlaceholder'), {
                 multiline: true
               })}
             </View>
 
             {/* Church Information Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Church Information</Text>
+              <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.churchInfo')}</Text>
               
-              {renderInputField('Church', 'church', 'Enter church name (optional)', {
+              {renderInputField(i18n.t('editProfileScreen.churchLabel'), 'church', i18n.t('editProfileScreen.churchPlaceholder'), {
                 autoCapitalize: 'words'
               })}
 
-              {renderInputField('Church From', 'churchFrom', 'e.g., Yes, No')}
+              {renderInputField(i18n.t('editProfileScreen.churchFromLabel'), 'churchFrom', i18n.t('editProfileScreen.churchFromPlaceholder'))}
             </View>
 
             {/* Additional Information Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Additional Information</Text>
+              <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.additionalInfo')}</Text>
               
-              {renderInputField('How Did You Know About Us?', 'howDidYouKnowAboutUs', 'e.g., Radio, Google, Facebook, etc.')}
+              {renderInputField(i18n.t('editProfileScreen.howDidYouKnowLabel'), 'howDidYouKnowAboutUs', i18n.t('editProfileScreen.howDidYouKnowPlaceholder'))}
 
-              {renderInputField('Other Specify', 'otherSpecify', 'Please specify if you selected "Other"')}
+              {renderInputField(i18n.t('editProfileScreen.otherSpecifyLabel'), 'otherSpecify', i18n.t('editProfileScreen.otherSpecifyPlaceholder'))}
             </View>
 
             {/* Save Button */}
@@ -586,7 +587,7 @@ export default function EditProfileScreen() {
               {saving ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Text style={styles.saveButtonText}>{i18n.t('editProfileScreen.saveButton')}</Text>
               )}
             </TouchableOpacity>
           </View>
