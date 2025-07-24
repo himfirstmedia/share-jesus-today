@@ -412,7 +412,7 @@ const WatchVideosScreen = () => {
       
       <TextInput
         style={styles.searchInput}
-        placeholder="Search videos ..."
+        placeholder={t('searchScreen.searchPlaceholder')}
         placeholderTextColor="#666"
         value={searchTerm}
         onChangeText={handleSearch}

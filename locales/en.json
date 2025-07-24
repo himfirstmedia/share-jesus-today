@@ -358,7 +358,6 @@
     "swipeInstruction": "Swipe left/right to view next or previous video",
     "previous": "← Previous",
     "next": "Next →",
-    "shareVideoMessage": "Check out this video: 
-{{videoUrl}}"
+    "shareVideoMessage": "Check out this video: {{videoUrl}}"
   }
 }
