@@ -36,7 +36,13 @@
     "myVideos": "My Videos",
     "noVideos": "No videos available for this profile.",
     "notSet": "Not Set",
-    "email": "Email"
+    "email": "Email",
+    "readLess": "Read less",
+    "readMore": "Read more",
+    "untitledVideo": "Untitled Video",
+    "loadingProfile": "Loading profile...",
+    "failedToLoadProfile": "Failed to load profile",
+    "retry": "Retry"
   },
   "alerts": {
     "confirmLogout": "Confirm Logout",

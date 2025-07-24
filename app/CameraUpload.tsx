@@ -94,9 +94,12 @@ const CameraUpload: React.FC = () => {
 
       const response = await videoApiService.uploadVideo(videoFile, metadata);
       if (response.success) {
-        Alert.alert(t('cameraUpload.success'), t('cameraUpload.videoUploadedSuccessfully'), [
-          { text: t('common.ok'), onPress: () => router.replace('/watchVideos') },
-        ]);
+        // Alert.alert(t('cameraUpload.success'), t('cameraUpload.videoUploadedSuccessfully'), [
+        //   { text: t('common.ok'), onPress: () => router.replace('/watchVideos') 
+
+        //   },
+        // ]);
+        router.replace('/watchVideos')
       } else {
         Alert.alert(t('cameraUpload.error'), response.error || t('cameraUpload.failedToUploadVideo'));
       }

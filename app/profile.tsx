@@ -1,4 +1,4 @@
-// app/profile.tsx - Updated Profile Screen with Blue Header and Conditional Details
+// app/profile.tsx - Updated Profile Screen with Translation Placeholders
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoModal } from '../components/video/VideoModal';
 import { profileService } from '../services/profileService';
 import AuthManager from '../utils/authManager';
+import { t } from '../utils/i18n';
 import ProfilePicturePage from './ProfilePicturePage';
 
 const { width } = Dimensions.get('window');
@@ -86,7 +87,7 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      Alert.alert('Error', 'Failed to load profile data');
+      Alert.alert(t('alerts.error'), t('alerts.failedLoadProfile'));
     } finally {
       setLoading(false);
     }
@@ -111,11 +112,11 @@ export default function ProfileScreen() {
 
       if (!authToken && !jwtToken) {
         Alert.alert(
-          'Authentication Required',
-          'Please login to view your videos.',
+          t('alerts.authRequired'),
+          t('alerts.loginToViewVideos'),
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Login', onPress: () => router.replace('/login') }
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('alerts.login'), onPress: () => router.replace('/login') }
           ]
         );
         return;
@@ -171,12 +172,12 @@ export default function ProfileScreen() {
 
       if (!userId && !email) {
         Alert.alert(
-          'Profile Data Missing',
-          'Your profile information is incomplete. Please logout and login again to restore your data.',
+          t('alerts.profileDataMissing'),
+          t('alerts.profileIncomplete'),
           [
-            { text: 'Cancel', style: 'cancel' },
+            { text: t('common.cancel'), style: 'cancel' },
             {
-              text: 'Logout & Login',
+              text: t('alerts.logoutLogin'),
               onPress: async () => {
                 await AsyncStorage.clear();
                 await AuthManager.clearAuthToken();
@@ -187,11 +188,11 @@ export default function ProfileScreen() {
         );
       } else {
         Alert.alert(
-          'Unable to Load Videos',
-          'There was a problem loading your videos. Please try refreshing or check your internet connection.',
+          t('alerts.unableToLoadVideos'),
+          t('alerts.videoLoadProblem'),
           [
-            { text: 'OK', style: 'default' },
-            { text: 'Refresh', onPress: () => loadUserVideos() }
+            { text: t('common.ok'), style: 'default' },
+            { text: t('common.refresh'), onPress: () => loadUserVideos() }
           ]
         );
       }
@@ -201,9 +202,9 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error('❌ Critical error in loadUserVideos:', error);
       Alert.alert(
-        'Error',
-        'An unexpected error occurred. Please try again.',
-        [{ text: 'OK' }]
+        t('common.error'),
+        t('alerts.unexpectedError'),
+        [{ text: t('common.ok') }]
       );
       setVideos([]);
     } finally {
@@ -264,7 +265,7 @@ export default function ProfileScreen() {
 
   // EVENT HANDLERS
   const formatDate = (dateString: string): string => {
-    if (!dateString) return 'Not Set';
+    if (!dateString) return t('common.notSet');
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
@@ -273,7 +274,7 @@ export default function ProfileScreen() {
         year: 'numeric'
       });
     } catch {
-      return 'Invalid date';
+      return t('common.invalidDate');
     }
   };
 
@@ -282,8 +283,10 @@ export default function ProfileScreen() {
 
     try {
       await Share.share({
-        message: `Check out my profile on Share Jesus Today: https://sharejesustoday.org/profile/?sh=${profile.id}`,
-        title: 'Share Profile'
+        message: t('profile.shareMessage', { 
+          profileUrl: `https://sharejesustoday.org/profile/?sh=${profile.id}` 
+        }),
+        title: t('profile.shareTitle')
       });
     } catch (error) {
       console.error('Error sharing profile:', error);
@@ -292,20 +295,20 @@ export default function ProfileScreen() {
 
   const handleDeleteVideo = (videoId: string) => {
     Alert.alert(
-      'Confirm Delete',
-      'Are you sure you want to delete this video?',
+      t('video.confirmDelete'),
+      t('video.deleteConfirmation'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await profileService.deleteVideo(videoId);
               loadUserVideos();
-              Alert.alert('Success', 'Video deleted successfully');
+              Alert.alert(t('common.success'), t('video.deleteSuccess'));
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete video');
+              Alert.alert(t('common.error'), t('video.deleteError'));
             }
           }
         }
@@ -377,12 +380,12 @@ export default function ProfileScreen() {
   };
 
   // Helper function to render profile detail item only if value exists
-  const renderDetailItem = (label: string, value?: string) => {
+  const renderDetailItem = (labelKey: string, value?: string) => {
     if (!value || value.trim() === '') return null;
     
     return (
       <View style={styles.detailItem}>
-        <Text style={styles.detailLabel}>{label}:</Text>
+        <Text style={styles.detailLabel}>{t(labelKey)}:</Text>
         <Text style={styles.detailValue}>{value}</Text>
       </View>
     );
@@ -407,7 +410,7 @@ export default function ProfileScreen() {
 
       <View style={styles.videoInfo}>
         <Text style={styles.videoTitle} numberOfLines={2}>
-          {item.title || 'Untitled Video'}
+          {item.title || t('video.untitled')}
         </Text>
         <Text style={styles.videoDate}>
           {formatDate(item.createdTimestamp)}
@@ -431,12 +434,12 @@ export default function ProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3260AD" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>{t('profile.loadingProfile')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -450,13 +453,13 @@ export default function ProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Failed to load profile</Text>
+          <Text style={styles.errorText}>{t('profile.failedToLoad')}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -471,7 +474,7 @@ export default function ProfileScreen() {
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         <TouchableOpacity onPress={handleShareProfile}>
           <Ionicons name="share-outline" size={24} color="#fff" />
         </TouchableOpacity>
@@ -532,7 +535,7 @@ export default function ProfileScreen() {
                   style={styles.readMoreButton}
                 >
                   <Text style={styles.readMoreText}>
-                    {isBioExpanded ? 'Read less' : 'Read more'}
+                    {isBioExpanded ? t('profile.readLess') : t('profile.readMore')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -541,32 +544,32 @@ export default function ProfileScreen() {
 
           {profile.churchFrom === 'yes' && (
             <View style={styles.emailContainer}>
-              <Text style={styles.profileEmail}>Email: {profile.email}</Text>
+              <Text style={styles.profileEmail}>{t('profile.email')}: {profile.email}</Text>
             </View>
           )}
 
           <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
-            <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+            <Text style={styles.editProfileButtonText}>{t('profile.editProfile')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Profile Details - Only render if details exist */}
         {hasProfileDetails() && (
           <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle}>Profile Information</Text>
+            <Text style={styles.sectionTitle}>{t('profile.profileInformation')}</Text>
 
-            {renderDetailItem('Gender', profile.gender)}
-            {renderDetailItem('Country', profile.country)}
-            {renderDetailItem('State', profile.state)}
-            {renderDetailItem('City', profile.city)}
-            {renderDetailItem('Zipcode', profile.zipcode)}
-            {renderDetailItem('Church', profile.church)}
+            {renderDetailItem('profile.gender', profile.gender)}
+            {renderDetailItem('profile.country', profile.country)}
+            {renderDetailItem('profile.state', profile.state)}
+            {renderDetailItem('profile.city', profile.city)}
+            {renderDetailItem('profile.zipcode', profile.zipcode)}
+            {renderDetailItem('profile.church', profile.church)}
           </View>
         )}
 
         {/* Videos Section */}
         <View style={styles.videosSection}>
-          <Text style={styles.sectionTitle}>My Videos</Text>
+          <Text style={styles.sectionTitle}>{t('profile.myVideos')}</Text>
           {videosLoading ? (
             <ActivityIndicator size="large" color="#3260AD" style={styles.videosLoading} />
           ) : videos.length > 0 ? (
@@ -580,7 +583,7 @@ export default function ProfileScreen() {
             />
           ) : (
             <View style={styles.noVideosContainer}>
-              <Text style={styles.noVideosText}>No videos available for this profile.</Text>
+              <Text style={styles.noVideosText}>{t('profile.noVideos')}</Text>
             </View>
           )}
         </View>

@@ -88,10 +88,8 @@ export default function PostVideoScreen() {
       case 'upload':
         return (
           <VideoUploadInterface
-            initialVideo={videoToUpload} // Pass recorded video if available
-            onCancel={videoToUpload ? handleRecordAgain : handleUploadCancelled} // If from recording, allow retake
+            onCancel={handleUploadCancelled}
             onComplete={handleUploadComplete}
-            isFromRecording={!!videoToUpload} // Indicate that the video came from recording if videoToUpload is present
           />
         );
       case 'record':

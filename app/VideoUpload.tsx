@@ -62,15 +62,19 @@ interface VideoFile {
 }
 
 interface VideoUploadProps {
+  initialVideo?: VideoFile;
   onCancel?: () => void;
   onComplete: (videoData?: any) => void;
+  isFromRecording?: boolean; // Add this prop
 }
 
-const videoUploadInterface: React.FC<VideoUploadProps> = ({
+const VideoUploadInterface: React.FC<VideoUploadProps> = ({
+  initialVideo,
   onCancel,
-  onComplete
+  onComplete,
+  isFromRecording, // Use the new prop
 }) => {
-  const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(initialVideo || null);
   const [videoTitle, setVideoTitle] = useState('');
   const [showTrimmer, setShowTrimmer] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -84,6 +88,12 @@ const videoUploadInterface: React.FC<VideoUploadProps> = ({
     player.loop = false;
     player.muted = false;
   });
+
+  useEffect(() => {
+    if (initialVideo) {
+      setSelectedVideo(initialVideo);
+    }
+  }, [initialVideo]);
 
   useEffect(() => {
     if (!player || !selectedVideo || showTrimmer) return;
@@ -130,7 +140,6 @@ const videoUploadInterface: React.FC<VideoUploadProps> = ({
           mimeType: asset.mimeType,
         };
 
-        // Reset trimming state for new video
         setHasBeenTrimmed(false);
         setOriginalDuration(0);
         setVideoLoaded(false);
@@ -247,15 +256,17 @@ const videoUploadInterface: React.FC<VideoUploadProps> = ({
         </View>
       )}
 
-      <TouchableOpacity
-        style={styles.selectVideoButton}
-        onPress={handleSelectVideo}
-        disabled={isLoading}
-      >
-        <Text style={styles.selectVideoText}>
-          {selectedVideo ? t('videoUploadInterface.selectDifferentVideoButton') : t('videoUploadInterface.selectVideoButton')}
-        </Text>
-      </TouchableOpacity>
+      {!isFromRecording && (
+        <TouchableOpacity
+          style={styles.selectVideoButton}
+          onPress={handleSelectVideo}
+          disabled={isLoading}
+        >
+          <Text style={styles.selectVideoText}>
+            {selectedVideo ? t('videoUploadInterface.selectDifferentVideoButton') : t('videoUploadInterface.selectVideoButton')}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {selectedVideo && (
         <>
@@ -277,7 +288,6 @@ const videoUploadInterface: React.FC<VideoUploadProps> = ({
             )}
           </View>
 
-          {/* Conditionally render title input and upload button sections */}
           {!showTrimmer && !needsTrimming && (
             <>
               <View style={styles.inputSection}>
@@ -320,6 +330,7 @@ const videoUploadInterface: React.FC<VideoUploadProps> = ({
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -451,4 +462,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default videoUploadInterface;
+export default VideoUploadInterface;

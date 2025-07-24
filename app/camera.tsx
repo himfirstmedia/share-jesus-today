@@ -1,3 +1,4 @@
+// app/camera.tsx - Fixed permission handling
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
@@ -5,9 +6,8 @@ import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { t } from '../utils/i18n'; // Import t
-// Import the actual VideoCompressionService
 import VideoCompressionService from '../services/videoCompressionService';
+import { t } from '../utils/i18n';
 
 // Define interfaces for better type safety
 interface RecordingData {
@@ -23,8 +23,6 @@ interface CameraRecordProps {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // --- Utility Functions ---
-
-// Initializes the directory where videos will be stored.
 const initializeVideoFilesDirectory = async () => {
   try {
     const videoFilesDirectory = `${FileSystem.documentDirectory}videofiles/`;
@@ -37,8 +35,7 @@ const initializeVideoFilesDirectory = async () => {
   }
 };
 
-// Deletes video files older than a specified age (default is 7 days).
-const cleanupOldVideos = async (maxAge = 7 * 24 * 60 * 60 * 1000) => { // 7 days
+const cleanupOldVideos = async (maxAge = 7 * 24 * 60 * 60 * 1000) => {
   const videoFilesDirectory = `${FileSystem.documentDirectory}videofiles/`;
   try {
     console.log('LOG: Starting cleanup of old videos...');
@@ -64,7 +61,6 @@ const cleanupOldVideos = async (maxAge = 7 * 24 * 60 * 60 * 1000) => { // 7 days
   }
 };
 
-// Checks available disk space.
 const checkStorageSpace = async () => {
   try {
     const freeDiskStorage = await FileSystem.getFreeDiskStorageAsync();
@@ -77,25 +73,26 @@ const checkStorageSpace = async () => {
 };
 
 const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCancel }) => {
+  // CORRECT PERMISSION HOOKS - Use only MediaLibrary, not ImagePicker
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
-  const [mediaLibraryPermission, requestMediaLibraryPermission] = MediaLibrary.usePermissions();
+  const [mediaLibraryPermission, requestMediaLibraryPermission] = MediaLibrary.usePermissions({ writeOnly: true });
+  
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [recording, setRecording] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingText, setProcessingText] = useState<string>(t('cameraScreen.processing'));
   const [countdown, setCountdown] = useState<number>(30);
   const cameraRef = useRef<CameraView>(null);
-  // Fix: Use ReturnType<typeof setInterval> for cross-platform compatibility
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
 
   // --- Effects ---
-
   useEffect(() => {
     (async () => {
       try {
         console.log('LOG: Requesting permissions...');
+        // FIXED: Only request the permissions we actually need for recording
         await requestCameraPermission();
         await requestMicrophonePermission();
         await requestMediaLibraryPermission();
@@ -106,7 +103,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
         console.error('ERROR: Initialization failed:', error);
       }
     })();
-  }, [requestCameraPermission, requestMicrophonePermission, requestMediaLibraryPermission]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -116,7 +113,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     };
   }, []);
 
-  // --- Recording Logic ---
   const processVideo = async (originalUri: string) => {
     setIsProcessing(true);
     let tempUri: string | null = null;
@@ -156,25 +152,23 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       try {
         const compressedUri = await VideoCompressionService.createCompressedCopy(tempUri);
         
-        // Handle the case where compression returns null
         if (compressedUri === null) {
           console.warn('WARN: Video compression returned null, using original');
           finalUri = tempUri;
-          tempUri = null; // Don't delete since we're using it
+          tempUri = null;
         } else {
           finalUri = compressedUri;
           console.log(`LOG: Compression successful. Final URI: ${finalUri}`);
           
-          // Clean up temp file if compression created a new file
           if (finalUri !== tempUri) {
             await FileSystem.deleteAsync(tempUri, { idempotent: true });
-            tempUri = null; // Set to null since we've cleaned it up
+            tempUri = null;
           }
         }
       } catch (compressionError) {
         console.warn('WARN: Video compression failed, using original:', compressionError);
         finalUri = tempUri;
-        tempUri = null; // Don't delete since we're using it
+        tempUri = null;
       }
 
       // Final verification
@@ -185,7 +179,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
       console.log(`LOG: Final video ready. URI: ${finalUri}, Size: ${finalFileInfo.size} bytes`);
 
-      // Save to Media Library if permission is granted
+      // Save to Media Library if permission is granted (this is fine - just saving, not opening gallery)
       if (mediaLibraryPermission?.granted) {
         try {
           await MediaLibrary.saveToLibraryAsync(finalUri);
@@ -197,7 +191,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       }
 
       setProcessingText(t('cameraScreen.finalizing'));
-      await sleep(200); // Small delay for UI feedback
+      await sleep(200);
 
       // Navigate or callback
       if (onRecordingComplete) {
@@ -215,7 +209,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     } catch (error: any) {
       console.error('ERROR: Failed to process video:', error);
       
-      // Clean up temp file if it exists
       if (tempUri) {
         try {
           await FileSystem.deleteAsync(tempUri, { idempotent: true });
@@ -242,11 +235,12 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     if (recording) return;
 
     const availableSpace = await checkStorageSpace();
-    if (availableSpace !== null && availableSpace < 50 * 1024 * 1024) { // 50MB threshold
+    if (availableSpace !== null && availableSpace < 50 * 1024 * 1024) {
       Alert.alert(t('cameraScreen.lowStorageTitle'), t('cameraScreen.lowStorageMessage'));
       return;
     }
 
+    // FIXED: Use the correct permission checks - no ImagePicker calls here!
     if (!cameraPermission?.granted || !microphonePermission?.granted) {
       Alert.alert(t('cameraScreen.permissionRequiredTitle'), t('cameraScreen.cameraMicPermissionMessage'));
       return;
@@ -269,10 +263,9 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       });
     }, 1000);
 
-    // Improved recording options
     const recordingOptions = {
       maxDuration: 30,
-      quality: 'high' as const, // Changed from 'SD' to 'high'
+      quality: 'high' as const,
       mute: false,
       videoCodec: 'h264' as const,
       audioCodec: 'aac' as const,
@@ -287,11 +280,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       }
       
       console.log(`LOG: Recording completed. URI: ${data.uri}`);
-      
-      // Wait a moment for the file to be fully written
       await sleep(1000);
-      
-      // Process the video directly without MediaLibrary first
       await processVideo(data.uri);
       
     } catch (error: any) {
@@ -312,13 +301,11 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       console.log('LOG: Manually stopping video recording...');
       cameraRef.current.stopRecording();
       
-      // Clear the countdown interval when manually stopping
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
       
-      // Reset the recording state and countdown
       setRecording(false);
       setCountdown(30);
     }
@@ -337,8 +324,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     }
   };
 
-  // --- Render Logic ---
-
+  // Render Logic
   if (!cameraPermission || !microphonePermission || !mediaLibraryPermission) {
     return (
       <View style={styles.container}>
@@ -399,16 +385,13 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
           <Ionicons
             name={recording ? 'stop-circle' : 'radio-button-on'}
             size={80}
-            color={recording ? 'red' : (isCameraReady ? 'white' : 'grey')}
+            color={recording ? 'red' : (isCameraReady ? 'white' : 'gray')}
           />
         </TouchableOpacity>
+        {isProcessing && (
+          <Text style={styles.processingText}>{processingText}</Text>
+        )}
       </View>
-
-      {isProcessing && (
-        <View style={styles.processingOverlay}>
-          <Text style={styles.processingText}>{t('cameraScreen.recording')}</Text>
-        </View>
-      )}
     </View>
   );
 };
@@ -417,48 +400,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
-    justifyContent: 'center',
-  },
-  header: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    zIndex: 1,
-  },
-  backButton: {
-    padding: 10,
-  },
-  headerTitle: {
-    flex: 1,
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginRight: 44, // Offset for the back button to center the title
   },
   camera: {
     flex: 1,
   },
-  controlsContainer: {
-    position: 'absolute',
-    bottom: 50,
-    left: 0,
-    right: 0,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 1,
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
-  timerText: {
+  backButton: {
+    marginRight: 15,
+  },
+  headerTitle: {
     color: 'white',
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+  },
+  controlsContainer: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   button: {
     alignItems: 'center',
@@ -467,35 +432,33 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
-  permissionText: {
-    textAlign: 'center',
+  timerText: {
     color: 'white',
-    paddingHorizontal: 20,
-    fontSize: 16,
-  },
-  permissionButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
-    alignSelf: 'center',
-  },
-  permissionButtonText: {
-    color: 'white',
-    textAlign: 'center',
+    fontSize: 24,
     fontWeight: 'bold',
-  },
-  processingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
+    marginBottom: 20,
   },
   processingText: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 16,
+    marginTop: 15,
+  },
+  permissionText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    margin: 20,
+  },
+  permissionButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 10,
+    margin: 20,
+  },
+  permissionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
     fontWeight: 'bold',
   },
 });
