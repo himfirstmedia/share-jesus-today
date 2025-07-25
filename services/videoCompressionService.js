@@ -1,4 +1,4 @@
-// services/videoCompressionService.js
+// services/videoCompressionService.js - Fixed version with proper file handling
 import * as FileSystem from 'expo-file-system';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Video } from 'react-native-compressor';
@@ -13,6 +13,29 @@ const initializeVideoFilesDirectory = async () => {
     console.error('ERROR: Failed to initialize videofiles directory in compression service:', error);
     throw error;
   }
+};
+
+// Helper function to verify file exists and is valid - FIXED to handle cache files properly
+const verifyFileWithRetry = async (uri, maxRetries = 5, delayMs = 1000) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > 1000) { // At least 1KB
+        console.log(`LOG: File verified on attempt ${attempt}: ${uri} (${fileInfo.size} bytes)`);
+        return fileInfo;
+      } else {
+        console.warn(`WARN: File check failed on attempt ${attempt}: exists=${fileInfo.exists}, size=${fileInfo.size}`);
+      }
+    } catch (error) {
+      console.warn(`WARN: File verification attempt ${attempt} failed:`, error.message);
+    }
+    
+    if (attempt < maxRetries) {
+      console.log(`LOG: Waiting ${delayMs}ms before retry attempt ${attempt + 1}...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  return null;
 };
 
 class VideoCompressionService {
@@ -30,10 +53,14 @@ class VideoCompressionService {
    */
   async getVideoInfo(uri) {
     try {
-      const fileInfo = await FileSystem.getInfoAsync(uri);
+      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
       
       if (!fileInfo.exists) {
         throw new Error('Video file does not exist');
+      }
+
+      if (!fileInfo.size || fileInfo.size === 0) {
+        throw new Error('Video file is empty');
       }
 
       // Try to get video metadata using thumbnail generation
@@ -148,8 +175,11 @@ class VideoCompressionService {
 
   /**
    * Compresses a video using react-native-compressor.
+   * FIXED: Properly handles cache files and moves them to persistent storage
    */
   async createCompressedCopy(sourceUri, options = {}) {
+    let compressedTempUri = null;
+    
     try {
       const {
         compressionMethod = 'auto', // 'auto', 'manual', or 'off'
@@ -159,22 +189,25 @@ class VideoCompressionService {
       } = options;
 
       if (compressionMethod === 'off') {
-        console.log('Compression is turned off.');
+        console.log('LOG: Compression is turned off.');
         return sourceUri;
       }
 
+      // Verify source file exists and is valid
       const sourceInfo = await this.getVideoInfo(sourceUri);
-      if (!sourceInfo.exists) {
-        throw new Error('Source video file not found for compression.');
+      if (!sourceInfo.exists || sourceInfo.size === 0) {
+        console.error('ERROR: Source video file not found or empty for compression:', sourceUri);
+        return null;
       }
       
       if (sourceInfo.sizeMB < minFileSizeForCompression) {
-        console.log(`Video size (${sourceInfo.sizeMB}MB) is below threshold (${minFileSizeForCompression}MB), skipping compression.`);
+        console.log(`LOG: Video size (${sourceInfo.sizeMB}MB) is below threshold (${minFileSizeForCompression}MB), skipping compression.`);
         return sourceUri;
       }
 
-      console.log(`Starting compression for: ${sourceUri} (${sourceInfo.sizeMB}MB)`);
+      console.log(`LOG: Starting compression for: ${sourceUri} (${sourceInfo.sizeMB}MB)`);
 
+      // Perform compression - this will create a file in cache directory
       const result = await Video.compress(
         sourceUri,
         {
@@ -188,63 +221,90 @@ class VideoCompressionService {
         }
       );
 
-
       if (!result) {
-        throw new Error('Video compression failed to return a valid path.');
+        console.error('ERROR: Video compression failed to return a valid path.');
+        return null;
       }
 
-      const compressedTempUri = result;
+      compressedTempUri = result;
+      console.log(`LOG: Compression completed, temp file in cache: ${compressedTempUri}`);
 
-      // Add retry logic for getVideoInfo on the temporary compressed file
-      let compressedInfo = null;
-      const MAX_INFO_RETRIES = 5;
-      const INFO_RETRY_DELAY_MS = 500; // 0.5 seconds
-
-      for (let i = 0; i < MAX_INFO_RETRIES; i++) {
-        try {
-          compressedInfo = await this.getVideoInfo(compressedTempUri);
-          if (compressedInfo.exists && compressedInfo.size > 0) {
-            console.log(`LOG: Compressed file info retrieved successfully after ${i + 1} attempts.`);
-            break;
-          }
-        } catch (infoError) {
-          console.warn(`WARN: Attempt ${i + 1} to get compressed file info failed:`, infoError);
-        }
-        await new Promise(resolve => setTimeout(resolve, INFO_RETRY_DELAY_MS));
+      // CRITICAL FIX: Verify the compressed file exists in cache with immediate retry
+      const compressedFileInfo = await verifyFileWithRetry(compressedTempUri, 3, 500);
+      if (!compressedFileInfo) {
+        console.error('ERROR: Compressed video file is invalid or empty in cache after retries.');
+        return null;
       }
 
-      if (!compressedInfo || !compressedInfo.exists || compressedInfo.size === 0) {
-        throw new Error('Compressed video file is invalid or empty after retries.');
-      }
+      const compressedSizeMB = Math.round(compressedFileInfo.size / 1024 / 1024 * 100) / 100;
+      console.log(`LOG: Compression verification successful in cache: ${compressedTempUri} (${compressedSizeMB}MB)`);
 
-      console.log(`Compression successful: ${compressedTempUri} (${compressedInfo.sizeMB}MB)`);
-
-      // Define the persistent directory and ensure it exists
+      // Initialize persistent directory
       const videoFilesDirectory = await initializeVideoFilesDirectory();
-
-      // Create a unique file name for the persistent compressed video
       const fileName = `compressed_video_${Date.now()}.mp4`;
       const persistentCompressedUri = `${videoFilesDirectory}${fileName}`;
 
-      // Copy the compressed video from the temporary cache to the persistent directory
-      await FileSystem.copyAsync({ from: compressedTempUri, to: persistentCompressedUri });
-      console.log(`LOG: Moved compressed video to persistent storage: ${persistentCompressedUri}`);
+      // CRITICAL FIX: Copy from cache to persistent storage immediately
+      console.log(`LOG: Moving compressed file from cache to persistent storage: ${persistentCompressedUri}`);
+      await FileSystem.copyAsync({ 
+        from: compressedTempUri, 
+        to: persistentCompressedUri 
+      });
 
-      // Clean up the temporary compressed file from cache
-      await FileSystem.deleteAsync(compressedTempUri, { idempotent: true });
-      console.log(`LOG: Deleted temporary compressed file from cache: ${compressedTempUri}`);
+      // Verify the copy was successful in persistent storage
+      const persistentFileInfo = await verifyFileWithRetry(persistentCompressedUri, 3, 500);
+      if (!persistentFileInfo) {
+        console.error('ERROR: Failed to copy compressed file to persistent storage');
+        
+        // Clean up the temp file before returning null
+        try {
+          await FileSystem.deleteAsync(compressedTempUri, { idempotent: true });
+          console.log(`LOG: Cleaned up temp file after copy failure: ${compressedTempUri}`);
+        } catch (cleanupError) {
+          console.warn('WARN: Failed to delete temp file after copy failure:', cleanupError);
+        }
+        
+        return null;
+      }
 
-      // Optional: Delete the original source file if it's in a temp directory
-      if (sourceUri.includes(FileSystem.cacheDirectory)) {
-        await FileSystem.deleteAsync(sourceUri, { idempotent: true });
-        console.log(`LOG: Deleted temporary source file: ${sourceUri}`);
+      console.log(`LOG: Successfully moved compressed video to persistent storage: ${persistentCompressedUri}`);
+
+      // Clean up the temporary compressed file in cache
+      try {
+        await FileSystem.deleteAsync(compressedTempUri, { idempotent: true });
+        console.log(`LOG: Deleted temporary compressed file from cache: ${compressedTempUri}`);
+      } catch (cleanupError) {
+        console.warn('WARN: Failed to delete temporary compressed file from cache:', cleanupError);
+      }
+
+      // Optional: Delete the original source file if it's in a temp/cache directory
+      if (sourceUri.includes(FileSystem.cacheDirectory) || sourceUri.includes('/cache/')) {
+        try {
+          await FileSystem.deleteAsync(sourceUri, { idempotent: true });
+          console.log(`LOG: Deleted temporary source file: ${sourceUri}`);
+        } catch (cleanupError) {
+          console.warn('WARN: Failed to delete temporary source file:', cleanupError);
+        }
       }
 
       return persistentCompressedUri;
+
     } catch (error) {
-      console.error('Video compression failed:', error);
-      // Fallback to returning the original URI if compression fails
-      return sourceUri;
+      console.error('ERROR: Video compression failed:', error);
+      
+      // Clean up any temporary files on error
+      if (compressedTempUri) {
+        try {
+          await FileSystem.deleteAsync(compressedTempUri, { idempotent: true });
+          console.log(`LOG: Cleaned up temp file after error: ${compressedTempUri}`);
+        } catch (cleanupError) {
+          console.warn('WARN: Failed to cleanup temp file after error:', cleanupError);
+        }
+      }
+      
+      // Return null to indicate compression failed
+      // The calling code should handle this and use the original file
+      return null;
     }
   }
 
@@ -253,32 +313,46 @@ class VideoCompressionService {
    */
   async cleanupTempFiles() {
     try {
-      const documentDir = FileSystem.documentDirectory;
-      const files = await FileSystem.readDirectoryAsync(documentDir);
-      
-      const videoFiles = files.filter(file => 
-        file.includes('compressed_') || 
-        file.includes('recording_') ||
-        file.includes('temp_video_')
-      );
+      // Clean up both document directory and cache directory
+      const directories = [
+        FileSystem.documentDirectory,
+        FileSystem.cacheDirectory
+      ];
 
-      for (const file of videoFiles) {
+      for (const directory of directories) {
+        if (!directory) continue;
+        
         try {
-          const filePath = `${documentDir}${file}`;
-          const fileInfo = await FileSystem.getInfoAsync(filePath);
+          const files = await FileSystem.readDirectoryAsync(directory);
           
-          // Delete files older than 1 hour
-          const oneHourAgo = Date.now() - (60 * 60 * 1000);
-          if (fileInfo.modificationTime < oneHourAgo) {
-            await FileSystem.deleteAsync(filePath, { idempotent: true });
-            console.log(`Cleaned up old video file: ${file}`);
+          const videoFiles = files.filter(file => 
+            file.includes('compressed_') || 
+            file.includes('recording_') ||
+            file.includes('temp_video_') ||
+            file.endsWith('.mp4')
+          );
+
+          for (const file of videoFiles) {
+            try {
+              const filePath = `${directory}${file}`;
+              const fileInfo = await FileSystem.getInfoAsync(filePath);
+              
+              // Delete files older than 1 hour
+              const oneHourAgo = Date.now() - (60 * 60 * 1000);
+              if (fileInfo.modificationTime && (fileInfo.modificationTime * 1000) < oneHourAgo) {
+                await FileSystem.deleteAsync(filePath, { idempotent: true });
+                console.log(`LOG: Cleaned up old video file: ${file}`);
+              }
+            } catch (error) {
+              console.warn(`WARN: Could not clean up file ${file}:`, error);
+            }
           }
-        } catch (error) {
-          console.warn(`Could not clean up file ${file}:`, error);
+        } catch (dirError) {
+          console.warn(`WARN: Could not read directory ${directory}:`, dirError);
         }
       }
     } catch (error) {
-      console.warn('Error during cleanup:', error);
+      console.warn('WARN: Error during cleanup:', error);
     }
   }
 

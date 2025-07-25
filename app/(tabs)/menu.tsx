@@ -268,7 +268,8 @@ export default function MenuScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('menu.title')}</Text>
-        <Text style={styles.version}>{t('common.version')}</Text>
+        {/* <Text style={styles.version}>{t('common.version')}</Text> */}
+        <Text style={styles.version}>{'v14.1.0'}</Text>
       </View>
 
       <ScrollView

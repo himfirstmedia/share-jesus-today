@@ -1,4 +1,4 @@
-// app/camera.tsx - Fixed permission handling with big countdown
+// app/camera.tsx - Complete fixed version with compression handling and file management
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
@@ -72,8 +72,29 @@ const checkStorageSpace = async () => {
   }
 };
 
+// Enhanced file verification function with longer delays for compression
+const verifyFileExists = async (uri: string, maxRetries = 5, delayMs = 500): Promise<boolean> => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > 0) {
+        console.log(`LOG: File verified (attempt ${i + 1}): ${uri}, size: ${fileInfo.size}`);
+        return true;
+      }
+    } catch (error) {
+      console.warn(`WARN: File verification attempt ${i + 1} failed:`, error);
+    }
+    
+    if (i < maxRetries - 1) {
+      console.log(`LOG: Waiting ${delayMs}ms before retry...`);
+      await sleep(delayMs);
+    }
+  }
+  return false;
+};
+
 const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCancel }) => {
-  // CORRECT PERMISSION HOOKS - Use only MediaLibrary, not ImagePicker
+  // Permission hooks
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
   const [mediaLibraryPermission, requestMediaLibraryPermission] = MediaLibrary.usePermissions({ writeOnly: true });
@@ -85,6 +106,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   const [countdown, setCountdown] = useState<number>(30);
   const [showBigCountdown, setShowBigCountdown] = useState<boolean>(false);
   const [bigCountdownValue, setBigCountdownValue] = useState<number>(5);
+  const [videoFilesDirectory, setVideoFilesDirectory] = useState<string>('');
   
   const cameraRef = useRef<CameraView>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -98,11 +120,11 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     (async () => {
       try {
         console.log('LOG: Requesting permissions...');
-        // FIXED: Only request the permissions we actually need for recording
         await requestCameraPermission();
         await requestMicrophonePermission();
         await requestMediaLibraryPermission();
-        await initializeVideoFilesDirectory();
+        const directory = await initializeVideoFilesDirectory();
+        setVideoFilesDirectory(directory);
         await cleanupOldVideos();
         console.log('LOG: Initialization complete');
       } catch (error) {
@@ -122,91 +144,129 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   // Animation effect for big countdown
   useEffect(() => {
     if (showBigCountdown) {
-      // Scale animation for each countdown number
       Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.3,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
+        Animated.timing(scaleAnim, { toValue: 1.3, duration: 150, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
       ]).start();
     }
   }, [bigCountdownValue, showBigCountdown]);
 
+  // Enhanced copy function with better error handling
+  const copyRecordedFile = async (originalUri: string): Promise<string> => {
+    const timestamp = Date.now();
+    const fileName = `recording_${timestamp}.mp4`;
+    const targetUri = `${videoFilesDirectory}${fileName}`;
+    
+    console.log(`LOG: Copying recorded file from ${originalUri} to ${targetUri}`);
+    
+    // Verify original file exists first
+    const originalExists = await verifyFileExists(originalUri, 3, 200);
+    if (!originalExists) {
+      throw new Error(`Original recorded file does not exist or is empty: ${originalUri}`);
+    }
+    
+    // Copy the file immediately while it still exists
+    await FileSystem.copyAsync({ 
+      from: originalUri, 
+      to: targetUri 
+    });
+    
+    // Verify the copy was successful with retries
+    const copyExists = await verifyFileExists(targetUri, 3, 200);
+    if (!copyExists) {
+      throw new Error(`Failed to copy recorded file to target directory: ${targetUri}`);
+    }
+    
+    console.log(`LOG: File copied successfully to: ${targetUri}`);
+    return targetUri;
+  };
+
   const processVideo = async (originalUri: string) => {
     setIsProcessing(true);
-    let tempUri: string | null = null;
+    let copiedUri: string | null = null;
     
     try {
       console.log(`LOG: Processing video URI: ${originalUri}`);
       setProcessingText(t('cameraScreen.preparingVideo'));
 
-      // Verify the original file exists and has content
-      const originalFileInfo = await FileSystem.getInfoAsync(originalUri, { size: true });
-      if (!originalFileInfo.exists || !originalFileInfo.size || originalFileInfo.size === 0) {
-        throw new Error(`Invalid original video file. Size: ${originalFileInfo.exists ? originalFileInfo.size : 'File does not exist'}`);
+      // Step 1: Copy the original file to our managed directory
+      try {
+        copiedUri = await copyRecordedFile(originalUri);
+        console.log(`LOG: File successfully copied to managed directory: ${copiedUri}`);
+      } catch (copyError: any) {
+        console.error('ERROR: Failed to copy recorded file:', copyError.message);
+        throw new Error(`Failed to copy recorded file: ${copyError.message}`);
       }
 
-      console.log(`LOG: Original video file verified. Size: ${originalFileInfo.size} bytes`);
-
-      const videoFilesDirectory = `${FileSystem.documentDirectory}videofiles/`;
-      await FileSystem.makeDirectoryAsync(videoFilesDirectory, { intermediates: true });
-
-      // Create a copy in our app directory
-      setProcessingText(t('cameraScreen.copyingVideo'));
-      tempUri = `${videoFilesDirectory}temp_video_${Date.now()}.mp4`;
-      await FileSystem.copyAsync({ from: originalUri, to: tempUri });
-      
-      // Verify the copied file
-      const copiedFileInfo = await FileSystem.getInfoAsync(tempUri, { size: true });
-      if (!copiedFileInfo.exists || !copiedFileInfo.size || copiedFileInfo.size === 0) {
-        throw new Error(`Failed to copy video file properly. Copied file size: ${copiedFileInfo.exists ? copiedFileInfo.size : 'N/A'}`);
-      }
-
-      console.log(`LOG: Video copied successfully. Size: ${copiedFileInfo.size} bytes`);
-
-      // Compress the video
+      // Step 2: Attempt compression with better error handling
       setProcessingText(t('cameraScreen.compressingVideo'));
-      let finalUri: string;
+      let finalUri: string = copiedUri; // Default to copied file
       
       try {
-        const compressedUri = await VideoCompressionService.createCompressedCopy(tempUri);
+        console.log(`LOG: Starting compression for: ${copiedUri}`);
+        const compressedUri = await VideoCompressionService.createCompressedCopy(copiedUri, {
+          progressCallback: (progress) => {
+            // Update UI with compression progress
+            const percentage = Math.round(progress * 100);
+            console.log(`LOG: Compression progress: ${percentage}%`);
+            setProcessingText(`${t('cameraScreen.compressingVideo')} ${percentage}%`);
+          },
+          maxSizeMB: 15,
+          minFileSizeForCompression: 1, // Only compress files larger than 1MB
+        });
         
         if (compressedUri === null) {
-          console.warn('WARN: Video compression returned null, using original');
-          finalUri = tempUri;
-          tempUri = null;
+          console.warn('WARN: Video compression failed, using original copy');
+          // finalUri remains as copiedUri (original copy)
+        } else if (compressedUri === copiedUri) {
+          console.log('LOG: Compression was skipped (file too small or disabled), using original');
+          // finalUri remains as copiedUri (original copy)
         } else {
-          finalUri = compressedUri;
-          console.log(`LOG: Compression successful. Final URI: ${finalUri}`);
-          
-          if (finalUri !== tempUri) {
-            await FileSystem.deleteAsync(tempUri, { idempotent: true });
-            tempUri = null;
+          // Compression was successful and created a new file
+          // Verify the compressed file exists with extended retry (up to 5 seconds for compression)
+          const compressedExists = await verifyFileExists(compressedUri, 10, 500);
+          if (compressedExists) {
+            console.log(`LOG: Compression successful. Using compressed file: ${compressedUri}`);
+            finalUri = compressedUri;
+            
+            // Clean up the uncompressed copy since we have a compressed version
+            try {
+              await FileSystem.deleteAsync(copiedUri, { idempotent: true });
+              console.log(`LOG: Cleaned up uncompressed file: ${copiedUri}`);
+              copiedUri = null; // Mark as cleaned up
+            } catch (cleanupError) {
+              console.warn('WARN: Failed to cleanup uncompressed file:', cleanupError);
+            }
+          } else {
+            console.warn(`WARN: Compressed file does not exist or is invalid: ${compressedUri}`);
+            console.warn('WARN: Using original copied file instead');
+            // Try to clean up the failed compressed file
+            try {
+              await FileSystem.deleteAsync(compressedUri, { idempotent: true });
+            } catch (cleanupError) {
+              console.warn('WARN: Failed to cleanup failed compressed file:', cleanupError);
+            }
+            // finalUri remains as copiedUri (original copy)
           }
         }
-      } catch (compressionError) {
-        console.warn('WARN: Video compression failed, using original:', compressionError);
-        finalUri = tempUri;
-        tempUri = null;
+      } catch (compressionError: any) {
+        console.warn('WARN: Video compression failed with exception, using original copy:', compressionError.message);
+        // finalUri remains as copiedUri (original copy)
       }
 
-      // Final verification
+      // Step 3: Final verification
+      const finalExists = await verifyFileExists(finalUri, 3, 200);
+      if (!finalExists) {
+        throw new Error(`Final video file is invalid or does not exist: ${finalUri}`);
+      }
+
       const finalFileInfo = await FileSystem.getInfoAsync(finalUri, { size: true });
-      if (!finalFileInfo.exists || !finalFileInfo.size || finalFileInfo.size === 0) {
-        throw new Error(`Final video file is invalid. Size: ${finalFileInfo.exists ? finalFileInfo.size : 'N/A'}`);
-      }
-
       console.log(`LOG: Final video ready. URI: ${finalUri}, Size: ${finalFileInfo.size} bytes`);
 
-      // Save to Media Library if permission is granted (this is fine - just saving, not opening gallery)
+      // Step 4: Save to media library
       if (mediaLibraryPermission?.granted) {
         try {
+          setProcessingText(t('cameraScreen.savingToGallery') || 'Saving to gallery...');
           await MediaLibrary.saveToLibraryAsync(finalUri);
           console.log('LOG: Video saved to Media Library.');
         } catch (mediaLibraryError: any) {
@@ -218,7 +278,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       setProcessingText(t('cameraScreen.finalizing'));
       await sleep(200);
 
-      // Navigate or callback
+      // Step 5: Complete processing
       if (onRecordingComplete) {
         onRecordingComplete({ uri: finalUri });
       } else {
@@ -234,11 +294,13 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     } catch (error: any) {
       console.error('ERROR: Failed to process video:', error);
       
-      if (tempUri) {
+      // Clean up any leftover files
+      if (copiedUri) {
         try {
-          await FileSystem.deleteAsync(tempUri, { idempotent: true });
+          await FileSystem.deleteAsync(copiedUri, { idempotent: true });
+          console.log(`LOG: Cleaned up copied file after error: ${copiedUri}`);
         } catch (cleanupError) {
-          console.warn('WARN: Failed to cleanup temp file:', cleanupError);
+          console.warn('WARN: Failed to cleanup copied file after error:', cleanupError);
         }
       }
       
@@ -248,16 +310,35 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       }
     } finally {
       setIsProcessing(false);
-      setProcessingText('Processing...');
+      setProcessingText(t('cameraScreen.processing'));
     }
   };
 
   const startRecording = async () => {
-    if (!cameraRef.current || !isCameraReady) {
-      Alert.alert(t('cameraScreen.cameraNotReadyTitle'), t('cameraScreen.cameraNotReadyMessage'));
+    console.log(`LOG: startRecording called - cameraRef: ${!!cameraRef.current}, isCameraReady: ${isCameraReady}, recording: ${recording}`);
+    
+    if (!cameraRef.current) {
+      console.error('ERROR: Camera ref is null');
+      Alert.alert(t('cameraScreen.cameraNotReadyTitle'), 'Camera reference is not available');
       return;
     }
-    if (recording) return;
+    
+    if (!isCameraReady) {
+      console.error('ERROR: Camera is not ready');
+      Alert.alert(t('cameraScreen.cameraNotReadyTitle'), 'Camera is not ready yet. Please wait and try again.');
+      return;
+    }
+    
+    if (recording) {
+      console.log('LOG: Already recording, ignoring start request');
+      return;
+    }
+
+    // Check if directory is initialized
+    if (!videoFilesDirectory) {
+      Alert.alert('Error', 'Video directory not initialized. Please try again.');
+      return;
+    }
 
     const availableSpace = await checkStorageSpace();
     if (availableSpace !== null && availableSpace < 50 * 1024 * 1024) {
@@ -265,7 +346,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       return;
     }
 
-    // FIXED: Use the correct permission checks - no ImagePicker calls here!
     if (!cameraPermission?.granted || !microphonePermission?.granted) {
       Alert.alert(t('cameraScreen.permissionRequiredTitle'), t('cameraScreen.cameraMicPermissionMessage'));
       return;
@@ -285,7 +365,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       setCountdown(prev => {
         const newValue = prev - 1;
         
-        // Show big countdown when 5 seconds or less remain
         if (newValue <= 5 && newValue > 0) {
           setShowBigCountdown(true);
           setBigCountdownValue(newValue);
@@ -308,19 +387,32 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     };
 
     try {
-      console.log('LOG: Starting recording...');
+      console.log('LOG: Starting recording with options:', recordingOptions);
+      console.log(`LOG: Camera ready state: ${isCameraReady}, Recording state: ${recording}`);
+      
       const data = await cameraRef.current.recordAsync(recordingOptions);
+      
+      console.log('LOG: Recording promise resolved with data:', data);
       
       if (!data?.uri) {
         throw new Error('No URI returned from camera recording');
       }
       
-      console.log(`LOG: Recording completed. URI: ${data.uri}`);
-      await sleep(1000);
+      console.log(`LOG: Recording completed successfully. Original URI: ${data.uri}`);
+      
+      // Add a small delay to ensure file is fully written
+      await sleep(100);
+      
+      // Process the video
       await processVideo(data.uri);
       
     } catch (error: any) {
       console.error('ERROR: Recording failed:', error);
+      console.error('ERROR: Recording error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       Alert.alert(t('cameraScreen.recordingErrorTitle'), t('cameraScreen.recordingErrorMessage', { message: error.message }));
     } finally {
       if (intervalRef.current) {
@@ -334,6 +426,8 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   };
 
   const stopRecording = () => {
+    console.log(`LOG: stopRecording called - cameraRef: ${!!cameraRef.current}, recording: ${recording}`);
+    
     if (cameraRef.current && recording) {
       console.log('LOG: Manually stopping video recording...');
       cameraRef.current.stopRecording();
@@ -346,6 +440,8 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       setRecording(false);
       setCountdown(30);
       setShowBigCountdown(false);
+    } else {
+      console.log('LOG: stopRecording called but not recording or no camera ref');
     }
   };
 
@@ -357,35 +453,31 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     }
     if (onCancel) {
       onCancel();
-    } else {
-      router.replace('/(tabs)/post');
     }
   };
 
-  // Render Logic
-  if (!cameraPermission || !microphonePermission || !mediaLibraryPermission) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.permissionText}>{t('cameraScreen.loadingPermissions')}</Text>
-      </View>
-    );
-  }
+  // Check if all permissions are granted
+  const allPermissionsGranted = cameraPermission?.granted && 
+                                microphonePermission?.granted && 
+                                mediaLibraryPermission?.granted;
 
-  if (!cameraPermission.granted || !microphonePermission.granted || !mediaLibraryPermission.granted) {
+  if (!allPermissionsGranted) {
     return (
-      <View style={styles.container}>
+      <View style={styles.permissionContainer}>
         <Text style={styles.permissionText}>
-          {t('cameraScreen.permissionExplanation')}
+          {t('cameraScreen.permissionsRequired')}
         </Text>
-        <TouchableOpacity
+        <TouchableOpacity 
+          style={styles.permissionButton} 
           onPress={async () => {
             await requestCameraPermission();
             await requestMicrophonePermission();
             await requestMediaLibraryPermission();
           }}
-          style={styles.permissionButton}
         >
-          <Text style={styles.permissionButtonText}>{t('cameraScreen.grantPermissionsButton')}</Text>
+          <Text style={styles.permissionButtonText}>
+            {t('cameraScreen.grantPermissions')}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -393,52 +485,67 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Ionicons name="close" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('cameraScreen.recordVideo')}</Text>
-      </View>
-
       <CameraView
-        style={styles.camera}
         ref={cameraRef}
-        mode="video"
+        style={styles.camera}
         facing="back"
+        mode="video"
         onCameraReady={() => {
-          console.log('LOG: Camera is ready.');
+          console.log('LOG: Camera is ready for video recording');
           setIsCameraReady(true);
         }}
-      />
-
-      {/* Big Countdown Overlay */}
-      {showBigCountdown && (
-        <View style={styles.bigCountdownOverlay}>
-          <Animated.View style={[styles.bigCountdownContainer, { transform: [{ scale: scaleAnim }] }]}>
-            <Text style={styles.bigCountdownText}>{bigCountdownValue}</Text>
-          </Animated.View>
-        </View>
-      )}
-
-      <View style={styles.controlsContainer}>
-        {recording && (
-          <Text style={styles.timerText}>0:{String(countdown).padStart(2, '0')}</Text>
-        )}
-        <TouchableOpacity
-          style={[styles.button, (!isCameraReady || isProcessing) && styles.disabledButton]}
-          onPress={handleRecordButtonPress}
-          disabled={!isCameraReady || isProcessing}
-        >
-          <Ionicons
-            name={recording ? 'stop-circle' : 'radio-button-on'}
-            size={80}
-            color={recording ? 'red' : (isCameraReady ? 'white' : 'gray')}
-          />
-        </TouchableOpacity>
+        onMountError={(error) => {
+          console.error('ERROR: Camera mount error:', error);
+          Alert.alert('Camera Error', 'Failed to initialize camera: ' + error.message);
+        }}
+      >
+        {/* Processing overlay */}
         {isProcessing && (
-          <Text style={styles.processingText}>{processingText}</Text>
+          <View style={styles.processingOverlay}>
+            <Text style={styles.processingText}>{processingText}</Text>
+          </View>
         )}
-      </View>
+
+        {/* Big countdown overlay */}
+        {showBigCountdown && (
+          <View style={styles.bigCountdownContainer}>
+            <Animated.Text style={[styles.bigCountdownText, { transform: [{ scale: scaleAnim }] }]}>
+              {bigCountdownValue}
+            </Animated.Text>
+          </View>
+        )}
+
+        {/* Top bar with back button and countdown */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          
+          {recording && (
+            <View style={styles.countdownContainer}>
+              <Text style={styles.countdownText}>{countdown}s</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Bottom controls */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity
+            style={[
+              styles.recordButton,
+              recording && styles.recordButtonActive,
+              !isCameraReady && styles.recordButtonDisabled
+            ]}
+            onPress={handleRecordButtonPress}
+            disabled={!isCameraReady || isProcessing}
+          >
+            <View style={[
+              styles.recordButtonInner,
+              recording && styles.recordButtonInnerActive
+            ]} />
+          </TouchableOpacity>
+        </View>
+      </CameraView>
     </View>
   );
 };
@@ -451,90 +558,112 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  backButton: {
-    marginRight: 15,
-  },
-  headerTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  controlsContainer: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  button: {
-    alignItems: 'center',
+  permissionContainer: {
+    flex: 1,
     justifyContent: 'center',
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  timerText: {
-    color: 'white',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  processingText: {
-    color: 'white',
-    fontSize: 16,
-    marginTop: 15,
+    alignItems: 'center',
+    backgroundColor: 'black',
+    padding: 20,
   },
   permissionText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
-    margin: 20,
+    marginBottom: 20,
   },
   permissionButton: {
     backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    margin: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   permissionButtonText: {
     color: 'white',
     fontSize: 16,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
-  // Big countdown styles
-  bigCountdownOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    zIndex: 1000,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 22,
   },
-  bigCountdownContainer: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+  countdownContainer: {
     backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  countdownText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  bottomControls: {
+    position: 'absolute',
+    bottom: 50,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  recordButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
     borderColor: 'white',
   },
+  recordButtonActive: {
+    borderColor: '#ff4444',
+  },
+  recordButtonDisabled: {
+    opacity: 0.5,
+  },
+  recordButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#ff4444',
+  },
+  recordButtonInnerActive: {
+    borderRadius: 8,
+    backgroundColor: '#ff4444',
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  processingText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  bigCountdownContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   bigCountdownText: {
-    fontSize: 80,
+    fontSize: 120,
     fontWeight: 'bold',
     color: 'white',
-    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
   },
 });
 
