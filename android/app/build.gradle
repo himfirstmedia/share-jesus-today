@@ -98,8 +98,8 @@ android {
         applicationId 'com.himfirstapps.sharejesustoday'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 14
-        versionName "14.0.0"
+        versionCode 140
+        versionName "14.9.1"
     }
     signingConfigs {
         debug {
@@ -109,12 +109,10 @@ android {
             keyPassword 'android'
         }
         release {
-            if (keystorePropertiesFile.exists()) {
-                storeFile file(keystoreProperties['MYAPP_UPLOAD_STORE_FILE'])
-                storePassword keystoreProperties['MYAPP_UPLOAD_STORE_PASSWORD']
-                keyAlias keystoreProperties['MYAPP_UPLOAD_KEY_ALIAS']
-                keyPassword keystoreProperties['MYAPP_UPLOAD_KEY_PASSWORD']
-            }
+            storeFile file('s.jks')
+            storePassword 'android'
+            keyAlias 'android'
+            keyPassword 'android'
         }
     }
     buildTypes {
