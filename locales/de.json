@@ -488,4 +488,23 @@
       "alertNetworkError": "Netzwerkfehler aufgetreten",
       "alertGenericError": "Fehler: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Kundensupport",
+    "fillAllFields": "Bitte füllen Sie alle Pflichtfelder aus (Name, E-Mail und Nachricht)",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein",
+    "messageSentTitle": "Nachricht gesendet",
+    "messageSentText": "Vielen Dank für Ihre Kontaktaufnahme! Wir werden uns in Kürze bei Ihnen melden.",
+    "submissionFailed": "Formularübermittlung fehlgeschlagen. Bitte versuchen Sie es später erneut. Vielen Dank für Ihre Geduld.",
+    "nameLabel": "Name*",
+    "namePlaceholder": "john black",
+    "emailLabel": "E-Mail-Adresse*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Telefonnummer",
+    "phonePlaceholder": "Geben Sie Ihre Telefonnummer ein",
+    "messageLabel": "Nachricht*",
+    "messagePlaceholder": "Geben Sie Ihre Nachricht ein",
+    "submitButton": "SENDEN"
+  }
 }

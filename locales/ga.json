@@ -488,4 +488,23 @@
       "alertNetworkError": "Tharla earráid líonra",
       "alertGenericError": "Earráid: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Tacaíocht do Chustaiméirí",
+    "fillAllFields": "Comhlánaigh gach réimse riachtanach (Ainm, Ríomhphost, agus Teachtaireacht) le do thoil",
+    "invalidEmail": "Iontráil seoladh ríomhphoist bailí le do thoil",
+    "invalidPhone": "Iontráil uimhir theileafóin bhailí le do thoil",
+    "messageSentTitle": "Teachtaireacht Seolta",
+    "messageSentText": "Go raibh maith agat as teagmháil a dhéanamh linn! Tiocfaimid ar ais chugat go luath.",
+    "submissionFailed": "Theip ar an bhfoirm a chur isteach. Bain triail eile as níos déanaí le do thoil. Go raibh maith agat as do fhoighne.",
+    "nameLabel": "Ainm*",
+    "namePlaceholder": "john black",
+    "emailLabel": "Seoladh Ríomhphoist*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Uimhir Theileafóin",
+    "phonePlaceholder": "Iontráil d'uimhir theileafóin",
+    "messageLabel": "Teachtaireacht*",
+    "messagePlaceholder": "Iontráil do Theachtaireacht",
+    "submitButton": "CUIR ISTEACH"
+  }
 }

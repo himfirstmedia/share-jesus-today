@@ -488,4 +488,23 @@
       "alertNetworkError": "नेटवर्क त्रुटि हुई",
       "alertGenericError": "त्रुटि: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "ग्राहक सहायता",
+    "fillAllFields": "कृपया सभी आवश्यक फ़ील्ड (नाम, ईमेल और संदेश) भरें",
+    "invalidEmail": "कृपया एक वैध ईमेल पता दर्ज करें",
+    "invalidPhone": "कृपया एक वैध फ़ोन नंबर दर्ज करें",
+    "messageSentTitle": "संदेश भेजा गया",
+    "messageSentText": "हमसे संपर्क करने के लिए धन्यवाद! हम जल्द ही आपसे संपर्क करेंगे।",
+    "submissionFailed": "फ़ॉर्म सबमिशन विफल। कृपया बाद में फिर से प्रयास करें। आपके धैर्य के लिए धन्यवाद।",
+    "nameLabel": "नाम*",
+    "namePlaceholder": "जॉन ब्लैक",
+    "emailLabel": "ईमेल पता*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "फ़ोन नंबर",
+    "phonePlaceholder": "अपना फ़ोन नंबर दर्ज करें",
+    "messageLabel": "संदेश*",
+    "messagePlaceholder": "अपना संदेश दर्ज करें",
+    "submitButton": "सबमिट करें"
+  }
 }

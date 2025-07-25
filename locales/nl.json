@@ -488,4 +488,23 @@
       "alertNetworkError": "Netwerkfout opgetreden",
       "alertGenericError": "Fout: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Klantenservice",
+    "fillAllFields": "Vul alstublieft alle verplichte velden in (Naam, E-mail en Bericht)",
+    "invalidEmail": "Voer alstublieft een geldig e-mailadres in",
+    "invalidPhone": "Voer alstublieft een geldig telefoonnummer in",
+    "messageSentTitle": "Bericht verzonden",
+    "messageSentText": "Bedankt voor uw contact! We nemen spoedig contact met u op.",
+    "submissionFailed": "Formulierverzending mislukt. Probeer het later opnieuw. Bedankt voor uw geduld.",
+    "nameLabel": "Naam*",
+    "namePlaceholder": "john black",
+    "emailLabel": "E-mailadres*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Telefoonnummer",
+    "phonePlaceholder": "Voer uw telefoonnummer in",
+    "messageLabel": "Bericht*",
+    "messagePlaceholder": "Voer uw bericht in",
+    "submitButton": "VERZENDEN"
+  }
 }

@@ -488,4 +488,23 @@
       "alertNetworkError": "Nätverksfel inträffade",
       "alertGenericError": "Fel: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Kundsupport",
+    "fillAllFields": "Vänligen fyll i alla obligatoriska fält (Namn, E-post och Meddelande)",
+    "invalidEmail": "Vänligen ange en giltig e-postadress",
+    "invalidPhone": "Vänligen ange ett giltigt telefonnummer",
+    "messageSentTitle": "Meddelande skickat",
+    "messageSentText": "Tack för att du kontaktade oss! Vi återkommer till dig snart.",
+    "submissionFailed": "Formulärinlämning misslyckades. Vänligen försök igen senare. Tack för ditt tålamod.",
+    "nameLabel": "Namn*",
+    "namePlaceholder": "john black",
+    "emailLabel": "E-postadress*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Telefonnummer",
+    "phonePlaceholder": "Ange ditt telefonnummer",
+    "messageLabel": "Meddelande*",
+    "messagePlaceholder": "Ange ditt meddelande",
+    "submitButton": "SKICKA"
+  }
 }

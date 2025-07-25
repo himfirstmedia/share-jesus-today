@@ -488,6 +488,25 @@
       "alertNetworkError": "Si è verificato un errore di rete",
       "alertGenericError": "Errore: "
     }
-
-
+  ,
+  "contactUsScreen": {
+    "title": "Supporto Clienti",
+    "fillAllFields": "Si prega di compilare tutti i campi obbligatori (Nome, Email e Messaggio)",
+    "invalidEmail": "Si prega di inserire un indirizzo email valido",
+    "invalidPhone": "Si prega di inserire un numero di telefono valido",
+    "messageSentTitle": "Messaggio Inviato",
+    "messageSentText": "Grazie per averci contattato! Ti risponderemo presto.",
+    "submissionFailed": "Invio del modulo fallito. Riprova più tardi. Grazie per la tua pazienza.",
+    "nameLabel": "Nome*",
+    "namePlaceholder": "john black",
+    "emailLabel": "Indirizzo Email*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Numero di Telefono",
+    "phonePlaceholder": "Inserisci il tuo numero di telefono",
+    "messageLabel": "Messaggio*",
+    "messagePlaceholder": "Inserisci il tuo Messaggio",
+    "submitButton": "INVIA"
+  }
 }
+
+

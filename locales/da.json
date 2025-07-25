@@ -488,4 +488,23 @@
       "alertNetworkError": "Netværksfejl opstod",
       "alertGenericError": "Fejl: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Kundesupport",
+    "fillAllFields": "Udfyld venligst alle påkrævede felter (Navn, E-mail og Besked)",
+    "invalidEmail": "Indtast venligst en gyldig e-mailadresse",
+    "invalidPhone": "Indtast venligst et gyldigt telefonnummer",
+    "messageSentTitle": "Besked sendt",
+    "messageSentText": "Tak for din henvendelse! Vi vender tilbage til dig snarest.",
+    "submissionFailed": "Formularindsendelse mislykkedes. Prøv venligst igen senere. Tak for din tålmodighed.",
+    "nameLabel": "Navn*",
+    "namePlaceholder": "john black",
+    "emailLabel": "E-mailadresse*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Telefonnummer",
+    "phonePlaceholder": "Indtast dit telefonnummer",
+    "messageLabel": "Besked*",
+    "messagePlaceholder": "Indtast din besked",
+    "submitButton": "SEND"
+  }
 }

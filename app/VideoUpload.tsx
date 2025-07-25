@@ -205,15 +205,15 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       const response = await videoApiService.uploadVideo(videoToUpload, metadata);
 
       if (response.success) {
-        Alert.alert(t('videoUploadInterface.alertSuccess'), t('videoUploadInterface.alertvideoUploaded'), [
+        Alert.alert(t('videoUploadInterface.alertSuccess'), t('videoUploadInterface.alertVideoUploaded'), [
           { text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }
         ]);
       } else {
-        Alert.alert(t('videoUploadInterface.alertError'), response.error || t('videoUploadInterface.failedToUploadVideo'));
+        Alert.alert(t('videoUploadInterface.alertError'), response.error || t('alerts.unexpectedError'));
       }
     } catch (error) {
       console.error(error);
-      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.unexpectedUploadError'));
+      Alert.alert(t('videoUploadInterface.alertError'), t('alerts.unexpectedError'));
     } finally {
       setIsLoading(false);
     }

@@ -489,4 +489,23 @@
       "alertNetworkError": "Παρουσιάστηκε σφάλμα δικτύου",
       "alertGenericError": "Σφάλμα: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Υποστήριξη Πελατών",
+    "fillAllFields": "Παρακαλώ συμπληρώστε όλα τα απαιτούμενα πεδία (Όνομα, Email και Μήνυμα)",
+    "invalidEmail": "Παρακαλώ εισάγετε μια έγκυρη διεύθυνση email",
+    "invalidPhone": "Παρακαλώ εισάγετε έναν έγκυρο αριθμό τηλεφώνου",
+    "messageSentTitle": "Το μήνυμα στάλθηκε",
+    "messageSentText": "Ευχαριστούμε που επικοινωνήσατε μαζί μας! Θα επικοινωνήσουμε μαζί σας σύντομα.",
+    "submissionFailed": "Η υποβολή της φόρμας απέτυχε. Παρακαλώ δοκιμάστε ξανά αργότερα. Ευχαριστούμε για την υπομονή σας.",
+    "nameLabel": "Όνομα*",
+    "namePlaceholder": "john black",
+    "emailLabel": "Διεύθυνση Email*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Αριθμός Τηλεφώνου",
+    "phonePlaceholder": "Εισάγετε τον αριθμό τηλεφώνου σας",
+    "messageLabel": "Μήνυμα*",
+    "messagePlaceholder": "Εισάγετε το μήνυμά σας",
+    "submitButton": "ΥΠΟΒΟΛΗ"
+  }
 }

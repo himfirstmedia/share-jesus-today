@@ -488,4 +488,23 @@
       "alertNetworkError": "Hitilafu ya mtandao imetokea",
       "alertGenericError": "Hitilafu: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Msaada kwa Wateja",
+    "fillAllFields": "Tafadhali jaza sehemu zote zinazohitajika (Jina, Barua pepe, na Ujumbe)",
+    "invalidEmail": "Tafadhali weka anwani halali ya barua pepe",
+    "invalidPhone": "Tafadhali weka nambari halali ya simu",
+    "messageSentTitle": "Ujumbe Umetumwa",
+    "messageSentText": "Asante kwa kuwasiliana nasi! Tutawasiliana nawe hivi karibuni.",
+    "submissionFailed": "Uwasilishaji wa fomu umeshindwa. Tafadhali jaribu tena baadaye. Asante kwa uvumilivu wako.",
+    "nameLabel": "Jina*",
+    "namePlaceholder": "john black",
+    "emailLabel": "Anwani ya Barua pepe*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Nambari ya Simu",
+    "phonePlaceholder": "Weka nambari yako ya simu",
+    "messageLabel": "Ujumbe*",
+    "messagePlaceholder": "Weka Ujumbe wako",
+    "submitButton": "WASILISHA"
+  }
 }

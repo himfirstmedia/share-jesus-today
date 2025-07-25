@@ -27,14 +27,14 @@ export default function ContactUsScreen() {
 
   const handleSubmit = async () => {
     if (!name.trim() || !email.trim() || !message.trim()) {
-      Alert.alert(t('common.error'), t('contactUsScreen.fillAllFields'));
+      Alert.alert(t('alerts.error'), t('contactUsScreen.fillAllFields'));
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert(t('common.error'), t('contactUsScreen.invalidEmail'));
+      Alert.alert(t('alerts.error'), t('contactUsScreen.fillAllFields'));
       return;
     }
 
@@ -42,7 +42,7 @@ export default function ContactUsScreen() {
     if (phone.trim()) {
       const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
       if (!phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
-        Alert.alert(t('common.error'), t('contactUsScreen.invalidPhone'));
+        Alert.alert(t('alerts.error'), t('contactUsScreen.fillAllFields'));
         return;
       }
     }
@@ -72,7 +72,7 @@ export default function ContactUsScreen() {
           t('contactUsScreen.messageSentText'),
           [
             {
-              text: t('common.ok'),
+              text: t('alerts.ok'),
               onPress: () => {
                 // Clear form
                 setName('');
@@ -90,9 +90,9 @@ export default function ContactUsScreen() {
       }
     } catch (error) {
       Alert.alert(
-        t('common.error'),
+        t('alerts.error'),
         t('contactUsScreen.submissionFailed'),
-        [{ text: t('common.ok') }]
+        [{ text: t('alerts.ok') }]
       );
       console.log(error);
       

@@ -467,6 +467,25 @@
       "alertNetworkError": "Възникна мрежова грешка",
       "alertGenericError": "Грешка: "
     }
+  ,
+  "contactUsScreen": {
+    "title": "Обслужване на клиенти",
+    "fillAllFields": "Моля, попълнете всички задължителни полета (Име, Имейл и Съобщение)",
+    "invalidEmail": "Моля, въведете валиден имейл адрес",
+    "invalidPhone": "Моля, въведете валиден телефонен номер",
+    "messageSentTitle": "Съобщението е изпратено",
+    "messageSentText": "Благодарим ви, че се свързахте с нас! Ще се свържем с вас скоро.",
+    "submissionFailed": "Изпращането на формуляра е неуспешно. Моля, опитайте отново по-късно. Благодарим ви за търпението.",
+    "nameLabel": "Име*",
+    "namePlaceholder": "джон блек",
+    "emailLabel": "Имейл адрес*",
+    "emailPlaceholder": "k@jo.com",
+    "phoneLabel": "Телефонен номер",
+    "phonePlaceholder": "Въведете вашия телефонен номер",
+    "messageLabel": "Съобщение*",
+    "messagePlaceholder": "Въведете вашето съобщение",
+    "submitButton": "ИЗПРАТИ"
+  }
 }
  
 
