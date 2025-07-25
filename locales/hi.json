@@ -407,5 +407,45 @@
     "invalidDob": "कृपया एक मान्य तिथि चुनें",
     "dobInFuture": "जन्म तिथि भविष्य में नहीं हो सकती",
     "invalidDobRange": "कृपया एक मान्य जन्म तिथि दर्ज करें"
-  }
+  },
+  "signup": {
+      "back": "← वापस",
+      "createAccount": "एक खाता बनाएँ",
+      "requiredFields": "(*) वाले सभी फ़ील्ड अनिवार्य हैं।",
+      "firstNamePlaceholder": "पहला नाम*",
+      "lastNamePlaceholder": "अंतिम नाम*",
+      "emailPlaceholder": "ईमेल पता*",
+      "cityPlaceholder": "शहर:",
+      "statePlaceholder": "राज्य:",
+      "nextButton": "अगला",
+      "alreadyHaveAccount": "पहले से ही एक खाता है? साइन इन करें",
+      "firstNameMinLength": "पहले नाम में कम से कम 3 अक्षर होने चाहिए",
+      "lastNameMinLength": "अंतिम नाम में कम से कम 3 अक्षर होने चाहिए",
+      "emailRequired": "ईमेल पता आवश्यक है",
+      "emailInvalid": "एक मान्य ईमेल पता दर्ज करें",
+      "signupSuccessTitle": "सफलता",
+      "signupSuccessMessage": "साइनअप सफल! कृपया ओटीपी के लिए अपना ईमेल जांचें।",
+      "accountFoundTitle": "खाता मिला",
+      "accountFoundMessage": "ईमेल पहले से मौजूद है। आपके खाते को सत्यापित करने के लिए एक ओटीपी भेजा गया है।",
+      "signupFailed": "साइनअप विफल",
+      "unexpectedError": "एक अप्रत्याशित त्रुटि हुई"
+    },
+      "verifyOtp": {
+      "invalidOtp": "अमान्य ओटीपी",
+      "pasteValidOtp": "कृपया एक मान्य 5-अंकीय ओटीपी पेस्ट करें",
+      "otpPastedSuccessfully": "ओटीपी सफलतापूर्वक पेस्ट किया गया",
+      "failedToPaste": "क्लिपबोर्ड से पेस्ट करने में विफल",
+      "enter5DigitOtp": "कृपया 5-अंकीय ओटीपी दर्ज करें",
+      "verificationFailed": "सत्यापन विफल। कृपया पुन: प्रयास करें।",
+      "networkError": "नेटवर्क त्रुटि। कृपया अपना कनेक्शन जांचें और पुनः प्रयास करें।",
+      "emailVerifiedSuccessfully": "ईमेल सफलतापूर्वक सत्यापित!",
+      "otpResentSuccessfully": "ओटीपी सफलतापूर्वक पुनः भेजा गया!",
+      "failedToResendOtp": "ओटीपी पुनः भेजने में विफल। कृपया पुन: प्रयास करें।",
+      "verifyYourEmail": "अपना ईमेल सत्यापित करें",
+      "sentVerificationCode": "हमने एक 5-अंकीय सत्यापन कोड भेजा है",
+      "pasteFromClipboard": "क्लिपबोर्ड से पेस्ट करें",
+      "verifyOtpButton": "ओटीपी सत्यापित करें",
+      "didNotReceiveCode": "कोड प्राप्त नहीं हुआ?",
+      "resend": "पुनः भेजें"
+    }
 }

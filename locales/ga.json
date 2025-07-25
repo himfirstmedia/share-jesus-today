@@ -407,5 +407,45 @@
   "invalidDob": "Roghnaigh dáta bailí, le do thoil",
   "dobInFuture": "Ní féidir le dáta breithe a bheith sa todhchaí",
   "invalidDobRange": "Iontráil dáta breithe bailí, le do thoil"
-}
+},
+ "signup": {
+      "back": "← Ar Ais",
+      "createAccount": "Cruthaigh Cuntas",
+      "requiredFields": "Tá gach réimse le (*) riachtanach.",
+      "firstNamePlaceholder": "Céadainm*",
+      "lastNamePlaceholder": "Sloinne*",
+      "emailPlaceholder": "Seoladh Ríomhphoist*",
+      "cityPlaceholder": "Cathair:",
+      "statePlaceholder": "Stát:",
+      "nextButton": "Ar Aghaidh",
+      "alreadyHaveAccount": "An bhfuil cuntas agat cheana? Sínigh Isteach",
+      "firstNameMinLength": "Caithfidh 3 charachtar ar a laghad a bheith sa chéadainm",
+      "lastNameMinLength": "Caithfidh 3 charachtar ar a laghad a bheith sa sloinne",
+      "emailRequired": "Tá an seoladh ríomhphoist riachtanach",
+      "emailInvalid": "Iontráil seoladh ríomhphoist bailí",
+      "signupSuccessTitle": "Rath",
+      "signupSuccessMessage": "D'éirigh leis an gclárú! Seiceáil do ríomhphost le do thoil don OTP.",
+      "accountFoundTitle": "Cuntas Aimsithe",
+      "accountFoundMessage": "Tá an ríomhphost ann cheana. Tá OTP seolta chun do chuntas a fhíorú.",
+      "signupFailed": "Theip ar an gclárú",
+      "unexpectedError": "Tharla earráid gan choinne"
+    },
+     "verifyOtp": {
+      "invalidOtp": "OTP neamhbhailí",
+      "pasteValidOtp": "Greamaigh OTP bailí 5 dhigit le do thoil",
+      "otpPastedSuccessfully": "Greamaíodh OTP go rathúil",
+      "failedToPaste": "Theip ar ghreamú ón ngearrthaisce",
+      "enter5DigitOtp": "Cuir isteach OTP 5 dhigit le do thoil",
+      "verificationFailed": "Theip ar an bhfíorú. Bain triail eile as le do thoil.",
+      "networkError": "Earráid líonra. Seiceáil do nasc le do thoil agus bain triail eile as.",
+      "emailVerifiedSuccessfully": "Fíoraíodh an ríomhphost go rathúil!",
+      "otpResentSuccessfully": "D'éirigh le hathsheoladh an OTP!",
+      "failedToResendOtp": "Theip ar athsheoladh an OTP. Bain triail eile as le do thoil.",
+      "verifyYourEmail": "Fíoraigh do Ríomhphost",
+      "sentVerificationCode": "Sheolamar cód fíorúcháin 5 dhigit chuig",
+      "pasteFromClipboard": "Greamaigh ón nGearrthaisce",
+      "verifyOtpButton": "Fíoraigh OTP",
+      "didNotReceiveCode": "Nár fhaigh tú an cód?",
+      "resend": "Athsheol"
+    }
 }

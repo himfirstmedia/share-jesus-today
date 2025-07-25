@@ -407,5 +407,45 @@
     "invalidDob": "Veuillez sélectionner une date valide",
     "dobInFuture": "La date de naissance ne peut pas être dans le futur",
     "invalidDobRange": "Veuillez saisir une date de naissance valide"
-  }
+  },
+  "signup": {
+      "back": "← Retour",
+      "createAccount": "Créer un compte",
+      "requiredFields": "Tous les champs avec (*) sont obligatoires.",
+      "firstNamePlaceholder": "Prénom*",
+      "lastNamePlaceholder": "Nom de famille*",
+      "emailPlaceholder": "Adresse e-mail*",
+      "cityPlaceholder": "Ville :",
+      "statePlaceholder": "État/Province :",
+      "nextButton": "Suivant",
+      "alreadyHaveAccount": "Vous avez déjà un compte ? Se connecter",
+      "firstNameMinLength": "Le prénom doit comporter au moins 3 caractères",
+      "lastNameMinLength": "Le nom de famille doit comporter au moins 3 caractères",
+      "emailRequired": "L'adresse e-mail est obligatoire",
+      "emailInvalid": "Saisissez une adresse e-mail valide",
+      "signupSuccessTitle": "Succès",
+      "signupSuccessMessage": "Inscription réussie ! Veuillez vérifier votre e-mail pour le code OTP.",
+      "accountFoundTitle": "Compte trouvé",
+      "accountFoundMessage": "L'e-mail existe déjà. Un code OTP a été envoyé pour vérifier votre compte.",
+      "signupFailed": "L'inscription a échoué",
+      "unexpectedError": "Une erreur inattendue s'est produite"
+    },
+    "verifyOtp": {
+      "invalidOtp": "OTP invalide",
+      "pasteValidOtp": "Veuillez coller un OTP valide à 5 chiffres",
+      "otpPastedSuccessfully": "OTP collé avec succès",
+      "failedToPaste": "Échec du collage depuis le presse-papiers",
+      "enter5DigitOtp": "Veuillez saisir un OTP à 5 chiffres",
+      "verificationFailed": "La vérification a échoué. Veuillez réessayer.",
+      "networkError": "Erreur réseau. Veuillez vérifier votre connexion et réessayer.",
+      "emailVerifiedSuccessfully": "E-mail vérifié avec succès !",
+      "otpResentSuccessfully": "OTP renvoyé avec succès !",
+      "failedToResendOtp": "Échec du renvoi de l'OTP. Veuillez réessayer.",
+      "verifyYourEmail": "Vérifiez votre e-mail",
+      "sentVerificationCode": "Nous avons envoyé un code de vérification à 5 chiffres à",
+      "pasteFromClipboard": "Coller depuis le presse-papiers",
+      "verifyOtpButton": "Vérifier l'OTP",
+      "didNotReceiveCode": "Vous n'avez pas reçu le code ?",
+      "resend": "Renvoyer"
+    }
 }

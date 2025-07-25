@@ -407,5 +407,45 @@
   "invalidDob": "Selecteer een geldige datum",
   "dobInFuture": "Geboortedatum kan niet in de toekomst liggen",
   "invalidDobRange": "Voer een geldige geboortedatum in"
-}
+},
+ "signup": {
+      "back": "← Terug",
+      "createAccount": "Account aanmaken",
+      "requiredFields": "Alle velden met (*) zijn verplicht.",
+      "firstNamePlaceholder": "Voornaam*",
+      "lastNamePlaceholder": "Achternaam*",
+      "emailPlaceholder": "E-mailadres*",
+      "cityPlaceholder": "Stad:",
+      "statePlaceholder": "Staat/Provincie:",
+      "nextButton": "Volgende",
+      "alreadyHaveAccount": "Heb je al een account? Inloggen",
+      "firstNameMinLength": "Voornaam moet minimaal 3 tekens bevatten",
+      "lastNameMinLength": "Achternaam moet minimaal 3 tekens bevatten",
+      "emailRequired": "E-mailadres is verplicht",
+      "emailInvalid": "Voer een geldig e-mailadres in",
+      "signupSuccessTitle": "Succes",
+      "signupSuccessMessage": "Aanmelding gelukt! Controleer uw e-mail voor de OTP.",
+      "accountFoundTitle": "Account gevonden",
+      "accountFoundMessage": "E-mailadres bestaat al. Er is een OTP gestuurd om uw account te verifiëren.",
+      "signupFailed": "Aanmelden mislukt",
+      "unexpectedError": "Er is een onverwachte fout opgetreden"
+    },  
+     "verifyOtp": {
+      "invalidOtp": "Ongeldige OTP",
+      "pasteValidOtp": "Plak een geldige 5-cijferige OTP",
+      "otpPastedSuccessfully": "OTP succesvol geplakt",
+      "failedToPaste": "Plakken vanaf klembord mislukt",
+      "enter5DigitOtp": "Voer een 5-cijferige OTP in",
+      "verificationFailed": "Verificatie mislukt. Probeer het opnieuw.",
+      "networkError": "Netwerkfout. Controleer uw verbinding en probeer het opnieuw.",
+      "emailVerifiedSuccessfully": "E-mail succesvol geverifieerd!",
+      "otpResentSuccessfully": "OTP succesvol opnieuw verzonden!",
+      "failedToResendOtp": "Kon OTP niet opnieuw verzenden. Probeer het opnieuw.",
+      "verifyYourEmail": "Verifieer uw e-mailadres",
+      "sentVerificationCode": "We hebben een 5-cijferige verificatiecode gestuurd naar",
+      "pasteFromClipboard": "Plakken vanaf klembord",
+      "verifyOtpButton": "OTP verifiëren",
+      "didNotReceiveCode": "Code niet ontvangen?",
+      "resend": "Opnieuw verzenden"
+    }
 }

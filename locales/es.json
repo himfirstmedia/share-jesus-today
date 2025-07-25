@@ -407,5 +407,45 @@
   "invalidDob": "Por favor, seleccione una fecha válida",
   "dobInFuture": "La fecha de nacimiento no puede ser en el futuro",
   "invalidDobRange": "Por favor, introduzca una fecha de nacimiento válida"
-}
+},
+"signup": {
+      "back": "← Atrás",
+      "createAccount": "Crear una cuenta",
+      "requiredFields": "Todos los campos con (*) son obligatorios.",
+      "firstNamePlaceholder": "Nombre*",
+      "lastNamePlaceholder": "Apellido*",
+      "emailPlaceholder": "Dirección de correo electrónico*",
+      "cityPlaceholder": "Ciudad:",
+      "statePlaceholder": "Estado/Provincia:",
+      "nextButton": "Siguiente",
+      "alreadyHaveAccount": "¿Ya tienes una cuenta? Iniciar sesión",
+      "firstNameMinLength": "El nombre debe tener al menos 3 caracteres",
+      "lastNameMinLength": "El apellido debe tener al menos 3 caracteres",
+      "emailRequired": "La dirección de correo electrónico es obligatoria",
+      "emailInvalid": "Introduce una dirección de correo electrónico válida",
+      "signupSuccessTitle": "Éxito",
+      "signupSuccessMessage": "¡Registro exitoso! Por favor, revisa tu correo electrónico para el código OTP.",
+      "accountFoundTitle": "Cuenta encontrada",
+      "accountFoundMessage": "El correo electrónico ya existe. Se ha enviado un código OTP para verificar tu cuenta.",
+      "signupFailed": "Falló el registro",
+      "unexpectedError": "Ocurrió un error inesperado"
+    },
+    "verifyOtp": {
+      "invalidOtp": "OTP no válido",
+      "pasteValidOtp": "Por favor, pega un OTP válido de 5 dígitos",
+      "otpPastedSuccessfully": "OTP pegado correctamente",
+      "failedToPaste": "No se pudo pegar desde el portapapeles",
+      "enter5DigitOtp": "Por favor, introduce un OTP de 5 dígitos",
+      "verificationFailed": "Error de verificación. Por favor, inténtalo de nuevo.",
+      "networkError": "Error de red. Por favor, comprueba tu conexión e inténtalo de nuevo.",
+      "emailVerifiedSuccessfully": "¡Correo electrónico verificado correctamente!",
+      "otpResentSuccessfully": "¡OTP reenviado correctamente!",
+      "failedToResendOtp": "No se pudo reenviar el OTP. Por favor, inténtalo de nuevo.",
+      "verifyYourEmail": "Verifica tu correo electrónico",
+      "sentVerificationCode": "Hemos enviado un código de verificación de 5 dígitos a",
+      "pasteFromClipboard": "Pegar desde el portapapeles",
+      "verifyOtpButton": "Verificar OTP",
+      "didNotReceiveCode": "¿No recibiste el código?",
+      "resend": "Reenviar"
+    }
 }

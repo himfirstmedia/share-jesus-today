@@ -295,20 +295,20 @@ export default function ProfileScreen() {
 
   const handleDeleteVideo = (videoId: string) => {
     Alert.alert(
-      t('video.confirmDelete'),
-      t('video.deleteConfirmation'),
+      t('alerts.confirmDelete'),
+      t('alerts.confirmDeleteVideo'),
       [
-        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('alerts.cancel'), style: 'cancel' },
         {
-          text: t('common.delete'),
+          text: t('alerts.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await profileService.deleteVideo(videoId);
               loadUserVideos();
-              Alert.alert(t('common.success'), t('video.deleteSuccess'));
+              Alert.alert(t('alerts.success'), t('alerts.videoDeleted'));
             } catch (error) {
-              Alert.alert(t('common.error'), t('video.deleteError'));
+              Alert.alert(t('alerts.error'), t('alerts.failedDeleteVideo'));
             }
           }
         }

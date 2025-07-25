@@ -46,30 +46,30 @@ const HeroSlider: React.FC = () => {
       imageStyle: "background"
       
     },
-    {
-      id: 2,
-      title: i18n.t('heroSlider.title2'),
-      subtitle: i18n.t('heroSlider.subtitle2'),
-      backgroundColor: "#3260ad",
-      icon: "✝️",
-      imageStyle: "icon"
-    },
-    {
-      id: 3,
-      title: i18n.t('heroSlider.title3'),
-      subtitle: i18n.t('heroSlider.subtitle3'),
-      backgroundColor: "#3260ad",
-      icon: "🤝",
-      imageStyle: "icon"
-    },
-    {
-      id: 4,
-      title: i18n.t('heroSlider.title4'),
-      subtitle: i18n.t('heroSlider.subtitle4'),
-      backgroundColor: "#3260ad",
-      icon: "🌱",
-      imageStyle: "icon"
-    }
+    // {
+    //   id: 2,
+    //   title: i18n.t('heroSlider.title2'),
+    //   subtitle: i18n.t('heroSlider.subtitle2'),
+    //   backgroundColor: "#3260ad",
+    //   icon: "✝️",
+    //   imageStyle: "icon"
+    // },
+    // {
+    //   id: 3,
+    //   title: i18n.t('heroSlider.title3'),
+    //   subtitle: i18n.t('heroSlider.subtitle3'),
+    //   backgroundColor: "#3260ad",
+    //   icon: "🤝",
+    //   imageStyle: "icon"
+    // },
+    // {
+    //   id: 4,
+    //   title: i18n.t('heroSlider.title4'),
+    //   subtitle: i18n.t('heroSlider.subtitle4'),
+    //   backgroundColor: "#3260ad",
+    //   icon: "🌱",
+    //   imageStyle: "icon"
+    // }
   ];
 
   // Auto-play functionality

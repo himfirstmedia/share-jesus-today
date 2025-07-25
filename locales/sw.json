@@ -407,5 +407,45 @@
   "invalidDob": "Tafadhali chagua tarehe halali",
   "dobInFuture": "Tarehe ya kuzaliwa haiwezi kuwa ya baadaye",
   "invalidDobRange": "Tafadhali weka tarehe halali ya kuzaliwa"
-}
+}, 
+"signup": {
+      "back": "← Nyuma",
+      "createAccount": "Fungua Akaunti",
+      "requiredFields": "Sehemu zote zilizo na (*) zinahitajika.",
+      "firstNamePlaceholder": "Jina la Kwanza*",
+      "lastNamePlaceholder": "Jina la Ukoo*",
+      "emailPlaceholder": "Anwani ya Barua Pepe*",
+      "cityPlaceholder": "Jiji:",
+      "statePlaceholder": "Jimbo:",
+      "nextButton": "Inayofuata",
+      "alreadyHaveAccount": "Tayari una akaunti? Ingia",
+      "firstNameMinLength": "Jina la kwanza lazima liwe na angalau herufi 3",
+      "lastNameMinLength": "Jina la ukoo lazima liwe na angalau herufi 3",
+      "emailRequired": "Anwani ya barua pepe inahitajika",
+      "emailInvalid": "Weka anwani ya barua pepe halali",
+      "signupSuccessTitle": "Mafanikio",
+      "signupSuccessMessage": "Usajili umefanikiwa! Tafadhali angalia barua pepe yako kwa OTP.",
+      "accountFoundTitle": "Akaunti Imepatikana",
+      "accountFoundMessage": "Barua pepe tayari ipo. OTP imetumwa ili kuthibitisha akaunti yako.",
+      "signupFailed": "Usajili haukufaulu",
+      "unexpectedError": "Hitilafu isiyotarajiwa imetokea"
+    },
+     "verifyOtp": {
+      "invalidOtp": "OTP si sahihi",
+      "pasteValidOtp": "Tafadhali bandika OTP halali ya tarakimu 5",
+      "otpPastedSuccessfully": "OTP imebandikwa kwa mafanikio",
+      "failedToPaste": "Imeshindwa kubandika kutoka kwenye ubao wa kunakili",
+      "enter5DigitOtp": "Tafadhali weka OTP ya tarakimu 5",
+      "verificationFailed": "Uthibitishaji haukufaulu. Tafadhali jaribu tena.",
+      "networkError": "Hitilafu ya mtandao. Tafadhali angalia muunganisho wako na ujaribu tena.",
+      "emailVerifiedSuccessfully": "Barua pepe imethibitishwa!",
+      "otpResentSuccessfully": "OTP imetumwa tena kwa mafanikio!",
+      "failedToResendOtp": "Imeshindwa kutuma tena OTP. Tafadhali jaribu tena.",
+      "verifyYourEmail": "Thibitisha Barua Pepe Yako",
+      "sentVerificationCode": "Tumetuma nambari ya uthibitishaji ya tarakimu 5 kwa",
+      "pasteFromClipboard": "Bandika kutoka Ubao wa Kunakili",
+      "verifyOtpButton": "Thibitisha OTP",
+      "didNotReceiveCode": "Hukupokea nambari?",
+      "resend": "Tuma tena"
+    }
 }

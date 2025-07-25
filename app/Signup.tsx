@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { t } from '../utils/i18n';
 
 export default function SignupScreen() {
   const [formData, setFormData] = useState({
@@ -36,23 +37,23 @@ export default function SignupScreen() {
     const { firstName, lastName, email } = formData;
 
     if (!firstName.trim() || firstName.length < 3) {
-      Alert.alert('Error', 'First name must have at least 3 characters');
+      Alert.alert(t('alerts.error'), t('signup.firstNameMinLength'));
       return false;
     }
 
     if (!lastName.trim() || lastName.length < 3) {
-      Alert.alert('Error', 'Last name must have at least 3 characters');
+      Alert.alert(t('alerts.error'), t('signup.lastNameMinLength'));
       return false;
     }
 
     if (!email.trim()) {
-      Alert.alert('Error', 'Email address is required');
+      Alert.alert(t('alerts.error'), t('signup.emailRequired'));
       return false;
     }
 
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Enter a valid email address');
+      Alert.alert(t('alerts.error'), t('signup.emailInvalid'));
       return false;
     }
 
@@ -92,11 +93,11 @@ export default function SignupScreen() {
         console.log('✅ Signup successful - navigating to VerifyOtp');
         
         Alert.alert(
-          'Success', 
-          'Signup successful! Please check your email for the OTP.',
+          t('signup.signupSuccessTitle'), 
+          t('signup.signupSuccessMessage'),
           [
             {
-              text: 'OK',
+              text: t('alerts.ok'),
               onPress: () => {
                 console.log('Navigating to VerifyOtp with email:', formData.email);
                 setTimeout(() => {
@@ -115,11 +116,11 @@ export default function SignupScreen() {
           console.log('📧 Email exists but OTP sent - navigating to VerifyOtp');
           
           Alert.alert(
-            'Account Found', 
-            'Email already exists. An OTP has been sent to verify your account.',
+            t('signup.accountFoundTitle'), 
+            t('signup.accountFoundMessage'),
             [
               {
-                text: 'OK',
+                text: t('alerts.ok'),
                 onPress: () => {
                   console.log('Navigating to VerifyOtp with email:', formData.email);
                   setTimeout(() => {
@@ -154,7 +155,7 @@ export default function SignupScreen() {
         {/* Header with Back Button */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <Text style={styles.backButtonText}>{t('signup.back')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -173,8 +174,8 @@ export default function SignupScreen() {
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>Create an Account</Text>
-          <Text style={styles.subtitle}>All fields with (*) are required.</Text>
+          <Text style={styles.title}>{t('signup.createAccount')}</Text>
+          <Text style={styles.subtitle}>{t('signup.requiredFields')}</Text>
 
           {/* Form Fields */}
           <View style={styles.row}>
@@ -183,7 +184,7 @@ export default function SignupScreen() {
                 style={styles.input}
                 value={formData.firstName}
                 onChangeText={(value) => handleInputChange('firstName', value)}
-                placeholder="First Name*"
+                placeholder={t('signup.firstNamePlaceholder')}
                 placeholderTextColor="#999"
                 autoCapitalize="words"
                 editable={!loading}
@@ -195,7 +196,7 @@ export default function SignupScreen() {
                 style={styles.input}
                 value={formData.lastName}
                 onChangeText={(value) => handleInputChange('lastName', value)}
-                placeholder="Last Name*"
+                placeholder={t('signup.lastNamePlaceholder')}
                 placeholderTextColor="#999"
                 autoCapitalize="words"
                 editable={!loading}
@@ -208,7 +209,7 @@ export default function SignupScreen() {
               style={styles.input}
               value={formData.email}
               onChangeText={(value) => handleInputChange('email', value)}
-              placeholder="Email Address*"
+              placeholder={t('signup.emailPlaceholder')}
               placeholderTextColor="#999"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -249,7 +250,7 @@ export default function SignupScreen() {
                 style={styles.input}
                 value={formData.city}
                 onChangeText={(value) => handleInputChange('city', value)}
-                placeholder="City:"
+                placeholder={t('signup.cityPlaceholder')}
                 placeholderTextColor="#999"
                 autoCapitalize="words"
                 editable={!loading}
@@ -261,7 +262,7 @@ export default function SignupScreen() {
                 style={styles.input}
                 value={formData.state}
                 onChangeText={(value) => handleInputChange('state', value)}
-                placeholder="State:"
+                placeholder={t('signup.statePlaceholder')}
                 placeholderTextColor="#999"
                 autoCapitalize="words"
                 editable={!loading}
@@ -391,7 +392,7 @@ export default function SignupScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Next</Text>
+              <Text style={styles.submitButtonText}>{t('signup.nextButton')}</Text>
             )}
           </TouchableOpacity>
 
@@ -400,7 +401,7 @@ export default function SignupScreen() {
             style={styles.loginLink} 
             onPress={() => router.push('/login')}
           >
-            <Text style={styles.loginLinkText}>Already have an account? Sign In</Text>
+            <Text style={styles.loginLinkText}>{t('signup.alreadyHaveAccount')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

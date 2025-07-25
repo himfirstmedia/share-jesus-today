@@ -407,5 +407,46 @@
     "invalidDob": "Παρακαλώ επιλέξτε μια έγκυρη ημερομηνία",
     "dobInFuture": "Η ημερομηνία γέννησης δεν μπορεί να είναι στο μέλλον",
     "invalidDobRange": "Παρακαλώ εισάγετε μια έγκυρη ημερομηνία γέννησης"
-  }
+  },
+
+  "signup": {
+    "back": "← Πίσω",
+    "createAccount": "Δημιουργία λογαριασμού",
+    "requiredFields": "Όλα τα πεδία με (*) είναι υποχρεωτικά.",
+    "firstNamePlaceholder": "Όνομα*",
+    "lastNamePlaceholder": "Επώνυμο*",
+    "emailPlaceholder": "Διεύθυνση email*",
+    "cityPlaceholder": "Πόλη:",
+    "statePlaceholder": "Πολιτεία/Περιοχή:",
+    "nextButton": "Επόμενο",
+    "alreadyHaveAccount": "Έχετε ήδη λογαριασμό; Σύνδεση",
+    "firstNameMinLength": "Το όνομα πρέπει να έχει τουλάχιστον 3 χαρακτήρες",
+    "lastNameMinLength": "Το επώνυμο πρέπει να έχει τουλάχιστον 3 χαρακτήρες",
+    "emailRequired": "Η διεύθυνση email είναι υποχρεωτική",
+    "emailInvalid": "Εισαγάγετε μια έγκυρη διεύθυνση email",
+    "signupSuccessTitle": "Επιτυχία",
+    "signupSuccessMessage": "Η εγγραφή ολοκληρώθηκε με επιτυχία! Παρακαλώ ελέγξτε το email σας για τον κωδικό OTP.",
+    "accountFoundTitle": "Ο λογαριασμός βρέθηκε",
+    "accountFoundMessage": "Το email υπάρχει ήδη. Ένας κωδικός OTP έχει σταλεί για την επαλήθευση του λογαριασμού σας.",
+    "signupFailed": "Η εγγραφή απέτυχε",
+    "unexpectedError": "Παρουσιάστηκε ένα μη αναμενόμενο σφάλμα"
+  },
+   "verifyOtp": {
+      "invalidOtp": "Μη έγκυρος κωδικός OTP",
+      "pasteValidOtp": "Παρακαλώ επικολλήστε έναν έγκυρο 5-ψήφιο κωδικό OTP",
+      "otpPastedSuccessfully": "Ο κωδικός OTP επικολλήθηκε με επιτυχία",
+      "failedToPaste": "Αποτυχία επικόλλησης από το πρόχειρο",
+      "enter5DigitOtp": "Παρακαλώ εισαγάγετε έναν 5-ψήφιο κωδικό OTP",
+      "verificationFailed": "Η επαλήθευση απέτυχε. Παρακαλώ δοκιμάστε ξανά.",
+      "networkError": "Σφάλμα δικτύου. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.",
+      "emailVerifiedSuccessfully": "Το email επαληθεύτηκε με επιτυχία!",
+      "otpResentSuccessfully": "Ο κωδικός OTP στάλθηκε ξανά με επιτυχία!",
+      "failedToResendOtp": "Αποτυχία επαναποστολής του κωδικού OTP. Παρακαλώ δοκιμάστε ξανά.",
+      "verifyYourEmail": "Επαληθεύστε το Email σας",
+      "sentVerificationCode": "Έχουμε στείλει έναν 5-ψήφιο κωδικό επαλήθευσης στο",
+      "pasteFromClipboard": "Επικόλληση από το πρόχειρο",
+      "verifyOtpButton": "Επαλήθευση OTP",
+      "didNotReceiveCode": "Δεν λάβατε τον κωδικό;",
+      "resend": "Επαναποστολή"
+    }
 }

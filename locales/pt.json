@@ -407,5 +407,45 @@
   "invalidDob": "Por favor, selecione uma data válida",
   "dobInFuture": "A data de nascimento não pode ser no futuro",
   "invalidDobRange": "Por favor, insira uma data de nascimento válida"
-}
+},
+ "signup": {
+      "back": "← Voltar",
+      "createAccount": "Criar uma conta",
+      "requiredFields": "Todos os campos com (*) são obrigatórios.",
+      "firstNamePlaceholder": "Nome*",
+      "lastNamePlaceholder": "Apelido*",
+      "emailPlaceholder": "Endereço de e-mail*",
+      "cityPlaceholder": "Cidade:",
+      "statePlaceholder": "Estado:",
+      "nextButton": "Próximo",
+      "alreadyHaveAccount": "Já tem uma conta? Entrar",
+      "firstNameMinLength": "O nome deve ter pelo menos 3 caracteres",
+      "lastNameMinLength": "O apelido deve ter pelo menos 3 caracteres",
+      "emailRequired": "O endereço de e-mail é obrigatório",
+      "emailInvalid": "Insira um endereço de e-mail válido",
+      "signupSuccessTitle": "Sucesso",
+      "signupSuccessMessage": "Cadastro realizado com sucesso! Por favor, verifique seu e-mail para o OTP.",
+      "accountFoundTitle": "Conta encontrada",
+      "accountFoundMessage": "O e-mail já existe. Um OTP foi enviado para verificar sua conta.",
+      "signupFailed": "Falha no cadastro",
+      "unexpectedError": "Ocorreu um erro inesperado"
+    },
+     "verifyOtp": {
+      "invalidOtp": "OTP inválido",
+      "pasteValidOtp": "Cole um OTP válido de 5 dígitos",
+      "otpPastedSuccessfully": "OTP colado com sucesso",
+      "failedToPaste": "Falha ao colar da área de transferência",
+      "enter5DigitOtp": "Insira um OTP de 5 dígitos",
+      "verificationFailed": "Falha na verificação. Por favor, tente novamente.",
+      "networkError": "Erro de rede. Verifique sua conexão e tente novamente.",
+      "emailVerifiedSuccessfully": "E-mail verificado com sucesso!",
+      "otpResentSuccessfully": "OTP reenviado com sucesso!",
+      "failedToResendOtp": "Falha ao reenviar OTP. Por favor, tente novamente.",
+      "verifyYourEmail": "Verifique seu e-mail",
+      "sentVerificationCode": "Enviamos um código de verificação de 5 dígitos para",
+      "pasteFromClipboard": "Colar da área de transferência",
+      "verifyOtpButton": "Verificar OTP",
+      "didNotReceiveCode": "Não recebeu o código?",
+      "resend": "Reenviar"
+    }
 }

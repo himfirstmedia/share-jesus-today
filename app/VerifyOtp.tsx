@@ -2,6 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import i18n from '../utils/i18n';
 import {
   ActivityIndicator,
   Alert,
@@ -94,7 +95,7 @@ const OTPVerification = () => {
       
       // Validate pasted data (should be 5 digits)
       if (!/^\d{5}$/.test(clipboardContent)) {
-        Alert.alert('Invalid OTP', 'Please paste a valid 5-digit OTP');
+        Alert.alert(i18n.t('verifyOtp.invalidOtp'), i18n.t('verifyOtp.pasteValidOtp'));
         return;
       }
 
@@ -105,10 +106,10 @@ const OTPVerification = () => {
       // Focus last input
       inputRefs.current[4]?.focus();
       
-      setSuccess('OTP pasted successfully');
+      setSuccess(i18n.t('verifyOtp.otpPastedSuccessfully'));
       setTimeout(() => setSuccess(''), 2000);
     } catch (error) {
-      Alert.alert('Error', 'Failed to paste from clipboard');
+      Alert.alert(i18n.t('alerts.error'), i18n.t('verifyOtp.failedToPaste'));
     }
   };
 
@@ -116,7 +117,7 @@ const OTPVerification = () => {
     const enteredOtp = otp.join('');
     
     if (enteredOtp.length !== 5) {
-      setError('Please enter a 5-digit OTP');
+      setError(i18n.t('verifyOtp.enter5DigitOtp'));
       return;
     }
 
@@ -131,17 +132,17 @@ const OTPVerification = () => {
       console.log('OTP verification response:', response);
 
       if (response.success) {
-        setSuccess('Email verified successfully!');
+        setSuccess(i18n.t('verifyOtp.emailVerifiedSuccessfully'));
         setTimeout(() => {
           // Navigate to create password screen using Expo Router
           router.push(`/CreatePassword?email=${encodeURIComponent(email!)}`);
         }, 1500);
       } else {
-        setError(response.error || 'Verification failed. Please try again.');
+        setError(response.error || i18n.t('verifyOtp.verificationFailed'));
       }
     } catch (error) {
       console.error('OTP verification error:', error);
-      setError('Network error. Please check your connection and try again.');
+      setError(i18n.t('verifyOtp.networkError'));
     } finally {
       setIsLoading(false);
     }
@@ -156,14 +157,14 @@ const OTPVerification = () => {
       const response = await apiService.post('/person/sign-up/resend-otp', { email });
       
       if (response.success) {
-        Alert.alert('Success', 'OTP resent successfully!');
-        setSuccess('OTP resent successfully!');
+        Alert.alert(i18n.t('alerts.success'), i18n.t('verifyOtp.otpResentSuccessfully'));
+        setSuccess(i18n.t('verifyOtp.otpResentSuccessfully'));
         setTimeout(() => setSuccess(''), 3000);
       } else {
-        setError(response.error || 'Failed to resend OTP. Please try again.');
+        setError(response.error || i18n.t('verifyOtp.failedToResendOtp'));
       }
     } catch (error) {
-      setError('Failed to resend OTP. Please try again.');
+      setError(i18n.t('verifyOtp.failedToResendOtp'));
     } finally {
       setIsLoading(false);
     }
@@ -196,9 +197,9 @@ const OTPVerification = () => {
 
           {/* Title and Description */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Verify Your Email</Text>
+            <Text style={styles.title}>{i18n.t('verifyOtp.verifyYourEmail')}</Text>
             <Text style={styles.description}>
-              We have sent a 5-digit verification code to
+              {i18n.t('verifyOtp.sentVerificationCode')}
             </Text>
             <Text style={styles.email}>{email}</Text>
           </View>
@@ -243,7 +244,7 @@ const OTPVerification = () => {
 
           {/* Paste Button */}
           <TouchableOpacity onPress={handlePaste} style={styles.pasteButton} disabled={isLoading}>
-            <Text style={styles.pasteButtonText}>Paste from Clipboard</Text>
+            <Text style={styles.pasteButtonText}>{i18n.t('verifyOtp.pasteFromClipboard')}</Text>
           </TouchableOpacity>
 
           {/* Verify Button */}
@@ -258,16 +259,16 @@ const OTPVerification = () => {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.verifyButtonText}>Verify OTP</Text>
+              <Text style={styles.verifyButtonText}>{i18n.t('verifyOtp.verifyOtpButton')}</Text>
             )}
           </TouchableOpacity>
 
           {/* Resend Code */}
           <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Did not receive the code? </Text>
+            <Text style={styles.resendText}>{i18n.t('verifyOtp.didNotReceiveCode')} </Text>
             <TouchableOpacity onPress={resendOtp} disabled={isLoading}>
               <Text style={[styles.resendLink, isLoading && styles.resendLinkDisabled]}>
-                Resend
+                {i18n.t('verifyOtp.resend')}
               </Text>
             </TouchableOpacity>
           </View>

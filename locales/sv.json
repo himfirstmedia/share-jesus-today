@@ -407,5 +407,45 @@
   "invalidDob": "Välj ett giltigt datum",
   "dobInFuture": "Födelsedatum kan inte vara i framtiden",
   "invalidDobRange": "Ange ett giltigt födelsedatum"
-}
+},
+"signup": {
+      "back": "← Tillbaka",
+      "createAccount": "Skapa ett konto",
+      "requiredFields": "Alla fält med (*) är obligatoriska.",
+      "firstNamePlaceholder": "Förnamn*",
+      "lastNamePlaceholder": "Efternamn*",
+      "emailPlaceholder": "E-postadress*",
+      "cityPlaceholder": "Stad:",
+      "statePlaceholder": "Delstat/Region:",
+      "nextButton": "Nästa",
+      "alreadyHaveAccount": "Har du redan ett konto? Logga in",
+      "firstNameMinLength": "Förnamnet måste ha minst 3 tecken",
+      "lastNameMinLength": "Efternamnet måste ha minst 3 tecken",
+      "emailRequired": "E-postadress är obligatorisk",
+      "emailInvalid": "Ange en giltig e-postadress",
+      "signupSuccessTitle": "Lyckades",
+      "signupSuccessMessage": "Registreringen lyckades! Vänligen kontrollera din e-post för OTP-koden.",
+      "accountFoundTitle": "Konto hittades",
+      "accountFoundMessage": "E-postadressen finns redan. En OTP-kod har skickats för att verifiera ditt konto.",
+      "signupFailed": "Registreringen misslyckades",
+      "unexpectedError": "Ett oväntat fel inträffade"
+    },
+      "verifyOtp": {
+      "invalidOtp": "Ogiltig OTP",
+      "pasteValidOtp": "Klistra in en giltig 5-siffrig OTP",
+      "otpPastedSuccessfully": "OTP inklistrad",
+      "failedToPaste": "Det gick inte att klistra in från urklipp",
+      "enter5DigitOtp": "Ange en 5-siffrig OTP",
+      "verificationFailed": "Verifiering misslyckades. Vänligen försök igen.",
+      "networkError": "Nätverksfel. Kontrollera din anslutning och försök igen.",
+      "emailVerifiedSuccessfully": "E-post verifierad!",
+      "otpResentSuccessfully": "OTP har skickats igen!",
+      "failedToResendOtp": "Det gick inte att skicka OTP igen. Vänligen försök igen.",
+      "verifyYourEmail": "Verifiera din e-post",
+      "sentVerificationCode": "Vi har skickat en 5-siffrig verifieringskod till",
+      "pasteFromClipboard": "Klistra in från urklipp",
+      "verifyOtpButton": "Verifiera OTP",
+      "didNotReceiveCode": "Fick du inte koden?",
+      "resend": "Skicka igen"
+    }
 }

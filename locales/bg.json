@@ -407,5 +407,47 @@
     "invalidDob": "Моля, изберете валидна дата",
     "dobInFuture": "Датата на раждане не може да бъде в бъдещето",
     "invalidDobRange": "Моля, въведете валидна дата на раждане"
-  }
+  },
+  "signup": {
+      "back": "← Назад",
+      "createAccount": "Създаване на акаунт",
+      "requiredFields": "Всички полета със (*) са задължителни.",
+      "firstNamePlaceholder": "Име*",
+      "lastNamePlaceholder": "Фамилия*",
+      "emailPlaceholder": "Имейл адрес*",
+      "cityPlaceholder": "Град:",
+      "statePlaceholder": "Щат/Област:",
+      "nextButton": "Напред",
+      "alreadyHaveAccount": "Вече имате акаунт? Вход",
+      "firstNameMinLength": "Името трябва да има поне 3 знака",
+      "lastNameMinLength": "Фамилията трябва да има поне 3 знака",
+      "emailRequired": "Имейл адресът е задължителен",
+      "emailInvalid": "Въведете валиден имейл адрес",
+      "signupSuccessTitle": "Успех",
+      "signupSuccessMessage": "Регистрацията е успешна! Моля, проверете имейла си за еднократната парола (OTP).",
+      "accountFoundTitle": "Намерен акаунт",
+      "accountFoundMessage": "Имейлът вече съществува. Изпратена е еднократна парола (OTP) за потвърждение на акаунта ви.",
+      "signupFailed": "Регистрацията е неуспешна",
+      "unexpectedError": "Възникна неочаквана грешка"
+    },
+     "verifyOtp": {
+      "invalidOtp": "Невалидна еднократна парола",
+      "pasteValidOtp": "Моля, поставете валидна 5-цифрена еднократна парола",
+      "otpPastedSuccessfully": "Еднократната парола е поставена успешно",
+      "failedToPaste": "Неуспешно поставяне от клипборда",
+      "enter5DigitOtp": "Моля, въведете 5-цифрена еднократна парола",
+      "verificationFailed": "Потвърждението е неуспешно. Моля, опитайте отново.",
+      "networkError": "Грешка в мрежата. Моля, проверете връзката си и опитайте отново.",
+      "emailVerifiedSuccessfully": "Имейлът е потвърден успешно!",
+      "otpResentSuccessfully": "Еднократната парола е изпратена отново успешно!",
+      "failedToResendOtp": "Неуспешно повторно изпращане на еднократна парола. Моля, опитайте отново.",
+      "verifyYourEmail": "Потвърдете своя имейл",
+      "sentVerificationCode": "Изпратихме 5-цифрен код за потвърждение на",
+      "pasteFromClipboard": "Поставяне от клипборда",
+      "verifyOtpButton": "Потвърди еднократната парола",
+      "didNotReceiveCode": "Не получихте кода?",
+      "resend": "Изпрати отново"
+    }
 }
+ 
+

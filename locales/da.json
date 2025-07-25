@@ -407,5 +407,45 @@
     "invalidDob": "Vælg venligst en gyldig dato",
     "dobInFuture": "Fødselsdatoen kan ikke være i fremtiden",
     "invalidDobRange": "Indtast venligst en gyldig fødselsdato"
-  }
+  },
+  "signup": {
+    "back": "← Tilbage",
+    "createAccount": "Opret en konto",
+    "requiredFields": "Alle felter med (*) er påkrævede.",
+    "firstNamePlaceholder": "Fornavn*",
+    "lastNamePlaceholder": "Efternavn*",
+    "emailPlaceholder": "E-mailadresse*",
+    "cityPlaceholder": "By:",
+    "statePlaceholder": "Stat/Region:",
+    "nextButton": "Næste",
+    "alreadyHaveAccount": "Har du allerede en konto? Log ind",
+    "firstNameMinLength": "Fornavn skal have mindst 3 tegn",
+    "lastNameMinLength": "Efternavn skal have mindst 3 tegn",
+    "emailRequired": "E-mailadresse er påkrævet",
+    "emailInvalid": "Indtast en gyldig e-mailadresse",
+    "signupSuccessTitle": "Succes",
+    "signupSuccessMessage": "Tilmelding lykkedes! Tjek venligst din e-mail for OTP.",
+    "accountFoundTitle": "Konto fundet",
+    "accountFoundMessage": "E-mailen eksisterer allerede. En OTP er blevet sendt for at bekræfte din konto.",
+    "signupFailed": "Tilmelding mislykkedes",
+    "unexpectedError": "Der opstod en uventet fejl"
+  },
+   "verifyOtp": {
+      "invalidOtp": "Ugyldig OTP",
+      "pasteValidOtp": "Indsæt venligst en gyldig 5-cifret OTP",
+      "otpPastedSuccessfully": "OTP indsat med succes",
+      "failedToPaste": "Kunne ikke indsætte fra udklipsholder",
+      "enter5DigitOtp": "Indtast venligst en 5-cifret OTP",
+      "verificationFailed": "Verifikation mislykkedes. Prøv venligst igen.",
+      "networkError": "Netværksfejl. Tjek venligst din forbindelse og prøv igen.",
+      "emailVerifiedSuccessfully": "E-mail bekræftet!",
+      "otpResentSuccessfully": "OTP gensendt!",
+      "failedToResendOtp": "Kunne ikke gensende OTP. Prøv venligst igen.",
+      "verifyYourEmail": "Bekræft din e-mail",
+      "sentVerificationCode": "Vi har sendt en 5-cifret bekræftelseskode til",
+      "pasteFromClipboard": "Indsæt fra udklipsholder",
+      "verifyOtpButton": "Bekræft OTP",
+      "didNotReceiveCode": "Modtog du ikke koden?",
+      "resend": "Gensend"
+    }
 }

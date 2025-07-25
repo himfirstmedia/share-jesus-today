@@ -165,11 +165,11 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
         
         // Show error to user and provide fallback
         Alert.alert(
-          'Save Error',
-          `Failed to save the trimmed video: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          t('alerts.saveErrorTitle'),
+          t('alerts.saveErrorMessageGeneric', { message: error instanceof Error ? error.message : 'Unknown error' }),
           [
             {
-              text: 'OK',
+              text: t('alerts.ok'),
               onPress: () => {
                 if (isMountedRef.current) {
                   onCancel();
@@ -254,7 +254,7 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
         // Validate the output
         if (!outputPath || typeof outputPath !== 'string') {
           console.error('Invalid output path received:', outputPath);
-          Alert.alert('Error', 'Failed to get valid trimmed video path.');
+          Alert.alert(t('alerts.error'), t('alerts.trimmingErrorMessageGeneric'));
           safeOnCancel();
           return;
         }
@@ -335,9 +335,9 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
                 errorMessage = 'Video processing failed. The file might be corrupted or in an unsupported format.';
               }
               
-              Alert.alert('Trimming Error', errorMessage, [
+              Alert.alert(t('alerts.trimmingErrorTitle'), errorMessage, [
                 {
-                  text: 'OK',
+                  text: t('alerts.ok'),
                   onPress: () => safeOnCancel()
                 }
               ]);
@@ -392,20 +392,20 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
           setStatus('error');
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           
-          let userMessage = 'Failed to open video trimmer.';
-          if (errorMessage.includes('not found') || errorMessage.includes('No such file')) {
-            userMessage = 'Video file not found. Please select the video again.';
+          let userMessage = t('alerts.trimmingErrorMessageGeneric');
+          if (errorMessage.includes('No such file or directory')) {
+            userMessage = t('alerts.trimmingErrorMessageFileNotFound');
           } else if (errorMessage.includes('timeout')) {
-            userMessage = 'Video validation timed out. Please try again with a smaller video file.';
+            userMessage = t('alerts.trimmingErrorMessageTimeout');
           } else if (errorMessage.includes('Invalid') || errorMessage.includes('corrupted')) {
-            userMessage = 'The selected video file is not valid or supported. Please try a different video.';
+            userMessage = t('alerts.trimmingErrorMessageInvalidFile');
           } else if (errorMessage.includes('copy') || errorMessage.includes('permission')) {
-            userMessage = 'Unable to access the video file. Please check permissions and try again.';
+            userMessage = t('alerts.trimmingErrorMessagePermission');
           }
           
-          Alert.alert('Error', userMessage, [
+          Alert.alert(t('alerts.error'), userMessage, [
             {
-              text: 'OK',
+              text: t('alerts.ok'),
               onPress: () => safeOnCancel()
             }
           ]);

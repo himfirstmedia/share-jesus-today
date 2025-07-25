@@ -407,6 +407,47 @@
   "invalidDob": "Seleziona una data valida",
   "dobInFuture": "La data di nascita non può essere nel futuro",
   "invalidDobRange": "Inserisci una data di nascita valida"
-}
+},
+    "signup": {
+      "back": "← Indietro",
+      "createAccount": "Crea un account",
+      "requiredFields": "Tutti i campi con (*) sono obbligatori.",
+      "firstNamePlaceholder": "Nome*",
+      "lastNamePlaceholder": "Cognome*",
+      "emailPlaceholder": "Indirizzo email*",
+      "cityPlaceholder": "Città:",
+      "statePlaceholder": "Stato/Provincia:",
+      "nextButton": "Avanti",
+      "alreadyHaveAccount": "Hai già un account? Accedi",
+      "firstNameMinLength": "Il nome deve avere almeno 3 caratteri",
+      "lastNameMinLength": "Il cognome deve avere almeno 3 caratteri",
+      "emailRequired": "L'indirizzo email è obbligatorio",
+      "emailInvalid": "Inserisci un indirizzo email valido",
+      "signupSuccessTitle": "Successo",
+      "signupSuccessMessage": "Registrazione avvenuta con successo! Controlla la tua email per l'OTP.",
+      "accountFoundTitle": "Account trovato",
+      "accountFoundMessage": "L'email esiste già. È stato inviato un OTP per verificare il tuo account.",
+      "signupFailed": "Registrazione non riuscita",
+      "unexpectedError": "Si è verificato un errore imprevisto"
+    },
+      "verifyOtp": {
+      "invalidOtp": "OTP non valido",
+      "pasteValidOtp": "Incolla un OTP valido di 5 cifre",
+      "otpPastedSuccessfully": "OTP incollato con successo",
+      "failedToPaste": "Impossibile incollare dagli appunti",
+      "enter5DigitOtp": "Inserisci un OTP di 5 cifre",
+      "verificationFailed": "Verifica fallita. Riprova.",
+      "networkError": "Errore di rete. Controlla la tua connessione e riprova.",
+      "emailVerifiedSuccessfully": "Email verificata con successo!",
+      "otpResentSuccessfully": "OTP reinviato con successo!",
+      "failedToResendOtp": "Impossibile reinviare l'OTP. Riprova.",
+      "verifyYourEmail": "Verifica la tua email",
+      "sentVerificationCode": "Abbiamo inviato un codice di verifica di 5 cifre a",
+      "pasteFromClipboard": "Incolla dagli appunti",
+      "verifyOtpButton": "Verifica OTP",
+      "didNotReceiveCode": "Non hai ricevuto il codice?",
+      "resend": "Reinvia"
+    }
+
 
 }

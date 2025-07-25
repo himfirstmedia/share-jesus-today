@@ -407,5 +407,45 @@
     "invalidDob": "Bitte wählen Sie ein gültiges Datum aus",
     "dobInFuture": "Das Geburtsdatum darf nicht in der Zukunft liegen",
     "invalidDobRange": "Bitte geben Sie ein gültiges Geburtsdatum ein"
-  }
+  },
+  "signup": {
+    "back": "← Zurück",
+    "createAccount": "Konto erstellen",
+    "requiredFields": "Alle Felder mit (*) sind Pflichtfelder.",
+    "firstNamePlaceholder": "Vorname*",
+    "lastNamePlaceholder": "Nachname*",
+    "emailPlaceholder": "E-Mail-Adresse*",
+    "cityPlaceholder": "Stadt:",
+    "statePlaceholder": "Bundesland:",
+    "nextButton": "Weiter",
+    "alreadyHaveAccount": "Haben Sie bereits ein Konto? Anmelden",
+    "firstNameMinLength": "Der Vorname muss mindestens 3 Zeichen lang sein",
+    "lastNameMinLength": "Der Nachname muss mindestens 3 Zeichen lang sein",
+    "emailRequired": "E-Mail-Adresse ist erforderlich",
+    "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein",
+    "signupSuccessTitle": "Erfolg",
+    "signupSuccessMessage": "Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mails auf das OTP.",
+    "accountFoundTitle": "Konto gefunden",
+    "accountFoundMessage": "E-Mail existiert bereits. Ein OTP wurde gesendet, um Ihr Konto zu verifizieren.",
+    "signupFailed": "Registrierung fehlgeschlagen",
+    "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten"
+  },
+  "verifyOtp": {
+      "invalidOtp": "Ungültiges OTP",
+      "pasteValidOtp": "Bitte fügen Sie ein gültiges 5-stelliges OTP ein",
+      "otpPastedSuccessfully": "OTP erfolgreich eingefügt",
+      "failedToPaste": "Einfügen aus der Zwischenablage fehlgeschlagen",
+      "enter5DigitOtp": "Bitte geben Sie ein 5-stelliges OTP ein",
+      "verificationFailed": "Verifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "emailVerifiedSuccessfully": "E-Mail erfolgreich verifiziert!",
+      "otpResentSuccessfully": "OTP erfolgreich erneut gesendet!",
+      "failedToResendOtp": "Fehler beim erneuten Senden des OTP. Bitte versuchen Sie es erneut.",
+      "verifyYourEmail": "Bestätigen Sie Ihre E-Mail-Adresse",
+      "sentVerificationCode": "Wir haben einen 5-stelligen Bestätigungscode an ... gesendet",
+      "pasteFromClipboard": "Aus Zwischenablage einfügen",
+      "verifyOtpButton": "OTP bestätigen",
+      "didNotReceiveCode": "Code nicht erhalten?",
+      "resend": "Erneut senden"
+    }
 }

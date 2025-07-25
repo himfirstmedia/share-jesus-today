@@ -15,6 +15,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { t } from '../utils/i18n';
 
 // Types matching the Android implementation
 interface PasswordResetResponse {
@@ -31,6 +32,7 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  
 
   // API service call using correct endpoint - matches Android's ApiServicePasswordReset
   const submitResetRequest = async () => {
@@ -41,7 +43,7 @@ const ForgotPassword = () => {
 
     // Validation - exact same as Android
     if (emailValue === '') {
-      Alert.alert('Error', 'Please Enter Your Email Address');
+      Alert.alert(t('forgotPassword.alertError'), t('forgotPassword.alertEnterEmail'));
       setIsLoading(false);
       return;
     }
@@ -62,9 +64,9 @@ const ForgotPassword = () => {
         const { otp, firstName, lastName } = response.data;
 
         // Show success message - matches Android toast
-        Alert.alert('Success', 'One Time Password (OTP) has been sent to your email.', [
+        Alert.alert(t('forgotPassword.alertSuccess'), t('forgotPassword.alertOtpSent'), [
           {
-            text: 'OK',
+            text: t('forgotPassword.alertOk'),
             onPress: () => {
               // Navigate to OTP verification screen - matches Android Intent
               router.push({
@@ -81,24 +83,24 @@ const ForgotPassword = () => {
         ]);
       } else {
         // Handle API service error response
-        let errorMessage = response.error || 'Failed to send OTP.';
+        let errorMessage = response.error || t('forgotPassword.alertFailedToSendOtp');
         
         // Handle specific error cases
         if (errorMessage.includes('404') || errorMessage.includes('not found')) {
-          errorMessage = 'Email address not found. Please check your email.';
+          errorMessage = t('forgotPassword.alertEmailNotFound');
         } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
-          errorMessage = 'Unable to process password reset. Please verify your email address.';
+          errorMessage = t('forgotPassword.alertUnableToProcess');
         } else if (errorMessage.includes('500') || errorMessage.includes('server')) {
-          errorMessage = 'Server error. Please try again later.';
+          errorMessage = t('forgotPassword.alertServerError');
         }
         
-        Alert.alert('Error', errorMessage);
+        Alert.alert(t('forgotPassword.alertError'), errorMessage);
         console.error('API Error:', response.error);
       }
     } catch (error) {
       // Handle network failure - matches Android onFailure
-      const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
-      Alert.alert('Error', `Error: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : t('forgotPassword.alertNetworkError');
+            Alert.alert(t('forgotPassword.alertError'), `${t('forgotPassword.alertGenericError')}${errorMessage}`);
       console.error('API Error:', error);
     } finally {
       setIsLoading(false);
@@ -136,18 +138,18 @@ const ForgotPassword = () => {
 
           {/* Title and Description */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Forgot Password?</Text>
+            <Text style={styles.title}>{t('forgotPassword.title')}</Text>
             <Text style={styles.description}>
-              Don't worry! Enter your email address and we'll send you a reset code.
+              {t('forgotPassword.description')}
             </Text>
           </View>
 
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email Address</Text>
+            <Text style={styles.inputLabel}>{t('forgotPassword.emailLabel')}</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="Enter your email address"
+              placeholder={t('forgotPassword.emailPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={email}
               onChangeText={setEmail}
@@ -167,15 +169,15 @@ const ForgotPassword = () => {
             {isLoading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={styles.resetButtonText}>Send Reset Code</Text>
+              <Text style={styles.resetButtonText}>{t('forgotPassword.sendResetCode')}</Text>
             )}
           </TouchableOpacity>
 
           {/* Back to Login Link */}
           <View style={styles.loginLinkContainer}>
-            <Text style={styles.loginLinkText}>Remember your password? </Text>
+            <Text style={styles.loginLinkText}>{t('forgotPassword.rememberPassword')} </Text>
             <TouchableOpacity onPress={() => router.replace('/login')}>
-              <Text style={styles.loginLink}>Sign In</Text>
+              <Text style={styles.loginLink}>{t('forgotPassword.signIn')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
