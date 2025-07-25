@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Impossibile caricare il profilo",
     "retry": "Riprova"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Caricamento profilo...",
+    "profileNotFound": "Profilo non trovato",
+    "couldNotLoadProfile": "Impossibile caricare il profilo.",
+    "retry": "Riprova",
+    "notSet": "Non impostato",
+    "invalidDate": "Data non valida",
+    "readLess": "Leggi meno",
+    "readMore": "Leggi di più",
+    "untitledVideo": "Video senza titolo",
+    "gender": "Genere",
+    "country": "Paese",
+    "state": "Stato",
+    "city": "Città",
+    "zipcode": "CAP",
+    "church": "Chiesa",
+    "profileInformation": "Informazioni profilo",
+    "noVideosAvailable": "Nessun video disponibile per questo utente.",
+    "userProfile": "Profilo utente",
+    "usersVideos": "Video dell'utente"
+  },
   "alerts": {
     "confirmLogout": "Conferma disconnessione",
     "logoutMessage": "Sei sicuro di voler uscire?",
@@ -447,6 +468,25 @@
       "verifyOtpButton": "Verifica OTP",
       "didNotReceiveCode": "Non hai ricevuto il codice?",
       "resend": "Reinvia"
+    },
+     "forgotPassword": {
+      "title": "Password dimenticata?",
+      "description": "Non preoccuparti! Inserisci il tuo indirizzo email e ti invieremo un codice di ripristino.",
+      "emailLabel": "Indirizzo email",
+      "emailPlaceholder": "Inserisci il tuo indirizzo email",
+      "sendResetCode": "Invia codice di ripristino",
+      "rememberPassword": "Ricordi la tua password?",
+      "signIn": "Accedi",
+      "alertError": "Errore",
+      "alertEnterEmail": "Inserisci il tuo indirizzo email",
+      "alertSuccess": "Successo",
+      "alertOtpSent": "Una One Time Password (OTP) è stata inviata alla tua email.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "Indirizzo email non trovato. Controlla la tua email.",
+      "alertUnableToProcess": "Impossibile elaborare il ripristino della password. Verifica il tuo indirizzo email.",
+      "alertServerError": "Errore del server. Riprova più tardi.",
+      "alertNetworkError": "Si è verificato un errore di rete",
+      "alertGenericError": "Errore: "
     }
 
 

@@ -44,6 +44,27 @@
     "failedToLoadProfile": "प्रोफ़ाइल लोड करने में विफल",
     "retry": "पुनः प्रयास करें"
   },
+  "userProfileScreen": {
+    "loadingProfile": "प्रोफ़ाइल लोड हो रही है...",
+    "profileNotFound": "प्रोफ़ाइल नहीं मिली",
+    "couldNotLoadProfile": "प्रोफ़ाइल लोड नहीं हो सकी।",
+    "retry": "पुनः प्रयास करें",
+    "notSet": "निर्धारित नहीं है",
+    "invalidDate": "अमान्य तिथि",
+    "readLess": "कम पढ़ें",
+    "readMore": "और पढ़ें",
+    "untitledVideo": "शीर्षकहीन वीडियो",
+    "gender": "लिंग",
+    "country": "देश",
+    "state": "राज्य",
+    "city": "शहर",
+    "zipcode": "ज़िप कोड",
+    "church": "चर्च",
+    "profileInformation": "प्रोफ़ाइल जानकारी",
+    "noVideosAvailable": "इस उपयोगकर्ता के लिए कोई वीडियो उपलब्ध नहीं है।",
+    "userProfile": "उपयोगकर्ता प्रोफ़ाइल",
+    "usersVideos": "उपयोगकर्ता के वीडियो"
+  },
   "alerts": {
     "confirmLogout": "लॉगआउट की पुष्टि करें",
     "logoutMessage": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "ओटीपी सत्यापित करें",
       "didNotReceiveCode": "कोड प्राप्त नहीं हुआ?",
       "resend": "पुनः भेजें"
+    },
+    "forgotPassword": {
+      "title": "पासवर्ड भूल गए?",
+      "description": "चिंता न करें! अपना ईमेल पता दर्ज करें और हम आपको एक रीसेट कोड भेजेंगे।",
+      "emailLabel": "ईमेल पता",
+      "emailPlaceholder": "अपना ईमेल पता दर्ज करें",
+      "sendResetCode": "रीसेट कोड भेजें",
+      "rememberPassword": "अपना पासवर्ड याद है?",
+      "signIn": "साइन इन करें",
+      "alertError": "त्रुटि",
+      "alertEnterEmail": "कृपया अपना ईमेल पता दर्ज करें",
+      "alertSuccess": "सफलता",
+      "alertOtpSent": "वन टाइम पासवर्ड (OTP) आपके ईमेल पर भेज दिया गया है।",
+      "alertOk": "ठीक है",
+      "alertEmailNotFound": "ईमेल पता नहीं मिला। कृपया अपना ईमेल जांचें।",
+      "alertUnableToProcess": "पासवर्ड रीसेट संसाधित करने में असमर्थ। कृपया अपना ईमेल पता सत्यापित करें।",
+      "alertServerError": "सर्वर त्रुटि। कृपया बाद में पुनः प्रयास करें।",
+      "alertNetworkError": "नेटवर्क त्रुटि हुई",
+      "alertGenericError": "त्रुटि: "
     }
 }

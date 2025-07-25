@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Error al cargar el perfil",
     "retry": "Reintentar"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Cargando perfil...",
+    "profileNotFound": "Perfil no encontrado",
+    "couldNotLoadProfile": "No se pudo cargar el perfil.",
+    "retry": "Reintentar",
+    "notSet": "No establecido",
+    "invalidDate": "Fecha inválida",
+    "readLess": "Leer menos",
+    "readMore": "Leer más",
+    "untitledVideo": "Video sin título",
+    "gender": "Género",
+    "country": "País",
+    "state": "Estado",
+    "city": "Ciudad",
+    "zipcode": "Código postal",
+    "church": "Iglesia",
+    "profileInformation": "Información del perfil",
+    "noVideosAvailable": "No hay videos disponibles para este usuario.",
+    "userProfile": "Perfil de usuario",
+    "usersVideos": "Videos del usuario"
+  },
   "alerts": {
     "confirmLogout": "Confirmar cierre de sesión",
     "logoutMessage": "¿Estás seguro de que quieres cerrar sesión?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Verificar OTP",
       "didNotReceiveCode": "¿No recibiste el código?",
       "resend": "Reenviar"
+    },
+     "forgotPassword": {
+      "title": "¿Olvidó su contraseña?",
+      "description": "¡No se preocupe! Ingrese su dirección de correo electrónico y le enviaremos un código de restablecimiento.",
+      "emailLabel": "Dirección de correo electrónico",
+      "emailPlaceholder": "Ingrese su dirección de correo electrónico",
+      "sendResetCode": "Enviar código de restablecimiento",
+      "rememberPassword": "¿Recuerda su contraseña?",
+      "signIn": "Iniciar sesión",
+      "alertError": "Error",
+      "alertEnterEmail": "Por favor, ingrese su dirección de correo electrónico",
+      "alertSuccess": "Éxito",
+      "alertOtpSent": "Se ha enviado una contraseña de un solo uso (OTP) a su correo electrónico.",
+      "alertOk": "Aceptar",
+      "alertEmailNotFound": "Dirección de correo electrónico no encontrada. Por favor, revise su correo electrónico.",
+      "alertUnableToProcess": "No se puede procesar el restablecimiento de la contraseña. Por favor, verifique su dirección de correo electrónico.",
+      "alertServerError": "Error del servidor. Por favor, inténtelo de nuevo más tarde.",
+      "alertNetworkError": "Ocurrió un error de red",
+      "alertGenericError": "Error: "
     }
 }

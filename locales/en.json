@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Failed to load profile",
     "retry": "Retry"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Loading Profile...",
+    "profileNotFound": "Profile Not Found",
+    "couldNotLoadProfile": "Could not load profile.",
+    "retry": "Retry",
+    "notSet": "Not Set",
+    "invalidDate": "Invalid date",
+    "readLess": "Read less",
+    "readMore": "Read more",
+    "untitledVideo": "Untitled Video",
+    "gender": "Gender",
+    "country": "Country",
+    "state": "State",
+    "city": "City",
+    "zipcode": "Zipcode",
+    "church": "Church",
+    "profileInformation": "Profile Information",
+    "noVideosAvailable": "No videos available for this user.",
+    "userProfile": "User Profile",
+    "usersVideos": "User's Videos"
+  },
   "alerts": {
     "confirmLogout": "Confirm Logout",
     "logoutMessage": "Are you sure you want to logout?",
@@ -139,7 +160,9 @@
   },
   "common": {
     "version": "v13.2",
-    "back": "Back"
+    "back": "Back",
+    "noThumbnail": "No Thumbnail",
+    "noCoverPhoto": "No Cover Photo"
   },
   "languageScreen": {
     "title": "Select Language",
@@ -492,5 +515,27 @@
     "alertServerError": "Server error. Please try again later.",
     "alertNetworkError": "Network error occurred",
     "alertGenericError": "Error: "
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "description": "Set a secure password for your account",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "passwordRequirements": "Password Requirements:",
+    "reqLength": "At least 8 characters",
+    "reqUppercase": "One uppercase letter",
+    "reqLowercase": "One lowercase letter",
+    "reqNumber": "One number",
+    "reqSpecialChar": "One special character",
+    "alertPasswordMismatch": "Passwords do not match",
+    "alertSuccessTitle": "Success",
+    "alertSuccessMessage": "Your account has been created successfully. Please log in with your credentials.",
+    "alertOk": "OK",
+    "alertFailedToCreate": "Failed to create password. Please try again.",
+    "alertNetworkError": "Network error. Please check your connection and try again.",
+    "creating": "Creating...",
+    "createPasswordButton": "Create Password"
   }
 }

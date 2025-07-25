@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Profil konnte nicht geladen werden",
     "retry": "Erneut versuchen"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Profil wird geladen...",
+    "profileNotFound": "Profil nicht gefunden",
+    "couldNotLoadProfile": "Profil konnte nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "notSet": "Nicht festgelegt",
+    "invalidDate": "Ungültiges Datum",
+    "readLess": "Weniger lesen",
+    "readMore": "Mehr lesen",
+    "untitledVideo": "Unbenanntes Video",
+    "gender": "Geschlecht",
+    "country": "Land",
+    "state": "Bundesland",
+    "city": "Stadt",
+    "zipcode": "Postleitzahl",
+    "church": "Kirche",
+    "profileInformation": "Profilinformationen",
+    "noVideosAvailable": "Keine Videos für diesen Benutzer verfügbar.",
+    "userProfile": "Benutzerprofil",
+    "usersVideos": "Videos des Benutzers"
+  },
   "alerts": {
     "confirmLogout": "Abmeldung bestätigen",
     "logoutMessage": "Sind Sie sicher, dass Sie sich abmelden möchten?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "OTP bestätigen",
       "didNotReceiveCode": "Code nicht erhalten?",
       "resend": "Erneut senden"
+    },
+      "forgotPassword": {
+      "title": "Passwort vergessen?",
+      "description": "Keine Sorge! Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Code zum Zurücksetzen.",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "Geben Sie Ihre E-Mail-Adresse ein",
+      "sendResetCode": "Code zum Zurücksetzen senden",
+      "rememberPassword": "Erinnern Sie sich an Ihr Passwort?",
+      "signIn": "Anmelden",
+      "alertError": "Fehler",
+      "alertEnterEmail": "Bitte geben Sie Ihre E-Mail-Adresse ein",
+      "alertSuccess": "Erfolg",
+      "alertOtpSent": "Ein Einmalpasswort (OTP) wurde an Ihre E-Mail gesendet.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "E-Mail-Adresse nicht gefunden. Bitte überprüfen Sie Ihre E-Mail.",
+      "alertUnableToProcess": "Passwortzurücksetzung konnte nicht verarbeitet werden. Bitte überprüfen Sie Ihre E-Mail-Adresse.",
+      "alertServerError": "Serverfehler. Bitte versuchen Sie es später erneut.",
+      "alertNetworkError": "Netzwerkfehler aufgetreten",
+      "alertGenericError": "Fehler: "
     }
 }

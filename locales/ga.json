@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Theip ar an bpróifíl a lódáil",
     "retry": "Bain triail eile as"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Próifíl á lódáil...",
+    "profileNotFound": "Próifíl gan Aimsiú",
+    "couldNotLoadProfile": "Níorbh fhéidir an phróifíl a lódáil.",
+    "retry": "Bain triail eile as",
+    "notSet": "Gan Socrú",
+    "invalidDate": "Dáta neamhbhailí",
+    "readLess": "Léigh níos lú",
+    "readMore": "Léigh níos mó",
+    "untitledVideo": "Físeán gan ainm",
+    "gender": "Inscne",
+    "country": "Tír",
+    "state": "Stát",
+    "city": "Cathair",
+    "zipcode": "Cód Zip",
+    "church": "Eaglais",
+    "profileInformation": "Eolas Próifíle",
+    "noVideosAvailable": "Níl físeáin ar fáil don úsáideoir seo.",
+    "userProfile": "Próifíl Úsáideora",
+    "usersVideos": "Físeáin an Úsáideora"
+  },
   "alerts": {
     "confirmLogout": "Deimhnigh Logáil Amach",
     "logoutMessage": "An bhfuil tú cinnte gur mian leat logáil amach?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Fíoraigh OTP",
       "didNotReceiveCode": "Nár fhaigh tú an cód?",
       "resend": "Athsheol"
+    },
+      "forgotPassword": {
+      "title": "Pasfhocal Dearmadta?",
+      "description": "Ná bí buartha! Cuir isteach do sheoladh ríomhphoist agus seolfaimid cód athshocraithe chugat.",
+      "emailLabel": "Seoladh Ríomhphoist",
+      "emailPlaceholder": "Cuir isteach do sheoladh ríomhphoist",
+      "sendResetCode": "Seol Cód Athshocraithe",
+      "rememberPassword": "An cuimhin leat do phasfhocal?",
+      "signIn": "Sínigh Isteach",
+      "alertError": "Earráid",
+      "alertEnterEmail": "Cuir isteach do Sheoladh Ríomhphoist le do thoil",
+      "alertSuccess": "Rath",
+      "alertOtpSent": "Tá Pasfhocal Aonuaire (OTP) seolta chuig do ríomhphost.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "Níor aimsíodh an seoladh ríomhphoist. Seiceáil do ríomhphost, le do thoil.",
+      "alertUnableToProcess": "Ní féidir athshocrú an phasfhocail a phróiseáil. Fíoraigh do sheoladh ríomhphoist, le do thoil.",
+      "alertServerError": "Earráid freastalaí. Bain triail eile as níos déanaí, le do thoil.",
+      "alertNetworkError": "Tharla earráid líonra",
+      "alertGenericError": "Earráid: "
     }
 }

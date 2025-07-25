@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Falha ao carregar o perfil",
     "retry": "Tente novamente"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Carregando perfil...",
+    "profileNotFound": "Perfil não encontrado",
+    "couldNotLoadProfile": "Não foi possível carregar o perfil.",
+    "retry": "Tente novamente",
+    "notSet": "Não definido",
+    "invalidDate": "Data inválida",
+    "readLess": "Ler menos",
+    "readMore": "Leia mais",
+    "untitledVideo": "Vídeo sem título",
+    "gender": "Gênero",
+    "country": "País",
+    "state": "Estado",
+    "city": "Cidade",
+    "zipcode": "CEP",
+    "church": "Igreja",
+    "profileInformation": "Informações do perfil",
+    "noVideosAvailable": "Nenhum vídeo disponível para este usuário.",
+    "userProfile": "Perfil do usuário",
+    "usersVideos": "Vídeos do usuário"
+  },
   "alerts": {
     "confirmLogout": "Confirmar logout",
     "logoutMessage": "Tem certeza de que deseja sair?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Verificar OTP",
       "didNotReceiveCode": "Não recebeu o código?",
       "resend": "Reenviar"
+    },
+     "forgotPassword": {
+      "title": "Esqueceu a senha?",
+      "description": "Não se preocupe! Insira seu endereço de e-mail e enviaremos um código de redefinição.",
+      "emailLabel": "Endereço de e-mail",
+      "emailPlaceholder": "Insira seu endereço de e-mail",
+      "sendResetCode": "Enviar código de redefinição",
+      "rememberPassword": "Lembra-se da sua senha?",
+      "signIn": "Entrar",
+      "alertError": "Erro",
+      "alertEnterEmail": "Por favor, insira o seu endereço de e-mail",
+      "alertSuccess": "Sucesso",
+      "alertOtpSent": "Uma senha de uso único (OTP) foi enviada para o seu e-mail.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "Endereço de e-mail não encontrado. Por favor, verifique seu e-mail.",
+      "alertUnableToProcess": "Não foi possível processar a redefinição de senha. Por favor, verifique seu endereço de e-mail.",
+      "alertServerError": "Erro no servidor. Por favor, tente novamente mais tarde.",
+      "alertNetworkError": "Ocorreu um erro de rede",
+      "alertGenericError": "Erro: "
     }
 }

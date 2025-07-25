@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Kan profiel niet laden",
     "retry": "Opnieuw proberen"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Profiel wordt geladen...",
+    "profileNotFound": "Profiel niet gevonden",
+    "couldNotLoadProfile": "Kon profiel niet laden.",
+    "retry": "Opnieuw proberen",
+    "notSet": "Niet ingesteld",
+    "invalidDate": "Ongeldige datum",
+    "readLess": "Lees minder",
+    "readMore": "Lees meer",
+    "untitledVideo": "Naamloze video",
+    "gender": "Geslacht",
+    "country": "Land",
+    "state": "Staat",
+    "city": "Stad",
+    "zipcode": "Postcode",
+    "church": "Kerk",
+    "profileInformation": "Profielinformatie",
+    "noVideosAvailable": "Geen video's beschikbaar voor deze gebruiker.",
+    "userProfile": "Gebruikersprofiel",
+    "usersVideos": "Video's van de gebruiker"
+  },
   "alerts": {
     "confirmLogout": "Uitloggen bevestigen",
     "logoutMessage": "Weet u zeker dat u wilt uitloggen?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "OTP verifiëren",
       "didNotReceiveCode": "Code niet ontvangen?",
       "resend": "Opnieuw verzenden"
+    },
+     "forgotPassword": {
+      "title": "Wachtwoord vergeten?",
+      "description": "Geen zorgen! Voer uw e-mailadres in en we sturen u een herstelcode.",
+      "emailLabel": "E-mailadres",
+      "emailPlaceholder": "Voer uw e-mailadres in",
+      "sendResetCode": "Herstelcode verzenden",
+      "rememberPassword": "Herinnert u zich uw wachtwoord?",
+      "signIn": "Inloggen",
+      "alertError": "Fout",
+      "alertEnterEmail": "Voer alstublieft uw e-mailadres in",
+      "alertSuccess": "Succes",
+      "alertOtpSent": "Een eenmalig wachtwoord (OTP) is naar uw e-mail verzonden.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "E-mailadres niet gevonden. Controleer uw e-mail.",
+      "alertUnableToProcess": "Kan het wachtwoordherstel niet verwerken. Verifieer uw e-mailadres.",
+      "alertServerError": "Serverfout. Probeer het later opnieuw.",
+      "alertNetworkError": "Netwerkfout opgetreden",
+      "alertGenericError": "Fout: "
     }
 }

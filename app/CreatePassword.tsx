@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import apiService from '../services/apiService';
+import { t } from '../utils/i18n';
 
 const CreatePassword = () => {
   const [password, setPassword] = useState('');
@@ -39,19 +40,19 @@ const CreatePassword = () => {
     const errors = [];
     
     if (pwd.length < 8) {
-      errors.push('At least 8 characters');
+      errors.push(t('createPassword.reqLength'));
     }
     if (!/[A-Z]/.test(pwd)) {
-      errors.push('One uppercase letter');
+      errors.push(t('createPassword.reqUppercase'));
     }
     if (!/[a-z]/.test(pwd)) {
-      errors.push('One lowercase letter');
+      errors.push(t('createPassword.reqLowercase'));
     }
     if (!/\d/.test(pwd)) {
-      errors.push('One number');
+      errors.push(t('createPassword.reqNumber'));
     }
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
-      errors.push('One special character');
+      errors.push(t('createPassword.reqSpecialChar'));
     }
     
     return errors;
@@ -71,13 +72,13 @@ const CreatePassword = () => {
     // Validate password
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
-      setError(`Password must contain: ${passwordErrors.join(', ')}`);
+      setError(`${t('createPassword.passwordRequirements')}: ${passwordErrors.join(', ')}`);
       return;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('createPassword.alertPasswordMismatch'));
       return;
     }
 
@@ -92,15 +93,15 @@ const CreatePassword = () => {
       console.log('Set password response:', response);
 
       if (response.success) {
-        setSuccess('Password created successfully!');
+        setSuccess(t('createPassword.alertSuccessTitle'));
         setTimeout(() => {
           // Navigate to login screen
           Alert.alert(
-            'Success',
-            'Your account has been created successfully. Please log in with your credentials.',
+            t('createPassword.alertSuccessTitle'),
+            t('createPassword.alertSuccessMessage'),
             [
               {
-                text: 'OK',
+                text: t('createPassword.alertOk'),
                 onPress: () => {
                   // Navigate to home/login screen using Expo Router
                   router.replace('/login');
@@ -110,11 +111,11 @@ const CreatePassword = () => {
           );
         }, 1500);
       } else {
-        setError(response.error || 'Failed to create password. Please try again.');
+        setError(response.error || t('createPassword.alertFailedToCreate'));
       }
     } catch (error) {
       console.error('Set password error:', error);
-      setError('Network error. Please check your connection and try again.');
+      setError(t('createPassword.alertNetworkError'));
     } finally {
       setIsLoading(false);
     }
@@ -150,9 +151,9 @@ const CreatePassword = () => {
 
         {/* Title and Description */}
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Create Password</Text>
+          <Text style={styles.title}>{t('createPassword.title')}</Text>
           <Text style={styles.description}>
-            Set a secure password for your account
+            {t('createPassword.description')}
           </Text>
           <Text style={styles.email}>{email}</Text>
         </View>
@@ -173,14 +174,14 @@ const CreatePassword = () => {
 
         {/* Password Input */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Password</Text>
+          <Text style={styles.inputLabel}>{t('createPassword.passwordLabel')}</Text>
           <View style={styles.passwordInputContainer}>
             <TextInput
               style={[
                 styles.passwordInput,
                 password ? (isPasswordValid ? styles.inputValid : styles.inputInvalid) : {}
               ]}
-              placeholder="Enter your password"
+              placeholder={t('createPassword.passwordPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={password}
               onChangeText={handlePasswordChange}
@@ -203,14 +204,14 @@ const CreatePassword = () => {
 
         {/* Confirm Password Input */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Confirm Password</Text>
+          <Text style={styles.inputLabel}>{t('createPassword.confirmPasswordLabel')}</Text>
           <View style={styles.passwordInputContainer}>
             <TextInput
               style={[
                 styles.passwordInput,
                 confirmPassword ? (doPasswordsMatch ? styles.inputValid : styles.inputInvalid) : {}
               ]}
-              placeholder="Confirm your password"
+              placeholder={t('createPassword.confirmPasswordPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={confirmPassword}
               onChangeText={handleConfirmPasswordChange}
@@ -233,13 +234,13 @@ const CreatePassword = () => {
 
         {/* Password Requirements */}
         <View style={styles.requirementsContainer}>
-          <Text style={styles.requirementsTitle}>Password Requirements:</Text>
+          <Text style={styles.requirementsTitle}>{t('createPassword.passwordRequirements')}:</Text>
           {[
-            { text: 'At least 8 characters', valid: password.length >= 8 },
-            { text: 'One uppercase letter', valid: /[A-Z]/.test(password) },
-            { text: 'One lowercase letter', valid: /[a-z]/.test(password) },
-            { text: 'One number', valid: /\d/.test(password) },
-            { text: 'One special character', valid: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
+            { text: t('createPassword.reqLength'), valid: password.length >= 8 },
+            { text: t('createPassword.reqUppercase'), valid: /[A-Z]/.test(password) },
+            { text: t('createPassword.reqLowercase'), valid: /[a-z]/.test(password) },
+            { text: t('createPassword.reqNumber'), valid: /\d/.test(password) },
+            { text: t('createPassword.reqSpecialChar'), valid: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
           ].map((requirement, index) => (
             <View key={index} style={styles.requirementItem}>
               <Ionicons 

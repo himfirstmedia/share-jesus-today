@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Αποτυχία φόρτωσης προφίλ",
     "retry": "Προσπάθησε ξανά"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Φόρτωση προφίλ...",
+    "profileNotFound": "Το προφίλ δεν βρέθηκε",
+    "couldNotLoadProfile": "Δεν ήταν δυνατή η φόρτωση του προφίλ.",
+    "retry": "Προσπάθησε ξανά",
+    "notSet": "Δεν έχει οριστεί",
+    "invalidDate": "Μη έγκυρη ημερομηνία",
+    "readLess": "Διαβάστε λιγότερα",
+    "readMore": "Διαβάστε περισσότερα",
+    "untitledVideo": "Βίντεο χωρίς τίτλο",
+    "gender": "Φύλο",
+    "country": "Χώρα",
+    "state": "Πολιτεία",
+    "city": "Πόλη",
+    "zipcode": "Ταχυδρομικός κώδικας",
+    "church": "Εκκλησία",
+    "profileInformation": "Πληροφορίες προφίλ",
+    "noVideosAvailable": "Δεν υπάρχουν διαθέσιμα βίντεο για αυτόν τον χρήστη.",
+    "userProfile": "Προφίλ χρήστη",
+    "usersVideos": "Βίντεο χρήστη"
+  },
   "alerts": {
     "confirmLogout": "Επιβεβαίωση αποσύνδεσης",
     "logoutMessage": "Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε;",
@@ -448,5 +469,24 @@
       "verifyOtpButton": "Επαλήθευση OTP",
       "didNotReceiveCode": "Δεν λάβατε τον κωδικό;",
       "resend": "Επαναποστολή"
+    },
+    "forgotPassword": {
+      "title": "Ξεχάσατε τον κωδικό πρόσβασης;",
+      "description": "Μην ανησυχείτε! Εισαγάγετε τη διεύθυνση email σας και θα σας στείλουμε έναν κωδικό επαναφοράς.",
+      "emailLabel": "Διεύθυνση Email",
+      "emailPlaceholder": "Εισαγάγετε τη διεύθυνση email σας",
+      "sendResetCode": "Αποστολή κωδικού επαναφοράς",
+      "rememberPassword": "Θυμάστε τον κωδικό πρόσβασής σας;",
+      "signIn": "Σύνδεση",
+      "alertError": "Σφάλμα",
+      "alertEnterEmail": "Παρακαλώ εισαγάγετε τη διεύθυνση email σας",
+      "alertSuccess": "Επιτυχία",
+      "alertOtpSent": "Ένας κωδικός μίας χρήσης (OTP) έχει σταλεί στο email σας.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "Η διεύθυνση email δεν βρέθηκε. Παρακαλώ ελέγξτε το email σας.",
+      "alertUnableToProcess": "Δεν είναι δυνατή η επεξεργασία της επαναφοράς κωδικού πρόσβασης. Παρακαλώ επαληθεύστε τη διεύθυνση email σας.",
+      "alertServerError": "Σφάλμα διακομιστή. Παρακαλώ δοκιμάστε ξανά αργότερα.",
+      "alertNetworkError": "Παρουσιάστηκε σφάλμα δικτύου",
+      "alertGenericError": "Σφάλμα: "
     }
 }

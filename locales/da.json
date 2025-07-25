@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Kunne ikke indlæse profil",
     "retry": "Prøv igen"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Indlæser profil...",
+    "profileNotFound": "Profil ikke fundet",
+    "couldNotLoadProfile": "Kunne ikke indlæse profil.",
+    "retry": "Prøv igen",
+    "notSet": "Ikke indstillet",
+    "invalidDate": "Ugyldig dato",
+    "readLess": "Læs mindre",
+    "readMore": "Læs mere",
+    "untitledVideo": "Uden titel video",
+    "gender": "Køn",
+    "country": "Land",
+    "state": "Stat",
+    "city": "By",
+    "zipcode": "Postnummer",
+    "church": "Kirke",
+    "profileInformation": "Profiloplysninger",
+    "noVideosAvailable": "Ingen videoer tilgængelige for denne bruger.",
+    "userProfile": "Brugerprofil",
+    "usersVideos": "Brugerens videoer"
+  },
   "alerts": {
     "confirmLogout": "Bekræft logud",
     "logoutMessage": "Er du sikker på, at du vil logge ud?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Bekræft OTP",
       "didNotReceiveCode": "Modtog du ikke koden?",
       "resend": "Gensend"
+    },
+    "forgotPassword": {
+      "title": "Glemt adgangskode?",
+      "description": "Bare rolig! Indtast din e-mailadresse, så sender vi dig en nulstillingskode.",
+      "emailLabel": "E-mailadresse",
+      "emailPlaceholder": "Indtast din e-mailadresse",
+      "sendResetCode": "Send nulstillingskode",
+      "rememberPassword": "Kan du huske din adgangskode?",
+      "signIn": "Log ind",
+      "alertError": "Fejl",
+      "alertEnterEmail": "Indtast venligst din e-mailadresse",
+      "alertSuccess": "Succes",
+      "alertOtpSent": "En engangskode (OTP) er blevet sendt til din e-mail.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "E-mailadresse ikke fundet. Tjek venligst din e-mail.",
+      "alertUnableToProcess": "Kunne ikke behandle nulstilling af adgangskode. Bekræft venligst din e-mailadresse.",
+      "alertServerError": "Serverfejl. Prøv venligst igen senere.",
+      "alertNetworkError": "Netværksfejl opstod",
+      "alertGenericError": "Fejl: "
     }
 }

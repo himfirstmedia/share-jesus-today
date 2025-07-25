@@ -115,7 +115,7 @@ export default function ProfileScreen() {
           t('alerts.authRequired'),
           t('alerts.loginToViewVideos'),
           [
-            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('alerts.cancel'), style: 'cancel' },
             { text: t('alerts.login'), onPress: () => router.replace('/login') }
           ]
         );
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
           t('alerts.profileDataMissing'),
           t('alerts.profileIncomplete'),
           [
-            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('alerts.cancel'), style: 'cancel' },
             {
               text: t('alerts.logoutLogin'),
               onPress: async () => {
@@ -191,8 +191,8 @@ export default function ProfileScreen() {
           t('alerts.unableToLoadVideos'),
           t('alerts.videoLoadProblem'),
           [
-            { text: t('common.ok'), style: 'default' },
-            { text: t('common.refresh'), onPress: () => loadUserVideos() }
+            { text: t('alerts.ok'), style: 'default' },
+            { text: t('alerts.refresh'), onPress: () => loadUserVideos() }
           ]
         );
       }
@@ -202,9 +202,9 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error('❌ Critical error in loadUserVideos:', error);
       Alert.alert(
-        t('common.error'),
+        t('alerts.error'),
         t('alerts.unexpectedError'),
-        [{ text: t('common.ok') }]
+        [{ text: t('alerts.ok') }]
       );
       setVideos([]);
     } finally {
@@ -265,7 +265,7 @@ export default function ProfileScreen() {
 
   // EVENT HANDLERS
   const formatDate = (dateString: string): string => {
-    if (!dateString) return t('common.notSet');
+    if (!dateString) return t('profile.notSet');
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
@@ -274,7 +274,7 @@ export default function ProfileScreen() {
         year: 'numeric'
       });
     } catch {
-      return t('common.invalidDate');
+      return t('editProfileScreen.invalidDob');
     }
   };
 
@@ -459,7 +459,7 @@ export default function ProfileScreen() {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{t('profile.failedToLoad')}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
-            <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+            <Text style={styles.retryButtonText}>{t('profile.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

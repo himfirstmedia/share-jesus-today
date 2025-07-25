@@ -447,6 +447,25 @@
       "verifyOtpButton": "Потвърди еднократната парола",
       "didNotReceiveCode": "Не получихте кода?",
       "resend": "Изпрати отново"
+    },
+     "forgotPassword": {
+      "title": "Забравена парола?",
+      "description": "Без притеснения! Въведете имейл адреса си и ще ви изпратим код за нулиране.",
+      "emailLabel": "Имейл адрес",
+      "emailPlaceholder": "Въведете своя имейл адрес",
+      "sendResetCode": "Изпрати код за нулиране",
+      "rememberPassword": "Спомняте ли си паролата?",
+      "signIn": "Вход",
+      "alertError": "Грешка",
+      "alertEnterEmail": "Моля, въведете своя имейл адрес",
+      "alertSuccess": "Успех",
+      "alertOtpSent": "Еднократна парола (OTP) е изпратена на вашия имейл.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "Имейл адресът не е намерен. Моля, проверете имейла си.",
+      "alertUnableToProcess": "Не може да се обработи нулирането на паролата. Моля, проверете имейл адреса си.",
+      "alertServerError": "Грешка в сървъра. Моля, опитайте отново по-късно.",
+      "alertNetworkError": "Възникна мрежова грешка",
+      "alertGenericError": "Грешка: "
     }
 }
  

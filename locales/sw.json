@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Imeshindwa kupakia wasifu",
     "retry": "Jaribu tena"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Inapakia Wasifu...",
+    "profileNotFound": "Wasifu Haupatikani",
+    "couldNotLoadProfile": "Imeshindwa kupakia wasifu.",
+    "retry": "Jaribu tena",
+    "notSet": "Haijawekwa",
+    "invalidDate": "Tarehe batili",
+    "readLess": "Soma kidogo",
+    "readMore": "Soma zaidi",
+    "untitledVideo": "Video isiyo na jina",
+    "gender": "Jinsia",
+    "country": "Nchi",
+    "state": "Jimbo",
+    "city": "Jiji",
+    "zipcode": "Msimbo wa Eneo",
+    "church": "Kanisa",
+    "profileInformation": "Taarifa za Wasifu",
+    "noVideosAvailable": "Hakuna video zinazopatikana kwa mtumiaji huyu.",
+    "userProfile": "Wasifu wa Mtumiaji",
+    "usersVideos": "Video za Mtumiaji"
+  },
   "alerts": {
     "confirmLogout": "Thibitisha Kutoka",
     "logoutMessage": "Una uhakika unataka kutoka?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Thibitisha OTP",
       "didNotReceiveCode": "Hukupokea nambari?",
       "resend": "Tuma tena"
+    },
+    "forgotPassword": {
+      "title": "Umesahau Nenosiri?",
+      "description": "Usijali! Ingiza anwani yako ya barua pepe na tutakutumia nambari ya kuweka upya.",
+      "emailLabel": "Anwani ya Barua Pepe",
+      "emailPlaceholder": "Ingiza anwani yako ya barua pepe",
+      "sendResetCode": "Tuma Nambari ya Kuweka Upya",
+      "rememberPassword": "Unakumbuka nenosiri lako?",
+      "signIn": "Ingia",
+      "alertError": "Hitilafu",
+      "alertEnterEmail": "Tafadhali Ingiza Anwani Yako ya Barua Pepe",
+      "alertSuccess": "Imefaulu",
+      "alertOtpSent": "Nenosiri la Mara Moja (OTP) limetumwa kwa barua pepe yako.",
+      "alertOk": "Sawa",
+      "alertEmailNotFound": "Anwani ya barua pepe haipatikani. Tafadhali angalia barua pepe yako.",
+      "alertUnableToProcess": "Imeshindwa kushughulikia uwekaji upya wa nenosiri. Tafadhali thibitisha anwani yako ya barua pepe.",
+      "alertServerError": "Hitilafu ya seva. Tafadhali jaribu tena baadaye.",
+      "alertNetworkError": "Hitilafu ya mtandao imetokea",
+      "alertGenericError": "Hitilafu: "
     }
 }

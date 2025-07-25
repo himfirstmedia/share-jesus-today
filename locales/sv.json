@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Kunde inte ladda profilen",
     "retry": "Försök igen"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Laddar profil...",
+    "profileNotFound": "Profilen hittades inte",
+    "couldNotLoadProfile": "Kunde inte ladda profilen.",
+    "retry": "Försök igen",
+    "notSet": "Inte inställt",
+    "invalidDate": "Ogiltigt datum",
+    "readLess": "Läs mindre",
+    "readMore": "Läs mer",
+    "untitledVideo": "Namnlös video",
+    "gender": "Kön",
+    "country": "Land",
+    "state": "Stat",
+    "city": "Stad",
+    "zipcode": "Postnummer",
+    "church": "Kyrka",
+    "profileInformation": "Profilinformation",
+    "noVideosAvailable": "Inga videor tillgängliga för den här användaren.",
+    "userProfile": "Användarprofil",
+    "usersVideos": "Användarens videor"
+  },
   "alerts": {
     "confirmLogout": "Bekräfta utloggning",
     "logoutMessage": "Är du säker på att du vill logga ut?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Verifiera OTP",
       "didNotReceiveCode": "Fick du inte koden?",
       "resend": "Skicka igen"
+    },
+      "forgotPassword": {
+      "title": "Glömt lösenord?",
+      "description": "Inga problem! Ange din e-postadress så skickar vi dig en återställningskod.",
+      "emailLabel": "E-postadress",
+      "emailPlaceholder": "Ange din e-postadress",
+      "sendResetCode": "Skicka återställningskod",
+      "rememberPassword": "Kommer du ihåg ditt lösenord?",
+      "signIn": "Logga in",
+      "alertError": "Fel",
+      "alertEnterEmail": "Vänligen ange din e-postadress",
+      "alertSuccess": "Lyckades",
+      "alertOtpSent": "Ett engångslösenord (OTP) har skickats till din e-post.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "E-postadressen hittades inte. Kontrollera din e-post.",
+      "alertUnableToProcess": "Kunde inte bearbeta återställning av lösenord. Verifiera din e-postadress.",
+      "alertServerError": "Serverfel. Försök igen senare.",
+      "alertNetworkError": "Nätverksfel inträffade",
+      "alertGenericError": "Fel: "
     }
 }

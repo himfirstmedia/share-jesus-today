@@ -44,6 +44,27 @@
     "failedToLoadProfile": "Échec du chargement du profil",
     "retry": "Réessayer"
   },
+  "userProfileScreen": {
+    "loadingProfile": "Chargement du profil...",
+    "profileNotFound": "Profil introuvable",
+    "couldNotLoadProfile": "Impossible de charger le profil.",
+    "retry": "Réessayer",
+    "notSet": "Non défini",
+    "invalidDate": "Date invalide",
+    "readLess": "Lire moins",
+    "readMore": "Lire la suite",
+    "untitledVideo": "Vidéo sans titre",
+    "gender": "Genre",
+    "country": "Pays",
+    "state": "État",
+    "city": "Ville",
+    "zipcode": "Code postal",
+    "church": "Église",
+    "profileInformation": "Informations du profil",
+    "noVideosAvailable": "Aucune vidéo disponible pour cet utilisateur.",
+    "userProfile": "Profil utilisateur",
+    "usersVideos": "Vidéos de l'utilisateur"
+  },
   "alerts": {
     "confirmLogout": "Confirmer la déconnexion",
     "logoutMessage": "Êtes-vous sûr de vouloir vous déconnecter ?",
@@ -447,5 +468,24 @@
       "verifyOtpButton": "Vérifier l'OTP",
       "didNotReceiveCode": "Vous n'avez pas reçu le code ?",
       "resend": "Renvoyer"
+    },
+     "forgotPassword": {
+      "title": "Mot de passe oublié ?",
+      "description": "Ne vous inquiétez pas ! Entrez votre adresse e-mail et nous vous enverrons un code de réinitialisation.",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "Entrez votre adresse e-mail",
+      "sendResetCode": "Envoyer le code de réinitialisation",
+      "rememberPassword": "Vous vous souvenez de votre mot de passe ?",
+      "signIn": "Se connecter",
+      "alertError": "Erreur",
+      "alertEnterEmail": "Veuillez entrer votre adresse e-mail",
+      "alertSuccess": "Succès",
+      "alertOtpSent": "Un mot de passe à usage unique (OTP) a été envoyé à votre adresse e-mail.",
+      "alertOk": "OK",
+      "alertEmailNotFound": "Adresse e-mail non trouvée. Veuillez vérifier votre e-mail.",
+      "alertUnableToProcess": "Impossible de traiter la réinitialisation du mot de passe. Veuillez vérifier votre adresse e-mail.",
+      "alertServerError": "Erreur du serveur. Veuillez réessayer plus tard.",
+      "alertNetworkError": "Une erreur de réseau est survenue",
+      "alertGenericError": "Erreur : "
     }
 }

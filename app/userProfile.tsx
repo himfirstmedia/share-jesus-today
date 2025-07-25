@@ -2,6 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
+import { t } from '../utils/i18n';
 import {
   ActivityIndicator,
   Alert,
@@ -141,7 +142,7 @@ export default function UserProfileScreen() {
   );
 
   const formatDate = (dateString?: string): string => {
-    if (!dateString) return 'Not Set';
+    if (!dateString) return t('userProfileScreen.notSet');
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
@@ -150,7 +151,7 @@ export default function UserProfileScreen() {
         year: 'numeric',
       });
     } catch {
-      return 'Invalid date';
+      return t('userProfileScreen.invalidDate');
     }
   };
 
@@ -223,7 +224,7 @@ export default function UserProfileScreen() {
       </TouchableOpacity>
       <View style={styles.videoInfo}>
         <Text style={styles.videoTitle} numberOfLines={2}>
-          {item.title || 'Untitled Video'}
+          {item.title || t('userProfileScreen.untitledVideo')}
         </Text>
         <Text style={styles.videoDate}>
           {formatDate(item.createdTimestamp)}
@@ -244,12 +245,12 @@ export default function UserProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/search')}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Loading Profile...</Text>
+          <Text style={styles.headerTitle}>{t('userProfileScreen.loadingProfile')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3260AD" />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>{t('userProfileScreen.loadingProfile')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -262,13 +263,13 @@ export default function UserProfileScreen() {
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/search')}>
             <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile Not Found</Text>
+          <Text style={styles.headerTitle}>{t('userProfileScreen.profileNotFound')}</Text>
           <View style={{ width: 24 }} />
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Could not load profile.</Text>
+          <Text style={styles.errorText}>{t('userProfileScreen.couldNotLoadProfile')}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadProfileData}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('userProfileScreen.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -290,7 +291,7 @@ export default function UserProfileScreen() {
           <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
-          {profile.firstName ? `${profile.firstName} ${profile.lastName}` : 'User Profile'}
+          {profile.firstName ? `${profile.firstName} ${profile.lastName}` : t('userProfileScreen.userProfile')}
         </Text>
         <TouchableOpacity onPress={handleShareProfile}>
           <Ionicons name="share-outline" size={24} color="#1e1b1b" />
@@ -341,7 +342,7 @@ export default function UserProfileScreen() {
                   style={styles.readMoreButton}
                 >
                   <Text style={styles.readMoreText}>
-                    {isBioExpanded ? 'Read less' : 'Read more'}
+                    {isBioExpanded ? t('userProfileScreen.readLess') : t('userProfileScreen.readMore')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -352,46 +353,46 @@ export default function UserProfileScreen() {
         {/* Only show the details section if there's at least one piece of profile information */}
         {hasProfileInfo && (
           <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle}>Profile Information</Text>
+            <Text style={styles.sectionTitle}>{t('userProfileScreen.profileInformation')}</Text>
             
             {isValueSet(profile.gender) && (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Gender:</Text>
+                <Text style={styles.detailLabel}>{t('userProfileScreen.gender')}:</Text>
                 <Text style={styles.detailValue}>{profile.gender}</Text>
               </View>
             )}
             
             {isValueSet(profile.country) && (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Country:</Text>
+                <Text style={styles.detailLabel}>{t('userProfileScreen.country')}:</Text>
                 <Text style={styles.detailValue}>{profile.country}</Text>
               </View>
             )}
             
             {isValueSet(profile.state) && (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>State:</Text>
+                <Text style={styles.detailLabel}>{t('userProfileScreen.state')}:</Text>
                 <Text style={styles.detailValue}>{profile.state}</Text>
               </View>
             )}
             
             {isValueSet(profile.city) && (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>City:</Text>
+                <Text style={styles.detailLabel}>{t('userProfileScreen.city')}:</Text>
                 <Text style={styles.detailValue}>{profile.city}</Text>
               </View>
             )}
             
             {isValueSet(profile.zipcode) && (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Zipcode:</Text>
+                <Text style={styles.detailLabel}>{t('userProfileScreen.zipcode')}:</Text>
                 <Text style={styles.detailValue}>{profile.zipcode}</Text>
               </View>
             )}
             
             {isValueSet(profile.church) && (
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Church:</Text>
+                <Text style={styles.detailLabel}>{t('userProfileScreen.church')}:</Text>
                 <Text style={styles.detailValue}>{profile.church}</Text>
               </View>
             )}
@@ -400,7 +401,7 @@ export default function UserProfileScreen() {
 
         <View style={styles.videosSection}>
           <Text style={styles.sectionTitle}>
-            {profile.firstName ? `${profile.firstName}'s Videos` : "User's Videos"}
+            {profile.firstName ? `${profile.firstName}'s Videos` : t('userProfileScreen.usersVideos')}
           </Text>
           {videosLoading ? (
             <ActivityIndicator size="large" color="#3260AD" style={styles.videosLoading} />
@@ -415,7 +416,7 @@ export default function UserProfileScreen() {
             />
           ) : (
             <View style={styles.noVideosContainer}>
-              <Text style={styles.noVideosText}>No videos available for this user.</Text>
+              <Text style={styles.noVideosText}>{t('userProfileScreen.noVideosAvailable')}</Text>
             </View>
           )}
         </View>
