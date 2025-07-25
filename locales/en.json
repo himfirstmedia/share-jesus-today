@@ -251,6 +251,7 @@
     "recordingErrorMessage": "An error occurred while recording: {message}",
     "saveToGalleryErrorTitle": "Save to Gallery Error",
     "saveToGalleryErrorMessage": "Failed to save video to the gallery.",
+    "alertUploadFailedTitle": "Upload Failed",
     "alertUploadFailedMessage": "Failed to upload video: {message}",
     "preparingVideo": "Preparing video...",
     "copyingVideo": "Copying video...",

@@ -29,7 +29,7 @@ const verifyFileWithRetry = async (uri, maxRetries = 5, delayMs = 1000) => {
     } catch (error) {
       console.warn(`WARN: File verification attempt ${attempt} failed:`, error.message);
     }
-    
+
     if (attempt < maxRetries) {
       console.log(`LOG: Waiting ${delayMs}ms before retry attempt ${attempt + 1}...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -54,7 +54,7 @@ class VideoCompressionService {
   async getVideoInfo(uri) {
     try {
       const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
-      
+
       if (!fileInfo.exists) {
         throw new Error('Video file does not exist');
       }
@@ -70,7 +70,7 @@ class VideoCompressionService {
           time: 0,
           quality: 0.1,
         });
-        
+
         if (thumbnail.uri) {
           // Video is valid, we can work with it
           metadata = {
@@ -108,14 +108,14 @@ class VideoCompressionService {
   getOptimalRecordingSettings(durationSeconds, targetSizeMB = 15) {
     // Calculate required bitrate to stay under target size
     // Formula: File Size (MB) = (Video Bitrate + Audio Bitrate) * Duration (s) / 8 / 1024 / 1024
-    
+
     const targetBytes = targetSizeMB * 1024 * 1024;
     const audioBitrate = 128000; // 128 kbps audio
     const overhead = 0.1; // 10% overhead for container and metadata
-    
+
     const availableBitsPerSecond = (targetBytes * 8 / durationSeconds) * (1 - overhead);
     const videoBitrate = Math.max(300000, availableBitsPerSecond - audioBitrate); // Min 300kbps
-    
+
     let quality = 'low';
     if (videoBitrate >= 1500000) {
       quality = 'high';
@@ -137,7 +137,7 @@ class VideoCompressionService {
   async validateVideo(uri) {
     try {
       const info = await this.getVideoInfo(uri);
-      
+
       const validations = {
         fileExists: info.exists,
         hasValidSize: info.size > 0,
@@ -179,7 +179,7 @@ class VideoCompressionService {
    */
   async createCompressedCopy(sourceUri, options = {}) {
     let compressedTempUri = null;
-    
+
     try {
       const {
         compressionMethod = 'auto', // 'auto', 'manual', or 'off'
@@ -199,7 +199,7 @@ class VideoCompressionService {
         console.error('ERROR: Source video file not found or empty for compression:', sourceUri);
         return null;
       }
-      
+
       if (sourceInfo.sizeMB < minFileSizeForCompression) {
         console.log(`LOG: Video size (${sourceInfo.sizeMB}MB) is below threshold (${minFileSizeForCompression}MB), skipping compression.`);
         return sourceUri;
@@ -228,9 +228,12 @@ class VideoCompressionService {
 
       compressedTempUri = result;
       console.log(`LOG: Compression completed, temp file in cache: ${compressedTempUri}`);
+      // ✅ FIX: Delay before checking file existence to allow disk write to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
 
       // CRITICAL FIX: Verify the compressed file exists in cache with immediate retry
-      const compressedFileInfo = await verifyFileWithRetry(compressedTempUri, 3, 500);
+      const compressedFileInfo = await verifyFileWithRetry(compressedTempUri, 5, 500);
       if (!compressedFileInfo) {
         console.error('ERROR: Compressed video file is invalid or empty in cache after retries.');
         return null;
@@ -246,16 +249,16 @@ class VideoCompressionService {
 
       // CRITICAL FIX: Copy from cache to persistent storage immediately
       console.log(`LOG: Moving compressed file from cache to persistent storage: ${persistentCompressedUri}`);
-      await FileSystem.copyAsync({ 
-        from: compressedTempUri, 
-        to: persistentCompressedUri 
+      await FileSystem.copyAsync({
+        from: compressedTempUri,
+        to: persistentCompressedUri
       });
 
       // Verify the copy was successful in persistent storage
       const persistentFileInfo = await verifyFileWithRetry(persistentCompressedUri, 3, 500);
       if (!persistentFileInfo) {
         console.error('ERROR: Failed to copy compressed file to persistent storage');
-        
+
         // Clean up the temp file before returning null
         try {
           await FileSystem.deleteAsync(compressedTempUri, { idempotent: true });
@@ -263,7 +266,7 @@ class VideoCompressionService {
         } catch (cleanupError) {
           console.warn('WARN: Failed to delete temp file after copy failure:', cleanupError);
         }
-        
+
         return null;
       }
 
@@ -291,7 +294,7 @@ class VideoCompressionService {
 
     } catch (error) {
       console.error('ERROR: Video compression failed:', error);
-      
+
       // Clean up any temporary files on error
       if (compressedTempUri) {
         try {
@@ -301,7 +304,7 @@ class VideoCompressionService {
           console.warn('WARN: Failed to cleanup temp file after error:', cleanupError);
         }
       }
-      
+
       // Return null to indicate compression failed
       // The calling code should handle this and use the original file
       return null;
@@ -321,12 +324,12 @@ class VideoCompressionService {
 
       for (const directory of directories) {
         if (!directory) continue;
-        
+
         try {
           const files = await FileSystem.readDirectoryAsync(directory);
-          
-          const videoFiles = files.filter(file => 
-            file.includes('compressed_') || 
+
+          const videoFiles = files.filter(file =>
+            file.includes('compressed_') ||
             file.includes('recording_') ||
             file.includes('temp_video_') ||
             file.endsWith('.mp4')
@@ -336,7 +339,7 @@ class VideoCompressionService {
             try {
               const filePath = `${directory}${file}`;
               const fileInfo = await FileSystem.getInfoAsync(filePath);
-              
+
               // Delete files older than 1 hour
               const oneHourAgo = Date.now() - (60 * 60 * 1000);
               if (fileInfo.modificationTime && (fileInfo.modificationTime * 1000) < oneHourAgo) {
@@ -361,7 +364,7 @@ class VideoCompressionService {
    */
   getRecommendedCameraSettings(maxDurationSeconds = 30, targetSizeMB = 15) {
     const settings = this.getOptimalRecordingSettings(maxDurationSeconds, targetSizeMB);
-    
+
     return {
       maxDuration: maxDurationSeconds,
       quality: settings.quality === 'high' ? '720p' : settings.quality === 'medium' ? '480p' : '360p',
