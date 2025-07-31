@@ -133,7 +133,7 @@ export const HeaderSection: React.FC<{
         </TouchableOpacity>
         {!isAuthenticated && (
           <TouchableOpacity onPress={() => router.push('/Signup')} style={homeStyles.actionButton}>
-            <Text style={homeStyles.actionButtonText}>{t('menu.createAccount')}</Text>
+            <Text style={homeStyles.actionButtonText}>{t('home.createAccount')}</Text>
           </TouchableOpacity>
         )}
       </View>

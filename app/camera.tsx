@@ -223,7 +223,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       
       try {
         const compressedUri = await VideoCompressionService.createCompressedCopy(copiedUri, {
-          progressCallback: (progress) => {
+          progressCallback: (progress: number) => {
             const percentage = Math.round(progress * 100);
             setProcessingText(`${t('cameraScreen.compressingVideo')} ${percentage}%`);
           },
@@ -288,7 +288,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       if (copiedUri) {
         await FileSystem.deleteAsync(copiedUri, { idempotent: true });
       }
-      Alert.alert(t('cameraScreen.alertFailedUpload'), t('cameraScreen.alertFailedUpload', { message: error.message }));
+      Alert.alert(t('cameraScreen.alertFailedToSaveVideo'), t('cameraScreen.alertFailedToSaveVideo', { message: error.message }));
       if (onRecordingComplete) {
         onRecordingComplete(null);
       }

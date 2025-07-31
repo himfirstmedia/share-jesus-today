@@ -269,7 +269,7 @@ export default function MenuScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('menu.title')}</Text>
         {/* <Text style={styles.version}>{t('common.version')}</Text> */}
-        <Text style={styles.version}>{'v14.1.0'}</Text>
+        <Text style={styles.version}>{'v15.0.0'}</Text>
       </View>
 
       <ScrollView
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 7,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
     backgroundColor: "#fff",

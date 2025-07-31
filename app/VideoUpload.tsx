@@ -11,7 +11,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  ScrollView // Import ScrollView
 } from 'react-native';
 import videoApiService from '../services/videoApiService'; // Import actual service
 import VideoCompressionService from '../services/videoCompressionService'; // Import actual service
@@ -245,7 +246,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {onCancel && (
         <View style={styles.header}>
           <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -327,7 +328,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           onSave={handleTrimSave}
         />
       )}
-    </View>
+    </ScrollView>
   );
 };
 
