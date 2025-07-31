@@ -198,7 +198,17 @@
     "alertVideoUploaded": "¡Video subido exitosamente!",
     "alertFailedUpload": "No se pudo subir el video",
     "alertFailedUploadTryAgain": "No se pudo subir el video. Por favor, inténtalo de nuevo.",
-    "alertNoValidUriToTrim": "No hay una URI de video válida para recortar"
+    "alertNoValidUriToTrim": "No hay una URI de video válida para recortar",
+    "compressingVideo": "Comprimiendo video...",
+    "uploadingVideo": "Subiendo video...",
+    "processingVideo": "Procesando video...",
+    "uploadComplete": "¡Subida completa!",
+    "compress": "Comprimir",
+    "upload": "Subir",
+    "process": "Procesar",
+    "videoUploaded": "Video subido con éxito.",
+    "videoTooLongError": "El video es demasiado largo.",
+    "videoDurationError": "El video debe durar 30 segundos o menos."
   },
   "searchScreen": {
     "headerTitle": "Buscar perfiles",

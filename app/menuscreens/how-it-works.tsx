@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEvent, useEventListener } from 'expo';
-import { useVideoPlayer, VideoView } from 'expo-video';
 import { router } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -89,6 +90,7 @@ export default function HowItWorksScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>

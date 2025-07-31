@@ -198,7 +198,17 @@
     "alertVideoUploaded": "Video caricato con successo!",
     "alertFailedUpload": "Impossibile caricare il video",
     "alertFailedUploadTryAgain": "Impossibile caricare il video. Riprova.",
-    "alertNoValidUriToTrim": "Nessun URI video valido da tagliare"
+    "alertNoValidUriToTrim": "Nessun URI video valido da tagliare",
+    "compressingVideo": "Compressione del video...",
+    "uploadingVideo": "Caricamento del video...",
+    "processingVideo": "Elaborazione del video...",
+    "uploadComplete": "Caricamento completato!",
+    "compress": "Comprimi",
+    "upload": "Carica",
+    "process": "Elabora",
+    "videoUploaded": "Video caricato con successo.",
+    "videoTooLongError": "Il video è troppo lungo.",
+    "videoDurationError": "Il video deve durare 30 secondi o meno."
   },
   "searchScreen": {
     "headerTitle": "Cerca profili",

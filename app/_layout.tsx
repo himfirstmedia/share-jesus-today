@@ -1,6 +1,9 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+
+import videoApiService from '../services/videoApiService';
+import videoCacheService from '../services/videoCacheService';
 import AuthManager from '../utils/authManager';
 
 const InitialLayout = () => {
@@ -27,6 +30,32 @@ const InitialLayout = () => {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const preCachePublicVideos = async () => {
+      try {
+        console.log('[AppLoadCache] Fetching public videos for pre-caching...');
+        const response = await videoApiService.fetchPublicVideos(0, 5); // Fetch first 5 videos
+        if (response.success && response.data) {
+          const videos = response.data.data;
+          console.log(`[AppLoadCache] Fetched ${videos.length} videos. Starting cache...`);
+          videos.forEach(video => {
+            if (video.url) {
+              videoCacheService.startCachingVideo(video.url).catch(e => {
+                console.error(`[AppLoadCache] Failed to cache ${video.url}:`, e);
+              });
+            }
+          });
+        } else {
+          console.error('[AppLoadCache] Failed to fetch videos for caching:', response.error);
+        }
+      } catch (error) {
+        console.error('[AppLoadCache] Error during video pre-caching:', error);
+      }
+    };
+
+    preCachePublicVideos();
   }, []);
 
   useEffect(() => {

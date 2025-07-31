@@ -2,6 +2,8 @@
 import i18n from '@/utils/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, usePathname } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import React, { useEffect } from 'react';
 import {
   Dimensions,
@@ -13,10 +15,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
-import AuthManager from '../../utils/authManager'; // Import AuthManager
+import AuthManager from '../../utils/authManager';
+
+import { Colors } from '@/constants/Colors';
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 80 : 70;
-const BUTTON_DIAMETER = 60; // Reduced diameter to match the image
+const BUTTON_DIAMETER = 60;
+const BRAND_BLUE = Colors.light.background; // Using color from constants
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof Ionicons>['name'];
@@ -27,35 +32,32 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   useEffect(() => {
-    // Initialize AuthManager when the app layout loads
+    // Initialize AuthManager once when the app layout loads
     AuthManager.initialize().catch((error) => {
       console.error('Failed to initialize AuthManager:', error);
-      // Optionally handle initialization error, e.g., show a message to the user
     });
-  }, []); // Empty dependency array ensures this runs only once on mount
+
+    // Set the bottom system navigation bar color to blue permanently.
+    // This will now apply to all screens.
+    SystemUI.setBackgroundColorAsync('#3260ad');
+  }, []); // Runs only once when the layout is first loaded.
 
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  console.log('Current pathname:', pathname);
 
   // Define screens that should NOT show the bottom navigation
-  const hideTabBarScreens = ['/login', '/Signup', '/VerifyOtp', '/CreatePassword', '/CameraRecord','/camera','/post'];
+  const hideTabBarScreens = ['/login', '/Signup', '/VerifyOtp', '/CreatePassword', '/CameraRecord', '/camera', '/post'];
+  
+  const shouldHideTabBar = hideTabBarScreens.some(screen => pathname.startsWith(screen));
 
-  const shouldHideTabBar =
-    hideTabBarScreens.includes(pathname) ||
-    pathname.includes('CameraRecord') ||
-    pathname.endsWith('/CameraRecord');
-
-  // Screen width is required for SVG width
   const screenWidth = Dimensions.get('window').width;
 
-  // Custom TabBar Background with circular cutout using Path
+  // Custom TabBar Background with circular cutout
   const TabBarBackground = () => {
     const centerX = screenWidth / 2;
-    const cutoutRadius = BUTTON_DIAMETER / 2 + 8; // Cutout radius
+    const cutoutRadius = BUTTON_DIAMETER / 2 + 8;
     const tabHeight = TAB_BAR_HEIGHT + insets.bottom;
-    
-    // Create path with proper circular cutout
+
     const pathData = `
       M 0,0
       L ${centerX - cutoutRadius},0
@@ -72,48 +74,27 @@ export default function TabLayout() {
         height={tabHeight}
         style={{ position: 'absolute', bottom: 0, left: 0 }}
       >
-        <Path
-          d={pathData}
-          fill="#3260AD"
-          fillRule="evenodd"
-        />
+        <Path d={pathData} fill={BRAND_BLUE} fillRule="evenodd" />
       </Svg>
     );
   };
 
-  // CustomTabBar component with transparent cutout and floating center button
+  // CustomTabBar component
   const CustomTabBar = ({
     state,
-    descriptors,
     navigation,
   }: {
-    state: {
-      index: number;
-      routes: { key: string; name: string }[];
-    };
-    descriptors: {
-      [key: string]: {
-        options: {
-          tabBarLabel?: string;
-          title?: string;
-          tabBarIcon?: (props: { focused: boolean; color: string; size: number }) => React.ReactNode;
-        };
-      };
-    };
-    navigation: {
-      navigate: (name: string) => void;
-    };
+    state: { index: number; routes: { key: string; name: string }[] };
+    navigation: { navigate: (name: string) => void };
   }) => {
-    // Don't render the tab bar for auth screens
+    
     if (shouldHideTabBar) {
       return null;
     }
 
-    // Names for tabs
-    const leftTabName = 'index'; // Home
-    const centerTabName = 'post'; // Post
-    const rightTabName = 'menu'; // Menu
-
+    const leftTabName = 'index';
+    const centerTabName = 'post';
+    const rightTabName = 'menu';
     const currentRoute = state.routes[state.index]?.name;
 
     return (
@@ -125,15 +106,11 @@ export default function TabLayout() {
           ]}
         >
           <TabBarBackground />
-
           <View style={styles.innerContainer}>
-            {/* Left Tab */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
-                if (currentRoute !== leftTabName) {
-                  navigation.navigate(leftTabName);
-                }
+                if (currentRoute !== leftTabName) navigation.navigate(leftTabName);
               }}
               style={styles.sideTab}
             >
@@ -147,16 +124,12 @@ export default function TabLayout() {
               </Text>
             </TouchableOpacity>
 
-            {/* Empty space for center button */}
             <View style={{ width: BUTTON_DIAMETER }} />
 
-            {/* Right Tab */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
-                if (currentRoute !== rightTabName) {
-                  navigation.navigate(rightTabName);
-                }
+                if (currentRoute !== rightTabName) navigation.navigate(rightTabName);
               }}
               style={styles.sideTab}
             >
@@ -172,17 +145,14 @@ export default function TabLayout() {
           </View>
         </View>
 
-        {/* Center floating button: positioned absolutely over the tab bar */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => {
-            if (currentRoute !== centerTabName) {
-              navigation.navigate(centerTabName);
-            }
+            if (currentRoute !== centerTabName) navigation.navigate(centerTabName);
           }}
           style={[
             styles.floatingButton,
-            { bottom: TAB_BAR_HEIGHT + insets.bottom - BUTTON_DIAMETER / 2 }
+            { bottom: TAB_BAR_HEIGHT + insets.bottom - BUTTON_DIAMETER / 2 },
           ]}
         >
           <Ionicons name="add" size={28} color="white" />
@@ -192,40 +162,43 @@ export default function TabLayout() {
   };
 
   return (
-    <Tabs
-      tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="post"
-        options={{
-          title: 'Post',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="menu"
-        options={{
-          title: 'Menu',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <>
+      {/* This StatusBar component styles the top bar for all screens within this layout. */}
+      {/* The blue color will persist because we are no longer resetting system UI colors. */}
+      <StatusBar style="light" backgroundColor={BRAND_BLUE} translucent={false} />
+      <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="post"
+          options={{
+            title: 'Post',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'add-circle' : 'add-circle-outline'} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="menu"
+          options={{
+            title: 'Menu',
+            tabBarIcon: ({ color, focused }) => (
+              <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </>
   );
 }
 
@@ -264,15 +237,15 @@ const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',
     left: '50%',
-    marginLeft: -BUTTON_DIAMETER / 2, // Center the button
+    marginLeft: -BUTTON_DIAMETER / 2,
     width: BUTTON_DIAMETER,
     height: BUTTON_DIAMETER,
     borderRadius: BUTTON_DIAMETER / 2,
-    backgroundColor: '#3260AD',
+    backgroundColor: BRAND_BLUE,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 12,
-    shadowColor: '#3260AD',
+    shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 12,

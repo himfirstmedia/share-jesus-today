@@ -198,7 +198,17 @@
     "alertVideoUploaded": "Video erfolgreich hochgeladen!",
     "alertFailedUpload": "Video konnte nicht hochgeladen werden",
     "alertFailedUploadTryAgain": "Video konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.",
-    "alertNoValidUriToTrim": "Keine gültige Video-URI zum Kürzen"
+    "alertNoValidUriToTrim": "Keine gültige Video-URI zum Kürzen",
+    "compressingVideo": "Video wird komprimiert...",
+    "uploadingVideo": "Video wird hochgeladen...",
+    "processingVideo": "Video wird verarbeitet...",
+    "uploadComplete": "Upload abgeschlossen!",
+    "compress": "Komprimieren",
+    "upload": "Hochladen",
+    "process": "Verarbeiten",
+    "videoUploaded": "Video erfolgreich hochgeladen.",
+    "videoTooLongError": "Das Video ist zu lang.",
+    "videoDurationError": "Das Video muss 30 Sekunden oder weniger dauern."
   },
   "searchScreen": {
     "headerTitle": "Profile suchen",

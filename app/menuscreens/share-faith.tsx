@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import {
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,6 +20,7 @@ export default function ShareFaithScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar  backgroundColor="#3260ad" barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>

@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/easylogo.png",
     "scheme": "sharejesustodayui",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "#ffffff",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,

@@ -177,7 +177,17 @@
     "alertVideoUploaded": "Видеоклипът е качен успешно!",
     "alertFailedUpload": "Неуспешно качване на видеоклип",
     "alertFailedUploadTryAgain": "Неуспешно качване на видеоклип. Моля, опитайте отново.",
-    "alertNoValidUriToTrim": "Няма валиден URI на видеоклип за изрязване"
+    "alertNoValidUriToTrim": "Няма валиден URI на видеоклип за изрязване",
+    "compressingVideo": "Компресиране на видео...",
+    "uploadingVideo": "Качване на видео...",
+    "processingVideo": "Обработка на видео...",
+    "uploadComplete": "Качването е завършено!",
+    "compress": "Компресиране",
+    "upload": "Качване",
+    "process": "Обработка",
+    "videoUploaded": "Видеоклипът е качен успешно.",
+    "videoTooLongError": "Видеоклипът е твърде дълъг.",
+    "videoDurationError": "Видеоклипът трябва да е с продължителност 30 секунди или по-малко."
   },
   "searchScreen": {
     "headerTitle": "Търсене на профили",

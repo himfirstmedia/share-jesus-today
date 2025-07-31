@@ -198,7 +198,17 @@
     "alertVideoUploaded": "वीडियो सफलतापूर्वक अपलोड किया गया!",
     "alertFailedUpload": "वीडियो अपलोड करने में विफल",
     "alertFailedUploadTryAgain": "वीडियो अपलोड करने में विफल। कृपया फिर से प्रयास करें।",
-    "alertNoValidUriToTrim": "ट्रिम करने के लिए कोई वैध वीडियो URI नहीं"
+    "alertNoValidUriToTrim": "ट्रिम करने के लिए कोई वैध वीडियो URI नहीं",
+    "compressingVideo": "वीडियो को कंप्रेस किया जा रहा है...",
+    "uploadingVideo": "वीडियो अपलोड हो रहा है...",
+    "processingVideo": "वीडियो प्रोसेस हो रहा है...",
+    "uploadComplete": "अपलोड पूरा हुआ!",
+    "compress": "कंप्रेस",
+    "upload": "अपलोड",
+    "process": "प्रोसेस",
+    "videoUploaded": "वीडियो सफलतापूर्वक अपलोड किया गया।",
+    "videoTooLongError": "वीडियो बहुत लंबा है।",
+    "videoDurationError": "वीडियो 30 सेकंड या उससे कम का होना चाहिए।"
   },
   "searchScreen": {
     "headerTitle": "प्रोफाइल खोजें",
@@ -209,7 +219,7 @@
     "tryDifferentKeywords": "विभिन्न कीवर्ड के साथ खोजने का प्रयास करें",
     "checkBackLater": "यीशु साझा करने वाले नए विश्वासियों के लिए बाद में देखें",
     "showAllProfiles": "सभी प्रोफ़ाइल दिखाएँ",
-    "alertError": "त्रुटि",
+    "alertError": "त्रुटي",
     "alertFailedLoadProfiles": "प्रोफ़ाइल लोड करने में विफल। कृपया फिर से प्रयास करें।",
     "alertSearchFailed": "खोज विफल। कृपया फिर से प्रयास करें."
   },

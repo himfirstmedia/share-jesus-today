@@ -1,8 +1,8 @@
-// app/profile.tsx - Updated Profile Screen with Translation Placeholders
+// app/profile.tsx - Updated Profile Screen with Edit Icon in Header
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -70,7 +70,7 @@ export default function ProfileScreen() {
   const [videosLoading, setVideosLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showProfilePicModal, setShowProfilePicModal] = useState(false);
-  const [isBioExpanded, setIsBioExpanded] = useState(false); // New state for bio expansion
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   // Video Modal State
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -96,19 +96,10 @@ export default function ProfileScreen() {
   const loadUserVideos = useCallback(async () => {
     try {
       setVideosLoading(true);
-
-      console.log('🔍 Profile Screen: Loading user videos...');
-
       const authToken = await AsyncStorage.getItem('authToken');
       const jwtToken = await AsyncStorage.getItem('jwt');
       const userId = await AsyncStorage.getItem('id');
       const email = await AsyncStorage.getItem('email');
-
-      console.log('🔍 Profile Debug:');
-      console.log('  Auth Token:', authToken ? 'Present' : 'Missing');
-      console.log('  JWT Token:', jwtToken ? 'Present' : 'Missing');
-      console.log('  User ID:', userId || 'Missing');
-      console.log('  Email:', email || 'Missing');
 
       if (!authToken && !jwtToken) {
         Alert.alert(
@@ -124,11 +115,8 @@ export default function ProfileScreen() {
 
       // Try method 1: Use ProfileService
       try {
-        console.log('📹 Attempting to load videos via ProfileService...');
         const userVideos = await profileService.getUserVideos();
-
         if (userVideos && userVideos.length >= 0) {
-          console.log(`✅ Successfully loaded ${userVideos.length} videos`);
           setVideos(userVideos.map(v => ({ ...v, duration: v.duration ?? 0 })));
           return;
         }
@@ -139,11 +127,8 @@ export default function ProfileScreen() {
       // Method 2: Try alternative email-based approach
       if (email && !userId) {
         try {
-          console.log('📧 Attempting email-based video loading...');
           const userVideos = await profileService.getUserVideosByEmail();
-
           if (userVideos && userVideos.length >= 0) {
-            console.log(`✅ Email-based loading successful: ${userVideos.length} videos`);
             setVideos(userVideos.map(v => ({ ...v, duration: v.duration ?? 0 })));
             return;
           }
@@ -155,11 +140,8 @@ export default function ProfileScreen() {
       // Method 3: Direct API call with stored user ID
       if (userId) {
         try {
-          console.log('🎯 Attempting direct API call with stored user ID...');
           const directVideos = await profileService.getProfileVideos(userId);
-
           if (directVideos && directVideos.length >= 0) {
-            console.log(`✅ Direct API call successful: ${directVideos.length} videos`);
             setVideos(directVideos.map(v => ({ ...v, duration: v.duration ?? 0 })));
             return;
           }
@@ -196,9 +178,7 @@ export default function ProfileScreen() {
           ]
         );
       }
-
       setVideos([]);
-
     } catch (error) {
       console.error('❌ Critical error in loadUserVideos:', error);
       Alert.alert(
@@ -221,44 +201,13 @@ export default function ProfileScreen() {
     }
   }, [loadProfile, loadUserVideos]);
 
-  const debugAllStorage = useCallback(async () => {
-    try {
-      console.log('🗂️ === COMPLETE STORAGE DEBUG ===');
-      const allKeys = await AsyncStorage.getAllKeys();
-      console.log('📋 All keys:', allKeys);
-
-      for (const key of allKeys) {
-        const value = await AsyncStorage.getItem(key);
-        console.log(`  ${key}:`, value ? (value.length > 50 ? value.substring(0, 50) + '...' : value) : 'null');
-      }
-      console.log('🗂️ === END STORAGE DEBUG ===');
-    } catch (error) {
-      console.error('❌ Storage debug error:', error);
-    }
-  }, []);
-
-  // SINGLE useEffect HOOK WITH CONSISTENT DEPENDENCY ARRAY
-  useEffect(() => {
-    const initializeProfile = async () => {
-      if (__DEV__) {
-        await debugAllStorage();
-      }
-      await loadProfile();
-      await loadUserVideos();
-    };
-
-    initializeProfile();
-  }, [debugAllStorage, loadProfile, loadUserVideos]);
-
   // Add useFocusEffect to reload data when the screen is focused
   useFocusEffect(
     useCallback(() => {
-      console.log('Profile screen focused, reloading data.');
-      loadProfile(); 
+      loadProfile();
       loadUserVideos();
-      
       return () => {
-        console.log('Profile screen unfocused.');
+        // Optional: cleanup when screen is unfocused
       };
     }, [loadProfile, loadUserVideos])
   );
@@ -280,11 +229,10 @@ export default function ProfileScreen() {
 
   const handleShareProfile = async () => {
     if (!profile?.id) return;
-
     try {
       await Share.share({
-        message: t('profile.shareMessage', { 
-          profileUrl: `https://sharejesustoday.org/profile/?sh=${profile.id}` 
+        message: t('menu.shareProfile', {
+          profileUrl: `https://sharejesustoday.org/profile/?sh=${profile.id}`
         }),
         title: t('profile.shareTitle')
       });
@@ -316,24 +264,14 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleEditProfile = () => {
-    router.push('/editProfile');
-  };
-
-  const handleEditCover = () => {
-    router.push('/EditCoverPhotoScreen');
-  };
-
-  const handleEditProfilePicture = () => {
-    setShowProfilePicModal(true);
-  };
-
+  const handleEditProfile = () => router.push('/editProfile');
+  const handleEditCover = () => router.push('/EditCoverPhotoScreen');
+  const handleEditProfilePicture = () => setShowProfilePicModal(true);
   const openVideoModal = (video: UserVideo, index: number) => {
     setSelectedVideo(video);
     setCurrentVideoIndex(index);
     setIsModalVisible(true);
   };
-
   const handleCloseModal = () => {
     setIsModalVisible(false);
     setSelectedVideo(null);
@@ -355,34 +293,19 @@ export default function ProfileScreen() {
     }
   };
 
-  // Helper function to check if bio text exceeds 3 lines
-  const shouldTruncateBio = (text: string) => {
-    return text && text.length > 120; // Approximate 3 lines worth of characters
-  };
-
+  const shouldTruncateBio = (text: string) => text && text.length > 120;
   const getTruncatedBio = (text: string) => {
     if (!text) return '';
-    if (text.length <= 120) return text;
-    return text.substring(0, 120) + '...';
+    return text.length <= 120 ? text : text.substring(0, 120) + '...';
   };
 
-  // Helper function to check if any profile details exist
   const hasProfileDetails = () => {
     if (!profile) return false;
-    return !!(
-      profile.gender ||
-      profile.country ||
-      profile.state ||
-      profile.city ||
-      profile.zipcode ||
-      profile.church
-    );
+    return !!(profile.gender || profile.country || profile.state || profile.city || profile.zipcode || profile.church);
   };
 
-  // Helper function to render profile detail item only if value exists
   const renderDetailItem = (labelKey: string, value?: string) => {
     if (!value || value.trim() === '') return null;
-    
     return (
       <View style={styles.detailItem}>
         <Text style={styles.detailLabel}>{t(labelKey)}:</Text>
@@ -398,16 +321,13 @@ export default function ProfileScreen() {
         onPress={() => openVideoModal(item, index)}
       >
         <Image
-          source={{
-            uri: item.thumbnailUrl || 'https://via.placeholder.com/150x100?text=No+Thumbnail'
-          }}
+          source={{ uri: item.thumbnailUrl || 'https://via.placeholder.com/150x100?text=No+Thumbnail' }}
           style={styles.thumbnailImage}
         />
         <View style={styles.playButtonOverlay}>
           <Ionicons name="play-circle" size={40} color="rgba(255, 255, 255, 0.9)" />
         </View>
       </TouchableOpacity>
-
       <View style={styles.videoInfo}>
         <Text style={styles.videoTitle} numberOfLines={2}>
           {item.title || t('video.untitled')}
@@ -416,7 +336,6 @@ export default function ProfileScreen() {
           {formatDate(item.createdTimestamp)}
         </Text>
       </View>
-
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => handleDeleteVideo(item.id)}
@@ -426,7 +345,6 @@ export default function ProfileScreen() {
     </View>
   );
 
-  // LOADING STATE
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -445,7 +363,6 @@ export default function ProfileScreen() {
     );
   }
 
-  // ERROR STATE
   if (!profile) {
     return (
       <SafeAreaView style={styles.container}>
@@ -466,32 +383,28 @@ export default function ProfileScreen() {
     );
   }
 
-  // MAIN RENDER
   return (
     <SafeAreaView style={styles.container}>
-       <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
+      <StatusBar backgroundColor="#3260ad"  barStyle="light-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('profile.title')}</Text>
-        <TouchableOpacity onPress={handleShareProfile}>
-          <Ionicons name="share-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerRightIcons}>
+          <TouchableOpacity onPress={handleShareProfile} style={styles.headerIconButton}>
+            <Ionicons name="share-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Cover Photo */}
         <View style={styles.coverContainer}>
           <Image
-            source={{
-              uri: profile.coverPhoto || 'https://via.placeholder.com/400x200?text=No+Cover+Photo'
-            }}
+            source={{ uri: profile.coverPhoto || 'https://via.placeholder.com/400x200?text=No+Cover+Photo' }}
             style={styles.coverImage}
           />
           <TouchableOpacity style={styles.editCoverButton} onPress={handleEditCover}>
@@ -499,13 +412,14 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Picture and Basic Info */}
         <View style={styles.profileSection}>
           <View style={styles.profileImageContainer}>
             <Image
-              source={{
-                uri: profile.profilePicture || '../../assets/images/profile.png'
-              }}
+              source={
+                profile.profilePicture
+                  ? { uri: profile.profilePicture }
+                  : require('../assets/images/profile.png')
+              }
               style={styles.profileImage}
             />
             <TouchableOpacity
@@ -520,17 +434,15 @@ export default function ProfileScreen() {
             {profile.firstName} {profile.lastName}
           </Text>
 
-          {/* Biography Section - Now under username */}
           {profile.biography && (
             <View style={styles.biographyContainer}>
               <Text style={styles.biographyText}>
-                {isBioExpanded || !shouldTruncateBio(profile.biography) 
-                  ? profile.biography 
-                  : getTruncatedBio(profile.biography)
-                }
+                {isBioExpanded || !shouldTruncateBio(profile.biography)
+                  ? profile.biography
+                  : getTruncatedBio(profile.biography)}
               </Text>
               {shouldTruncateBio(profile.biography) && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setIsBioExpanded(!isBioExpanded)}
                   style={styles.readMoreButton}
                 >
@@ -547,16 +459,16 @@ export default function ProfileScreen() {
               <Text style={styles.profileEmail}>{t('profile.email')}: {profile.email}</Text>
             </View>
           )}
-
-          <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
-            <Text style={styles.editProfileButtonText}>{t('profile.editProfile')}</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Profile Details - Only render if details exist */}
         {hasProfileDetails() && (
           <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle}>{t('profile.profileInformation')}</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('profile.profileInformation')}</Text>
+              <TouchableOpacity onPress={handleEditProfile}>
+                <Ionicons name="create-outline" size={24} color="#3260AD" />
+              </TouchableOpacity>
+            </View>
 
             {renderDetailItem('profile.gender', profile.gender)}
             {renderDetailItem('profile.country', profile.country)}
@@ -567,9 +479,10 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Videos Section */}
         <View style={styles.videosSection}>
-          <Text style={styles.sectionTitle}>{t('profile.myVideos')}</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('profile.myVideos')}</Text>
+          </View>
           {videosLoading ? (
             <ActivityIndicator size="large" color="#3260AD" style={styles.videosLoading} />
           ) : videos.length > 0 ? (
@@ -589,7 +502,6 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* Video Modal */}
       {selectedVideo && (
         <VideoModal
           visible={isModalVisible}
@@ -604,21 +516,17 @@ export default function ProfileScreen() {
           }
           isLoading={false}
           onClose={handleCloseModal}
-          onVideoLoad={() => console.log('Video loaded in modal')}
-          onVideoError={(err) => console.error('Video modal error:', err)}
-          onPlaybackStatusUpdate={(status) => console.log('Playback status:', status)}
+          onNextVideo={handleNextVideo}
+          onPreviousVideo={handlePreviousVideo}
           videoList={videos.map(v => ({
             ...v,
             description: v.description ?? "",
             duration: v.duration ?? 0,
           }))}
           currentVideoIndex={currentVideoIndex}
-          onNextVideo={handleNextVideo}
-          onPreviousVideo={handlePreviousVideo}
         />
       )}
 
-      {/* Profile Picture Modal */}
       <Modal visible={showProfilePicModal} animationType="slide">
         <ProfilePicturePage
           currentImageUri={profile?.profilePicture}
@@ -644,14 +552,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#3260AD', // Blue background
+    backgroundColor: '#3260AD',
     borderBottomWidth: 1,
     borderBottomColor: '#2855A8',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff', // White text
+    color: '#fff',
+  },
+  headerRightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconButton: {
+    marginLeft: 16,
   },
   scrollView: {
     flex: 1,
@@ -739,7 +654,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  // New biography styles
   biographyContainer: {
     marginTop: 12,
     paddingHorizontal: 16,
@@ -767,29 +681,22 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  editProfileButton: {
-    backgroundColor: '#3260AD',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  editProfileButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   detailsSection: {
     paddingHorizontal: 20,
     paddingVertical: 24,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1e1b1b',
-    marginBottom: 16,
   },
   detailItem: {
     flexDirection: 'row',

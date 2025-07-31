@@ -21,6 +21,7 @@ import { t } from '@/utils/i18n';
 import { VideoCard } from '../components/video/VideoCard';
 import { VideoModal } from '../components/video/VideoModal';
 import videoApiService, { VideoModel } from '../services/videoApiService';
+import videoCacheService from '../services/videoCacheService';
 
 // Blocked Content Management
 const BLOCKED_USER_IDS_KEY = 'blockedUserIds';
@@ -228,6 +229,16 @@ const WatchVideosScreen = () => {
     );
   };
 
+  const preCacheVideos = (videos: VideoModel[]) => {
+    videos.forEach(video => {
+      if (video.url) {
+        videoCacheService.startCachingVideo(video.url).catch(e => {
+          console.error(`Failed to cache video ${video.url}:`, e);
+        });
+      }
+    });
+  };
+
   const loadInitialVideos = async () => {
     if (isLoading) return;
     console.log('Loading initial videos...');
@@ -243,6 +254,7 @@ const WatchVideosScreen = () => {
         setTotalPages(response.data.totalPages);
         setCurrentPage(response.data.number !== undefined ? response.data.number : 0);
         console.log(`Initial load: Fetched ${fetchedVideos.length}, Displaying ${nonBlockedVideos.length} (after filtering).`);
+        preCacheVideos(nonBlockedVideos);
       } else {
         console.error('Failed to load initial videos:', response.error);
         Alert.alert('Error', 'Failed to load videos. Please try again.');
@@ -287,6 +299,7 @@ const WatchVideosScreen = () => {
               return updatedAllVideos;
             });
             console.log(`Loaded ${nonBlockedNewVideos.length} more non-blocked videos.`);
+            preCacheVideos(nonBlockedNewVideos);
           }
         }
         setCurrentPage(response.data.number !== undefined ? response.data.number : nextPageToFetch);
@@ -344,11 +357,12 @@ const WatchVideosScreen = () => {
     loadInitialVideos();
 
     const backAction = () => {
-      if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace('/(tabs)');
-      }
+      // if (router.canGoBack()) {
+      //   router.back();
+      // } else {
+      //   router.replace('/(tabs)');
+      // }
+      router.replace('/(tabs)');
       return true; // Prevent default behavior
     };
 
@@ -382,7 +396,6 @@ const WatchVideosScreen = () => {
         setCurrentVideoIndexInModal(index >= 0 ? index : 0);
         setIsModalVisible(true);
       }}
-      onFlagPress={() => handleShowBlockMenu(item)} // This prop needs to be added to VideoCard
     />
   );
 

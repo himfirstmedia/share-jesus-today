@@ -53,7 +53,12 @@ export default function PostVideoScreen() {
       case 'options':
         return (
           <View style={styles.optionsContainer}>
-            <Text style={styles.title}>{t('postScreen.title')}</Text>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
+                <Ionicons name="arrow-back" size={24} color="#333333" />
+              </TouchableOpacity>
+              <Text style={styles.title}>{t('postScreen.title')}</Text>
+            </View>
             
             <View style={styles.noticeContainer}>
               <Text style={styles.noticeText}>
@@ -110,9 +115,6 @@ export default function PostVideoScreen() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#3260AD" barStyle="light-content" />
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#ffe" />
-        </TouchableOpacity>
         {renderContent()}
       </View>
     </SafeAreaView>
@@ -144,7 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#3260AD',
-    paddingTop: 50, // Add padding to make space for the back button
   },
   fullScreenView: {
     flex: 1,
@@ -156,17 +157,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: '#ffffff',
     alignContent:'center',
-    justifyContent:'center'
-    
+    justifyContent:'center',
+    paddingTop: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  headerBackButton: {
+    marginRight: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 10,
-    textAlign: 'center',
-    paddingLeft: 4,
-    paddingTop: 10,
   },
   noticeContainer: {
     backgroundColor: '#ffffff',
@@ -206,11 +211,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#333333',
     fontWeight: '400',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 16,
-    zIndex: 1,
   },
 });

@@ -6,13 +6,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Dimensions,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  ScrollView // Import ScrollView
+  View
 } from 'react-native';
 import videoApiService from '../services/videoApiService'; // Import actual service
 import VideoCompressionService from '../services/videoCompressionService'; // Import actual service
@@ -22,7 +23,14 @@ import VideoTrimmer from './VideoTrimmer'; // Our new native video trimmer
 const { width } = Dimensions.get('window');
 const MAX_VIDEO_DURATION = 30.10; // 30 seconds
 
-
+// Upload progress states
+enum UploadState {
+  IDLE = 'idle',
+  COMPRESSING = 'compressing',
+  UPLOADING = 'uploading',
+  PROCESSING = 'processing',
+  COMPLETE = 'complete'
+}
 
 // Utility Functions
 const initializeVideoFilesDirectory = async () => {
@@ -84,6 +92,11 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [hasBeenTrimmed, setHasBeenTrimmed] = useState(false);
   const [originalDuration, setOriginalDuration] = useState(0);
+  
+  // Upload progress states
+  const [uploadState, setUploadState] = useState<UploadState>(UploadState.IDLE);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const progressAnimation = new Animated.Value(0);
 
   const player = useVideoPlayer(selectedVideo?.uri || '', (player) => {
     player.loop = false;
@@ -117,6 +130,69 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     return () => subscription?.remove();
   }, [player, videoLoaded, selectedVideo, showTrimmer]);
 
+  // Animate progress bar
+  const animateProgress = (progress: number) => {
+    Animated.timing(progressAnimation, {
+      toValue: progress,
+      duration: 500,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  // Simulate progress updates for different stages
+  const simulateProgress = async (state: UploadState) => {
+    setUploadState(state);
+    
+    switch (state) {
+      case UploadState.COMPRESSING:
+        // Simulate compression progress
+        for (let i = 0; i <= 30; i += 5) {
+          setUploadProgress(i);
+          animateProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        break;
+        
+      case UploadState.UPLOADING:
+        // Simulate upload progress
+        for (let i = 30; i <= 80; i += 10) {
+          setUploadProgress(i);
+          animateProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        break;
+        
+      case UploadState.PROCESSING:
+        // Simulate server processing
+        for (let i = 80; i <= 95; i += 5) {
+          setUploadProgress(i);
+          animateProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 400));
+        }
+        break;
+        
+      case UploadState.COMPLETE:
+        setUploadProgress(100);
+        animateProgress(100);
+        break;
+    }
+  };
+
+  const getUploadStateText = () => {
+    switch (uploadState) {
+      case UploadState.COMPRESSING:
+        return t('videoUploadInterface.compressingVideo') || 'Compressing video...';
+      case UploadState.UPLOADING:
+        return t('videoUploadInterface.uploadingVideo') || 'Uploading video...';
+      case UploadState.PROCESSING:
+        return t('videoUploadInterface.processingVideo') || 'Processing video...';
+      case UploadState.COMPLETE:
+        return t('videoUploadInterface.uploadComplete') || 'Upload complete!';
+      default:
+        return '';
+    }
+  };
+
   const handlePlayPause = useCallback(() => {
     if (!player) return;
     player.playing ? player.pause() : player.play();
@@ -146,6 +222,10 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         setVideoLoaded(false);
         setVideoDuration(0);
         setSelectedVideo(videoFile);
+        // Reset upload progress
+        setUploadState(UploadState.IDLE);
+        setUploadProgress(0);
+        progressAnimation.setValue(0);
       }
     } catch (error) {
       console.error(error);
@@ -193,8 +273,14 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     }
 
     setIsLoading(true);
+    
     try {
+      // Step 1: Compression
+      await simulateProgress(UploadState.COMPRESSING);
       const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri);
+      
+      // Step 2: Upload
+      await simulateProgress(UploadState.UPLOADING);
       const metadata = {
         name: selectedVideo.name,
         title: videoTitle.trim(),
@@ -203,21 +289,97 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         wasTrimmed: hasBeenTrimmed,
       };
       const videoToUpload = { ...selectedVideo, uri: compressedUri };
+      
+      // Step 3: Server Processing
+      await simulateProgress(UploadState.PROCESSING);
       const response = await videoApiService.uploadVideo(videoToUpload, metadata);
 
+      // Step 4: Complete
+      await simulateProgress(UploadState.COMPLETE);
+      
       if (response.success) {
-        Alert.alert(t('videoUploadInterface.alertSuccess'), t('videoUploadInterface.alertVideoUploaded'), [
-          { text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }
-        ]);
+        // Small delay to show completion
+        setTimeout(() => {
+          Alert.alert(t('videoUploadInterface.alertSuccess'), t('videoUploadInterface.alertVideoUploaded'), [
+            { text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }
+          ]);
+        }, 1000);
       } else {
         Alert.alert(t('videoUploadInterface.alertError'), response.error || t('alerts.unexpectedError'));
       }
     } catch (error) {
       console.error(error);
       Alert.alert(t('videoUploadInterface.alertError'), t('alerts.unexpectedError'));
+      // Reset progress on error
+      setUploadState(UploadState.IDLE);
+      setUploadProgress(0);
+      progressAnimation.setValue(0);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const renderUploadProgress = () => {
+    if (!isLoading || uploadState === UploadState.IDLE) return null;
+
+    return (
+      <View style={styles.progressContainer}>
+        <View style={styles.progressHeader}>
+          <Text style={styles.progressText}>{getUploadStateText()}</Text>
+          <Text style={styles.progressPercentage}>{uploadProgress}%</Text>
+        </View>
+        
+        <View style={styles.progressBarContainer}>
+          <Animated.View
+            style={[
+              styles.progressBar,
+              {
+                width: progressAnimation.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: ['0%', '100%'],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ]}
+          />
+        </View>
+        
+        <View style={styles.progressSteps}>
+          <View style={[styles.progressStep, uploadProgress >= 30 && styles.progressStepActive]}>
+            <Ionicons 
+              name={uploadProgress >= 30 ? "checkmark-circle" : "ellipse-outline"} 
+              size={16} 
+              color={uploadProgress >= 30 ? "#28a745" : "#bdc3c7"} 
+            />
+            <Text style={[styles.progressStepText, uploadProgress >= 30 && styles.progressStepTextActive]}>
+              {t('videoUploadInterface.compress') || 'Compress'}
+            </Text>
+          </View>
+          
+          <View style={[styles.progressStep, uploadProgress >= 80 && styles.progressStepActive]}>
+            <Ionicons 
+              name={uploadProgress >= 80 ? "checkmark-circle" : "ellipse-outline"} 
+              size={16} 
+              color={uploadProgress >= 80 ? "#28a745" : "#bdc3c7"} 
+            />
+            <Text style={[styles.progressStepText, uploadProgress >= 80 && styles.progressStepTextActive]}>
+              {t('videoUploadInterface.upload') || 'Upload'}
+            </Text>
+          </View>
+          
+          <View style={[styles.progressStep, uploadProgress >= 100 && styles.progressStepActive]}>
+            <Ionicons 
+              name={uploadProgress >= 100 ? "checkmark-circle" : "ellipse-outline"} 
+              size={16} 
+              color={uploadProgress >= 100 ? "#28a745" : "#bdc3c7"} 
+            />
+            <Text style={[styles.progressStepText, uploadProgress >= 100 && styles.progressStepTextActive]}>
+              {t('videoUploadInterface.process') || 'Process'}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   const renderVideoPreview = () => {
@@ -302,6 +464,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
                 />
               </View>
 
+              {renderUploadProgress()}
+
               <View style={styles.uploadSection}>
                 <TouchableOpacity
                   style={[styles.uploadButton, (!videoTitle.trim() || isLoading) && styles.disabledButton]}
@@ -331,7 +495,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     </ScrollView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -382,12 +545,53 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative'
   },
-  video: { width: '100%', height: 200, backgroundColor: '#000' },
-  playButton: { position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }], backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 25, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
-  warningContainer: { backgroundColor: '#fff3cd', borderColor: '#ffeaa7', borderWidth: 1, borderRadius: 8, padding: 15, marginBottom: 15 },
-  warningText: { color: '#856404', fontSize: 14, textAlign: 'center', marginBottom: 10 },
-  durationText: { color: '#28a745', fontSize: 14, textAlign: 'center', backgroundColor: '#d4edda', borderColor: '#c3e6cb', borderWidth: 1, borderRadius: 8, padding: 10 },
+  video: { 
+    width: '100%', 
+    height: 200, 
+    backgroundColor: '#000' 
+  },
+  playButton: { 
+    position: 'absolute', 
+    top: '50%', 
+    left: '50%', 
+    transform: [{ translateX: -25 }, { translateY: -25 }], 
+    backgroundColor: 'rgba(0,0,0,0.6)', 
+    borderRadius: 25, 
+    width: 50, 
+    height: 50, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  loadingOverlay: { 
+    ...StyleSheet.absoluteFillObject, 
+    backgroundColor: 'rgba(0,0,0,0.3)', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  warningContainer: { 
+    backgroundColor: '#fff3cd', 
+    borderColor: '#ffeaa7', 
+    borderWidth: 1, 
+    borderRadius: 8, 
+    padding: 15, 
+    marginBottom: 15 
+  },
+  warningText: { 
+    color: '#856404', 
+    fontSize: 14, 
+    textAlign: 'center', 
+    marginBottom: 10 
+  },
+  durationText: { 
+    color: '#28a745', 
+    fontSize: 14, 
+    textAlign: 'center', 
+    backgroundColor: '#d4edda', 
+    borderColor: '#c3e6cb', 
+    borderWidth: 1, 
+    borderRadius: 8, 
+    padding: 10 
+  },
   videoPlaceholder: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -460,6 +664,63 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: '#bdc3c7'
+  },
+  // Progress UI Styles
+  progressContainer: {
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0'
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15
+  },
+  progressText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  progressPercentage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3260ad'
+  },
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
+    marginBottom: 20,
+    overflow: 'hidden'
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#3260ad',
+    borderRadius: 4
+  },
+  progressSteps: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  progressStep: {
+    alignItems: 'center',
+    flex: 1
+  },
+  progressStepActive: {},
+  progressStepText: {
+    fontSize: 12,
+    color: '#bdc3c7',
+    marginTop: 5,
+    textAlign: 'center'
+  },
+  progressStepTextActive: {
+    color: '#28a745',
+    fontWeight: '600'
   }
 });
 

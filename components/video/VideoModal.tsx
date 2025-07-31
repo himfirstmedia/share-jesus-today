@@ -23,6 +23,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { t } from '@/utils/i18n';
+import videoCacheService from '@/services/videoCacheService';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -100,18 +101,37 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const loadingTimeoutRef = React.useRef<number | null>(null);
   const cleanupFunctionsRef = React.useRef<(() => void)[]>([]);
 
-  // Reanimated shared values for swipe animation
+  const [resolvedVideoUrl, setResolvedVideoUrl] = React.useState<string | null>(null);
   const translateX = useSharedValue(0);
   const isSwipeInProgress = useSharedValue(false);
 
+  React.useEffect(() => {
+    const handleVideoLoading = () => {
+      if (visible && video?.url) {
+        setShowLoading(true);
+        // Always use the remote URL for playback to avoid source errors with local files.
+        setResolvedVideoUrl(video.url);
+        console.log(`[Player] Using remote URI for playback: ${video.url}`);
+
+        // Trigger caching in the background for future use.
+        videoCacheService.startCachingVideo(video.url).catch(e => {
+          console.error(`[Player] Background caching failed:`, e);
+        });
+      } else if (!visible) {
+        setResolvedVideoUrl(null);
+      }
+    };
+
+    handleVideoLoading();
+  }, [visible, video?.url]);
+
   // Create a new video source when video changes
   const videoSource = React.useMemo(() => {
-    if (visible && video?.url) {
-      console.log('Creating new video source for:', video.url);
-      return { uri: video.url };
+    if (resolvedVideoUrl) {
+      return { uri: resolvedVideoUrl };
     }
     return null;
-  }, [visible, video?.url]);
+  }, [resolvedVideoUrl]);
 
   // Initialize video player with proper source handling
   const player = useVideoPlayer(videoSource, (player) => {
@@ -256,24 +276,14 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     setShowLoading(false);
     setPlayerReady(true);
     onVideoLoad();
-    
-    // Clear loading timeout
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-    }
   }, [onVideoLoad]);
 
   // Handle video error
   const handleVideoError = React.useCallback((error: any) => {
-    console.error('Video error:', error);
+    console.error('Video playback error:', error);
     setShowLoading(false);
     setPlayerReady(false);
     onVideoError(error);
-    
-    // Clear loading timeout
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-    }
   }, [onVideoError]);
 
   // Handle swipe to next video - Fixed to properly trigger callback
@@ -339,18 +349,6 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       resetControlsTimeout();
       translateX.value = 0;
       isSwipeInProgress.value = false;
-
-      // Clear any existing timeout
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-      
-      // Fallback timeout for loading
-      loadingTimeoutRef.current = setTimeout(() => {
-        console.log('Loading timeout reached, setting player ready');
-        setShowLoading(false);
-        setPlayerReady(true);
-      }, 8000); // Increased timeout
     } else if (!visible) {
       setShowControls(true);
       setShowLoading(true);
@@ -369,9 +367,6 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       // Clear timeouts
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
-      }
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
       }
     }
   }, [visible, video?.url, video?.id, resetControlsTimeout, player]); // Added video?.id to dependencies

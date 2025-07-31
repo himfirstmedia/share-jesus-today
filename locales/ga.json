@@ -198,7 +198,17 @@
     "alertVideoUploaded": "Físeán uaslódáilte go rathúil!",
     "alertFailedUpload": "Theip ar fhíseán a uaslódáil",
     "alertFailedUploadTryAgain": "Theip ar fhíseán a uaslódáil. Bain triail as arís le do thoil.",
-    "alertNoValidUriToTrim": "Níl URI físeáin bailí ar bith le gearradh"
+    "alertNoValidUriToTrim": "Níl URI físeáin bailí ar bith le gearradh",
+    "compressingVideo": "Físeán á chomhbhrú...",
+    "uploadingVideo": "Físeán á uaslódáil...",
+    "processingVideo": "Físeán á phróiseáil...",
+    "uploadComplete": "Uaslódáil críochnaithe!",
+    "compress": "Comhbhrúigh",
+    "upload": "Uaslódáil",
+    "process": "Próiseáil",
+    "videoUploaded": "D'éirigh leis an bhfíseán a uaslódáil.",
+    "videoTooLongError": "Tá an físeán ró-fhada.",
+    "videoDurationError": "Caithfidh an físeán a bheith 30 soicind nó níos lú."
   },
   "searchScreen": {
     "headerTitle": "Cuardaigh Próifílí",

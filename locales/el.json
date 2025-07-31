@@ -198,7 +198,17 @@
     "alertVideoUploaded": "Το βίντεο ανέβηκε επιτυχώς!",
     "alertFailedUpload": "Αποτυχία ανεβάσματος βίντεο",
     "alertFailedUploadTryAgain": "Αποτυχία ανεβάσματος βίντεο. Παρακαλώ δοκιμάστε ξανά.",
-    "alertNoValidUriToTrim": "Δεν υπάρχει έγκυρο URI βίντεο για περικοπή"
+    "alertNoValidUriToTrim": "Δεν υπάρχει έγκυρο URI βίντεο για περικοπή",
+    "compressingVideo": "Συμπίεση βίντεο...",
+    "uploadingVideo": "Ανέβασμα βίντεο...",
+    "processingVideo": "Επεξεργασία βίντεο...",
+    "uploadComplete": "Το ανέβασμα ολοκληρώθηκε!",
+    "compress": "Συμπίεση",
+    "upload": "Ανέβασμα",
+    "process": "Επεξεργασία",
+    "videoUploaded": "Το βίντεο ανέβηκε με επιτυχία.",
+    "videoTooLongError": "Το βίντεο είναι πολύ μεγάλο.",
+    "videoDurationError": "Το βίντεο πρέπει να διαρκεί 30 δευτερόλεπτα ή λιγότερο."
   },
   "searchScreen": {
     "headerTitle": "Αναζήτηση Προφίλ",

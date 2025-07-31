@@ -198,7 +198,17 @@
     "alertVideoUploaded": "Vidéo téléchargée avec succès !",
     "alertFailedUpload": "Échec du téléchargement de la vidéo",
     "alertFailedUploadTryAgain": "Échec du téléchargement de la vidéo. Veuillez réessayer.",
-    "alertNoValidUriToTrim": "Pas d'URI vidéo valide à couper"
+    "alertNoValidUriToTrim": "Pas d'URI vidéo valide à couper",
+    "compressingVideo": "Compression de la vidéo en cours...",
+    "uploadingVideo": "Téléchargement de la vidéo en cours...",
+    "processingVideo": "Traitement de la vidéo en cours...",
+    "uploadComplete": "Téléchargement terminé !",
+    "compress": "Compresser",
+    "upload": "Télécharger",
+    "process": "Traiter",
+    "videoUploaded": "Vidéo téléchargée avec succès.",
+    "videoTooLongError": "La vidéo est trop longue.",
+    "videoDurationError": "La vidéo doit durer 30 secondes ou moins."
   },
   "searchScreen": {
     "headerTitle": "Rechercher des profils",
