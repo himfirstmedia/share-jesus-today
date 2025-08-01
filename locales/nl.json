@@ -14,7 +14,7 @@
     "customerSupport": "Klantenservice",
     "share": "Delen",
     "shareApp": "App delen",
-    "shareProfile": "Profiel delen",
+    "shareProfile": "Profiel delen {{profileUrl}}",
     "shareVideos": "Video's delen",
     "language": "Taal: Engels",
     "termsAndConditions": "Algemene voorwaarden",

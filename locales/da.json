@@ -14,7 +14,7 @@
     "customerSupport": "Kundesupport",
     "share": "Del",
     "shareApp": "Del app",
-    "shareProfile": "Del profil",
+    "shareProfile": "Del profil {{profileUrl}}",
     "shareVideos": "Del videoer",
     "language": "Sprog: Engelsk",
     "termsAndConditions": "Vilkår og Betingelser",

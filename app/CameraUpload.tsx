@@ -69,7 +69,7 @@ const CameraUpload: React.FC = () => {
       setVideoFile(newVideoFile);
     } else {
       Alert.alert(t('videoUploadInterface.alertError'), t('cameraUpload.noVideoProvided'), [
-        { text: t('common.ok'), onPress: () => router.replace('/(tabs)/post') },
+        { text: t('alerts.ok'), onPress: () => router.replace('/(tabs)/post') },
       ]);
     }
   }, [videoUri, videoName, videoType, router]);
@@ -267,10 +267,20 @@ const CameraUpload: React.FC = () => {
               onPress={handleSave}
               disabled={!videoFile || !videoTitle.trim() || isLoading}
             >
+              <Ionicons name="cloud-upload-outline" size={24} color="white" style={styles.buttonIcon} />
               <Text style={styles.uploadButtonText}>
                 {/* Using the correct key for the button text */}
                 {isLoading ? getUploadStateText() : (t('videoUploadInterface.uploadButton') || 'Upload Video')}
               </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.recordButton, isLoading && styles.disabledButton]}
+              onPress={() => router.replace({ pathname: '/camera', params: { fromCameraUpload: 'true' } })}
+              disabled={isLoading}
+            >
+              <Ionicons name="camera-outline" size={24} color="#3260ad" style={styles.buttonIcon} />
+              <Text style={styles.recordButtonText}>{t('videoUploadInterface.recordAgainButton') || 'Record Again'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -297,8 +307,11 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8 },
   titleInput: { backgroundColor: 'white', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, borderWidth: 1, borderColor: '#e0e0e0' },
   uploadSection: { marginHorizontal: 20, marginTop: 20 },
-  uploadButton: { backgroundColor: '#3260ad', paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
-  uploadButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  uploadButton: { backgroundColor: '#3260ad', paddingVertical: 15, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  uploadButtonText: { color: 'white', fontSize: 16, fontWeight: '600', marginLeft: 10 },
+  recordButton: { backgroundColor: '#e0e0e0', paddingVertical: 15, borderRadius: 8, alignItems: 'center', marginTop: 15, flexDirection: 'row', justifyContent: 'center' },
+  recordButtonText: { color: '#3260ad', fontSize: 16, fontWeight: '600', marginLeft: 10 },
+  buttonIcon: { marginRight: 5 },
   disabledButton: { backgroundColor: '#bdc3c7' },
   progressContainer: {
     backgroundColor: 'white',

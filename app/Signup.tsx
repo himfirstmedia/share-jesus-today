@@ -1,5 +1,6 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import apiService from '@/services/apiService';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -10,6 +11,7 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -148,15 +150,17 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
       >
-        {/* Header with Back Button */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-            <Text style={styles.backButtonText}>{t('signup.back')}</Text>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="white" />
+            <Text style={styles.backText}>{t('common.back')}</Text>
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('signup.createAccount')}</Text>
         </View>
 
         <ScrollView
@@ -397,12 +401,12 @@ export default function SignupScreen() {
           </TouchableOpacity>
 
           {/* Login Link */}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             style={styles.loginLink} 
             onPress={() => router.push('/login')}
           >
             <Text style={styles.loginLinkText}>{t('signup.alreadyHaveAccount')}</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -413,21 +417,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    paddingTop: 10,
+    paddingTop: 0,
   },
   header: {
+    backgroundColor: '#3260ad',
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 5,
-    backgroundColor: '#f5f5f5',
+    paddingVertical: 45,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   backButton: {
-    paddingVertical: 8,
+    position: 'absolute',
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  backButtonText: {
-    fontSize: 18,
-    color: '#333',
-    fontWeight: '500',
+  backText: {
+    color: 'white',
+    fontSize: 16,
+    marginLeft: 5,
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -537,19 +552,28 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#3260ad',
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 25,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 25,
+    marginBottom: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6, // For Android shadow
   },
   submitButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#a0a0a0',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   loginLink: {
     alignItems: 'center',

@@ -14,7 +14,7 @@
     "customerSupport": "ग्राहक सहायता",
     "share": "साझा करें",
     "shareApp": "ऐप साझा करें",
-    "shareProfile": "प्रोफाइल साझा करें",
+    "shareProfile": "प्रोफाइल साझा करें {{profileUrl}}",
     "shareVideos": "वीडियो साझा करें",
     "language": "भाषा: अंग्रेजी",
     "termsAndConditions": "नियम और शर्तें",

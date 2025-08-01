@@ -1,8 +1,8 @@
 // app/userProfile.tsx - Read-only Profile Screen for other users
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { t } from '../utils/i18n';
 import {
   ActivityIndicator,
   Alert,
@@ -11,15 +11,16 @@ import {
   RefreshControl,
   ScrollView,
   Share,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { VideoModal } from '../components/video/VideoModal';
 import { profileService } from '../services/profileService';
+import { t } from '../utils/i18n';
 
 const { width } = Dimensions.get('window');
 
@@ -243,7 +244,7 @@ export default function UserProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/search')}>
-            <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('userProfileScreen.loadingProfile')}</Text>
           <View style={{ width: 24 }} />
@@ -261,7 +262,7 @@ export default function UserProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/search')}>
-            <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
+            <Ionicons name="arrow-back" size={24} color="#f5f0f0ff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('userProfileScreen.profileNotFound')}</Text>
           <View style={{ width: 24 }} />
@@ -286,15 +287,16 @@ export default function UserProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/search')}>
-          <Ionicons name="arrow-back" size={24} color="#1e1b1b" />
+          <Ionicons name="arrow-back" size={24} color="#f8f3f3ff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
           {profile.firstName ? `${profile.firstName} ${profile.lastName}` : t('userProfileScreen.userProfile')}
         </Text>
         <TouchableOpacity onPress={handleShareProfile}>
-          <Ionicons name="share-outline" size={24} color="#1e1b1b" />
+          <Ionicons name="share-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -464,18 +466,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: '#3260ad',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#2855A8',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1e1b1b',
+    color: '#fff',
     flexShrink: 1,
     marginHorizontal: 10,
   },
   scrollView: {
     flex: 1,
+    paddingTop:0
   },
   loadingContainer: {
     flex: 1,

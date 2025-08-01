@@ -1,4 +1,4 @@
-// app/login.tsx - Updated with proper vertical centering
+// app/login.tsx - Updated to match the design
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import apiService from '@/services/apiService';
@@ -29,7 +29,7 @@ import {
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -71,7 +71,7 @@ export default function LoginScreen() {
 
   // Updated login handler that properly stores user profile data
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       Alert.alert(t('login.error'), t('login.pleaseFillAllFields'));
       return;
     }
@@ -81,7 +81,7 @@ export default function LoginScreen() {
       console.log('🔐 Attempting login...');
 
       const response = await apiService.login({
-        userName: username,
+        userName: email, // Using email as username
         password: password,
       });
 
@@ -185,38 +185,46 @@ export default function LoginScreen() {
     header: {
       paddingTop: 10,
       paddingHorizontal: 20,
-      paddingBottom: 0,
-      // Remove flex properties to keep header at top
+      paddingBottom: 20,
+      backgroundColor: 'white',
     },
     backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
       padding: 8,
       alignSelf: 'flex-start',
+    },
+    backText: {
+      fontSize: 18,
+      color: '#37455cff',
+      marginLeft: 8,
+      fontWeight: '500',
     },
     scrollContainer: {
       flexGrow: 1,
       justifyContent: 'center',
-      paddingHorizontal: 20,
-      paddingBottom: 10,
-      paddingTop: 1,
-      // Ensure minimum height for proper centering
-      minHeight: screenHeight - 120, // Account for header height and safe areas
+      paddingHorizontal: 30,
+      paddingBottom: 40,
+      backgroundColor: 'white',
+      minHeight: screenHeight - 120,
     },
     contentContainer: {
       justifyContent: 'center',
       alignItems: 'center',
+      width: '100%',
+    },
+    logo: {
+      width: 280,
+      height: 200,
+      alignSelf: 'center',
+      marginBottom: 20,
     },
     title: {
-      fontSize: 32,
-      fontWeight: 'bold',
-      textAlign: 'center',
-      marginBottom: 10,
-      color: '#3260ad',
-    },
-    subtitle: {
-      fontSize: 16,
+      fontSize: 22,
+      fontWeight: '600',
       textAlign: 'center',
       marginBottom: 40,
-      color: Colors.light.text,
+      color: '#333',
     },
     inputContainer: {
       marginBottom: 20,
@@ -224,48 +232,74 @@ export default function LoginScreen() {
     },
     label: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '500',
       marginBottom: 8,
-      color: '#3260ad',
+      color: '#666',
     },
     input: {
-      borderWidth: 1,
-      borderColor: Colors.dark.icon,
-      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: '#333',
+      borderRadius: 25,
       padding: 15,
+      paddingHorizontal: 20,
       fontSize: 16,
-      backgroundColor: Colors.dark.tint,
-      color: '#000',
+      backgroundColor: 'white',
+      color: '#333',
     },
     passwordInputContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: Colors.dark.icon,
-      borderRadius: 8,
-      backgroundColor: Colors.dark.tint,
+      borderWidth: 2,
+      borderColor: '#333',
+      borderRadius: 25,
+      backgroundColor: 'white',
     },
     passwordInput: {
       flex: 1,
       padding: 15,
+      paddingHorizontal: 20,
       fontSize: 16,
-      color: '#000',
+      color: '#333',
     },
     eyeIcon: {
       paddingHorizontal: 15,
     },
+    forgotPasswordContainer: {
+      alignSelf: 'flex-end',
+      marginBottom: 30,
+      marginTop: 10,
+    },
+    forgotPassword: {
+      color: '#333',
+      fontSize: 14,
+      fontWeight: '500',
+    },
     loginButton: {
-      backgroundColor: '#3260ad',
-      borderRadius: 8,
+      backgroundColor: '#4472C4',
+      borderRadius: 25,
       padding: 15,
       alignItems: 'center',
-      marginTop: 20,
+      marginBottom: 15,
       width: '100%',
     },
     loginButtonText: {
       color: 'white',
-      fontSize: 18,
-      fontWeight: 'bold',
+      fontSize: 16,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+    },
+    createAccountButton: {
+      backgroundColor: '#4472C4',
+      borderRadius: 25,
+      padding: 15,
+      alignItems: 'center',
+      width: '100%',
+    },
+    createAccountButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: '600',
+      textTransform: 'uppercase',
     },
     loadingContainer: {
       flexDirection: 'row',
@@ -274,35 +308,14 @@ export default function LoginScreen() {
     },
     loadingText: {
       color: 'white',
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginLeft: 10,
-    },
-    logo: {
-      width: 220,
-      height: 180,
-      alignSelf: 'center',
-      marginBottom: 1,
-    },
-    linkContainer: {
-      alignItems: 'center',
-      width: '100%',
-    },
-    forgotPassword: {
-      textAlign: 'center',
-      marginTop: 15,
-      color: '#3260ad',
-      fontSize: 14,
-    },
-    linkText: {
-      color: '#000',
       fontSize: 16,
-      textDecorationLine: 'underline',
-      marginTop: 10,
+      fontWeight: '600',
+      marginLeft: 10,
+      textTransform: 'uppercase',
     },
     debugButton: {
       backgroundColor: '#FF6B6B',
-      borderRadius: 8,
+      borderRadius: 25,
       padding: 10,
       alignItems: 'center',
       marginTop: 10,
@@ -325,14 +338,15 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header with Back Button - Fixed at top */}
+        {/* Header with Back Button */}
         <View style={dynamicStyles.header}>
           <TouchableOpacity onPress={handleBack} style={dynamicStyles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#37455cff" />
+            <Text style={dynamicStyles.backText}>Back</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Scrollable content area - Vertically centered */}
+        {/* Scrollable content area */}
         <ScrollView
           contentContainerStyle={dynamicStyles.scrollContainer}
           keyboardShouldPersistTaps="handled"
@@ -345,31 +359,31 @@ export default function LoginScreen() {
               resizeMode="contain"
             />
 
-            <Text style={dynamicStyles.title}>{t('login.welcomeBack')}</Text>
-            <Text style={dynamicStyles.subtitle}>{t('login.signInToContinue')}</Text>
+            <Text style={dynamicStyles.title}>Sign in to your account</Text>
 
             <View style={dynamicStyles.inputContainer}>
-              <Text style={dynamicStyles.label}>{t('login.username')}</Text>
+              <Text style={dynamicStyles.label}>Email Address*</Text>
               <TextInput
                 style={dynamicStyles.input}
-                value={username}
-                onChangeText={setUsername}
-                placeholder={t('login.enterYourUsername')}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter your email address"
                 placeholderTextColor="#999"
                 autoCapitalize="none"
                 autoCorrect={false}
+                keyboardType="email-address"
                 editable={!loading}
               />
             </View>
 
             <View style={dynamicStyles.inputContainer}>
-              <Text style={dynamicStyles.label}>{t('login.password')}</Text>
+              <Text style={dynamicStyles.label}>Password *</Text>
               <View style={dynamicStyles.passwordInputContainer}>
                 <TextInput
                   style={dynamicStyles.passwordInput}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder={t('login.enterYourPassword')}
+                  placeholder="Enter your password"
                   placeholderTextColor="#999"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
@@ -383,12 +397,21 @@ export default function LoginScreen() {
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off' : 'eye'}
-                    size={24}
+                    size={20}
                     color="#999"
                   />
                 </TouchableOpacity>
               </View>
             </View>
+
+            <TouchableOpacity
+              style={dynamicStyles.forgotPasswordContainer}
+              onPress={() => router.push('/forgotpassword')}
+            >
+              <Text style={dynamicStyles.forgotPassword}>
+                Forgot password?
+              </Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={dynamicStyles.loginButton}
@@ -397,30 +420,20 @@ export default function LoginScreen() {
             >
               {loading ? (
                 <View style={dynamicStyles.loadingContainer}>
-                  <ActivityIndicator color="white" />
-                  <Text style={dynamicStyles.loadingText}>{t('login.signingIn')}</Text>
+                  <ActivityIndicator color="white" size="small" />
+                  <Text style={dynamicStyles.loadingText}>Signing In</Text>
                 </View>
               ) : (
-                <Text style={dynamicStyles.loginButtonText}>{t('login.signIn')}</Text>
+                <Text style={dynamicStyles.loginButtonText}>Sign In</Text>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={dynamicStyles.linkContainer}
-              onPress={() => router.push('/forgotpassword')}
-            >
-              <Text style={dynamicStyles.forgotPassword}>
-                {t('login.forgotPassword')}
-              </Text>
-            </TouchableOpacity>
-
-
-            <TouchableOpacity
-              style={dynamicStyles.linkContainer}
+              style={dynamicStyles.createAccountButton}
               onPress={() => router.push('/Signup')}
               disabled={loading}
             >
-              <Text style={dynamicStyles.linkText}>{t('login.noAccountSignUp')}</Text>
+              <Text style={dynamicStyles.createAccountButtonText}>Create Account</Text>
             </TouchableOpacity>
 
             {/* Debug button for development */}

@@ -520,13 +520,13 @@ export default function EditProfileScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.personalInfo')}</Text>
               
-              {renderInputField(i18n.t('editProfileScreen.genderLabel'), 'gender', i18n.t('editProfileScreen.genderPlaceholder'))}
+              {/* {renderInputField(i18n.t('editProfileScreen.genderLabel'), 'gender', i18n.t('editProfileScreen.genderPlaceholder'))}
 
               {renderDatePicker()}
 
               {renderInputField(i18n.t('editProfileScreen.phoneLabel'), 'phone', i18n.t('editProfileScreen.phonePlaceholder'), {
                 keyboardType: 'phone-pad'
-              })}
+              })} */}
 
               {renderInputField(i18n.t('editProfileScreen.bioLabel'), 'biography', i18n.t('editProfileScreen.bioPlaceholder'), {
                 multiline: true
@@ -559,7 +559,7 @@ export default function EditProfileScreen() {
             </View>
 
             {/* Church Information Section */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.churchInfo')}</Text>
               
               {renderInputField(i18n.t('editProfileScreen.churchLabel'), 'church', i18n.t('editProfileScreen.churchPlaceholder'), {
@@ -567,16 +567,16 @@ export default function EditProfileScreen() {
               })}
 
               {renderInputField(i18n.t('editProfileScreen.churchFromLabel'), 'churchFrom', i18n.t('editProfileScreen.churchFromPlaceholder'))}
-            </View>
+            </View> */}
 
             {/* Additional Information Section */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.additionalInfo')}</Text>
               
               {renderInputField(i18n.t('editProfileScreen.howDidYouKnowLabel'), 'howDidYouKnowAboutUs', i18n.t('editProfileScreen.howDidYouKnowPlaceholder'))}
 
               {renderInputField(i18n.t('editProfileScreen.otherSpecifyLabel'), 'otherSpecify', i18n.t('editProfileScreen.otherSpecifyPlaceholder'))}
-            </View>
+            </View> */}
 
             {/* Save Button */}
             <TouchableOpacity

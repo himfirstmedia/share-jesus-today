@@ -28,6 +28,8 @@ import apiService, { type ApiResponse, type Video } from '@/services/apiService'
 import { t } from '@/utils/i18n';
 import { homeStyles } from '../../styles/HomeStyles';
 
+import AuthManager from '../../utils/authManager';
+
 // Blocked Content Management
 const BLOCKED_USER_IDS_KEY = 'blockedUserIds';
 const BLOCKED_VIDEO_IDS_KEY = 'blockedVideoIds';
@@ -438,11 +440,20 @@ export default function HomeTabScreen() {
 
   // Navigation Functions
   const navigateToSearchProfiles = () => {
-    router.push('/search');
+    // if (AuthManager.isAuthenticated()) {
+    //   router.push('/search');
+    // } else {
+    //   router.push('/(tabs)/AuthLanding');
+    // }
+    router.push('/search')
   };
 
   const navigateToPostVideo = () => {
-    router.push('/(tabs)/post');
+    if (AuthManager.isAuthenticated()) {
+      router.push('/(tabs)/post');
+    } else {
+      router.push('/(tabs)/AuthLanding');
+    }
   };
 
   const handleLoadMore = () => {

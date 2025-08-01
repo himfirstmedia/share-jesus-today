@@ -14,7 +14,7 @@
     "customerSupport": "Υποστήριξη πελατών",
     "share": "Κοινή χρήση",
     "shareApp": "Κοινή χρήση εφαρμογής",
-    "shareProfile": "Κοινή χρήση προφίλ",
+    "shareProfile": "Κοινή χρήση προφίλ {{profileUrl}}",
     "shareVideos": "Κοινή χρήση βίντεο",
     "language": "Γλώσσα: Αγγλικά",
     "termsAndConditions": "Όροι και Προϋποθέσεις",

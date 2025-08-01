@@ -14,7 +14,7 @@
     "customerSupport": "Customer Support",
     "share": "Share",
     "shareApp": "Share App",
-    "shareProfile": "Share Profile",
+    "shareProfile": "Check out my profile on Share Jesus Today: {{profileUrl}}",
     "shareVideos": "Share Videos",
     "language": "Language: English",
     "termsAndConditions": "Terms and Conditions",
@@ -133,6 +133,13 @@
     "postVideo": "POST VIDEO",
     "watchVideos": "WATCH VIDEOS",
     "createAccount": "CREATE ACCOUNT"
+  },
+  "authLanding": {
+    "welcome": "Welcome to Share Jesus Today",
+    "chooseOption": "Please choose an option to continue",
+    "createAccount": "CREATE ACCOUNT",
+    "login": "LOGIN",
+    "videoOptions": "Video Options"
   },
   "login": {
     "noAccountSignUp": "Do not have an account? Sign Up",

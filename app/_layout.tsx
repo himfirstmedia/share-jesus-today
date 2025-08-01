@@ -89,7 +89,9 @@ const InitialLayout = () => {
       'menuscreens/contactus',
       'forgotpassword',
       'otpresetpassword',
-      'resetPassword'
+      'resetPassword',
+      '(tabs)/AuthLanding',
+    
     ];
 
     const isPublicRoute = publicRoutes.includes(path);

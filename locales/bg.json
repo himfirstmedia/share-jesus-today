@@ -14,7 +14,7 @@
     "customerSupport": "Обслужване на клиенти",
     "share": "Споделяне",
     "shareApp": "Споделяне на приложение",
-    "shareProfile": "Споделяне на профил",
+    "shareProfile": "Споделяне на профил {{profileUrl}}",
     "shareVideos": "Споделяне на видеоклипове",
     "language": "Език: Английски",
     "termsAndConditions": "Правила и условия",

@@ -14,7 +14,7 @@
     "customerSupport": "Tacaíocht do Chustaiméirí",
     "share": "Roinn",
     "shareApp": "Roinn Aip",
-    "shareProfile": "Roinn Próifíl",
+    "shareProfile": "Roinn Próifíl {{profileUrl}}",
     "shareVideos": "Roinn Físeáin",
     "language": "Teanga: Béarla",
     "termsAndConditions": "Téarmaí agus Coinníollacha",

@@ -1,14 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import { CameraView, PermissionStatus, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// Note: VideoCompressionService is no longer needed here.
 import { t } from '../utils/i18n';
 
-// --- Interfaces and Helper Functions ---
+// --- Interfaces and Helper Functions (Unchanged) ---
 interface RecordingData {
   uri: string;
 }
@@ -114,12 +113,11 @@ const verifyRecordingIsStable = async (
   return null;
 };
 
-
+// --- Updated Component ---
 const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCancel }) => {
-  // ... (useState, useRef, etc. are unchanged)
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
-  const [mediaLibraryPermission, requestMediaLibraryPermission] = MediaLibrary.usePermissions({ writeOnly: true });
+  const [mediaLibraryPermission, requestMediaLibraryPermission] = MediaLibrary.usePermissions();
   
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [recording, setRecording] = useState<boolean>(false);
@@ -130,21 +128,26 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   const [bigCountdownValue, setBigCountdownValue] = useState<number>(5);
   const [videoFilesDirectory, setVideoFilesDirectory] = useState<string>('');
   
+  // --- NEW: State for camera facing direction and flash mode ---
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [flash, setFlash] = useState<'on' | 'off'>('off');
+
   const cameraRef = useRef<CameraView>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { fromCameraUpload } = params;
   
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-
-  // ... (useEffect hooks are unchanged)
   useEffect(() => {
     (async () => {
       try {
-        console.log('LOG: Initializing component...');
-        await requestCameraPermission();
-        await requestMicrophonePermission();
-        await requestMediaLibraryPermission();
+        console.log('LOG: Initializing component and checking permissions...');
+        if (cameraPermission?.status === PermissionStatus.UNDETERMINED) await requestCameraPermission();
+        if (microphonePermission?.status === PermissionStatus.UNDETERMINED) await requestMicrophonePermission();
+        if (mediaLibraryPermission?.status === PermissionStatus.UNDETERMINED) await requestMediaLibraryPermission();
+        
         const directory = await initializeVideoFilesDirectory();
         setVideoFilesDirectory(directory);
         await cleanupOldVideos();
@@ -173,6 +176,16 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     }
   }, [bigCountdownValue, showBigCountdown]);
 
+  // --- NEW: Handlers for toggling camera and flash ---
+  const toggleFacing = () => {
+    if (recording) return; // Prevent switching during recording
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  };
+
+  const toggleFlash = () => {
+    if (recording) return; // Prevent toggling during recording
+    setFlash(current => (current === 'off' ? 'on' : 'off'));
+  };
 
   const copyRecordedFile = async (originalUri: string): Promise<string> => {
     const timestamp = Date.now();
@@ -191,29 +204,20 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     return targetUri;
   };
 
-  /**
-   * **UPDATED**: Handles post-recording file operations **without compression**.
-   */
   const processVideo = async (originalUri: string) => {
     setIsProcessing(true);
     let finalUri: string | null = null;
     
     try {
-      // Step 1: Verify the original recording is stable.
       setProcessingText(t('cameraScreen.preparingVideo'));
-      console.log(`LOG: Verifying stability of initial recording file: ${originalUri}`);
       const stableFileInfo = await verifyRecordingIsStable(originalUri);
       if (!stableFileInfo) {
         throw new Error(`Initial recorded file is not stable or could not be found: ${originalUri}`);
       }
       console.log(`LOG: Initial recording file is stable. Size: ${stableFileInfo.size} bytes.`);
 
-      // Step 2: Secure the file by copying it to our managed directory.
       finalUri = await copyRecordedFile(originalUri);
       
-      // **COMPRESSION LOGIC REMOVED FROM THIS STEP**
-
-      // Step 3: (Optional) Save the uncompressed video to the device's Media Library.
       if (mediaLibraryPermission?.granted) {
         try {
           setProcessingText(t('cameraScreen.finalizing') || 'Saving to gallery...');
@@ -228,7 +232,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
       await sleep(200);
 
-      // Step 4: Pass the **uncompressed** URI to the callback or navigate.
       if (onRecordingComplete) {
         onRecordingComplete({ uri: finalUri });
       } else {
@@ -252,7 +255,6 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
     }
   };
 
-  // ... (startRecording, stopRecording, and other handlers are unchanged)
   const startRecording = async () => {
     if (!cameraRef.current || !isCameraReady || recording) return;
     if (!videoFilesDirectory) {
@@ -260,7 +262,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
       return;
     }
     const availableSpace = await checkStorageSpace();
-    if (availableSpace !== null && availableSpace < 50 * 1024 * 1024) {
+    if (availableSpace !== null && availableSpace < 50 * 1024 * 1024) { // 50MB threshold
       Alert.alert(t('cameraScreen.lowStorageTitle'), t('cameraScreen.lowStorageMessage'));
       return;
     }
@@ -314,13 +316,17 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
 
   const handleBackPress = () => {
     if (recording) stopRecording();
-    if (onCancel) onCancel();
-    else router.back();
+    if (fromCameraUpload === 'true') {
+      router.replace('/CameraUpload');
+    } else if (onCancel) {
+      onCancel();
+    } else {
+      router.back();
+    }
   };
 
   const allPermissionsGranted = cameraPermission?.granted && microphonePermission?.granted && mediaLibraryPermission?.granted;
   
-  // ... (JSX render part is unchanged)
   if (!allPermissionsGranted) {
     return (
       <View style={styles.permissionContainer}>
@@ -341,7 +347,9 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
         <CameraView
             ref={cameraRef}
             style={styles.camera}
-            facing="back"
+            // --- UPDATED: Pass state to control camera ---
+            facing={facing}
+            flash={flash}
             mode="video"
             onCameraReady={() => setIsCameraReady(true)}
             onMountError={(error) => Alert.alert('Camera Error', 'Failed to initialize camera: ' + error.message)}
@@ -356,12 +364,29 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
                     </Animated.Text>
                 </View>
             )}
+            
+            {/* --- UPDATED: Top bar with new controls --- */}
             <View style={styles.topBar}>
-                <TouchableOpacity style={styles.backButton} onPress={handleBackPress}><Ionicons name="close" size={24} color="white" /></TouchableOpacity>
-                {recording && (
-                    <View style={styles.countdownContainer}><Text style={styles.countdownText}>{countdown}s</Text></View>
+                <TouchableOpacity style={styles.iconButton} onPress={handleBackPress}>
+                    <Ionicons name="close" size={24} color="white" />
+                </TouchableOpacity>
+
+                {recording ? (
+                    <View style={styles.countdownContainer}>
+                      <Text style={styles.countdownText}>{countdown}s</Text>
+                    </View>
+                ) : (
+                    <View style={styles.topActionsContainer}>
+                        <TouchableOpacity style={styles.iconButton} onPress={toggleFlash}>
+                            <Ionicons name={flash === 'on' ? 'flash' : 'flash-off'} size={24} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.iconButton} onPress={toggleFacing}>
+                            <Ionicons name="camera-reverse" size={24} color="white" />
+                        </TouchableOpacity>
+                    </View>
                 )}
             </View>
+
             <View style={styles.bottomControls}>
                 <TouchableOpacity
                     style={[styles.recordButton, recording && styles.recordButtonActive, !isCameraReady && styles.recordButtonDisabled]}
@@ -376,7 +401,7 @@ const CameraRecord: React.FC<CameraRecordProps> = ({ onRecordingComplete, onCanc
   );
 };
 
-// ... (Styles are unchanged)
+// --- Updated Styles ---
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'black' },
   camera: { flex: 1 },
@@ -384,9 +409,36 @@ const styles = StyleSheet.create({
   permissionText: { color: 'white', fontSize: 18, textAlign: 'center', marginBottom: 20 },
   permissionButton: { backgroundColor: '#007AFF', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8 },
   permissionButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  topBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 50, paddingHorizontal: 20 },
-  backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)', borderRadius: 22 },
-  countdownContainer: { backgroundColor: 'rgba(255, 0, 0, 0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+  },
+  // --- NEW: Generic style for icon buttons and a container for them ---
+  iconButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 22,
+  },
+  topActionsContainer: {
+    flexDirection: 'row',
+    gap: 12, // Adds space between the flash and reverse camera buttons
+  },
+  countdownContainer: {
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
   countdownText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   bottomControls: { position: 'absolute', bottom: 50, left: 0, right: 0, alignItems: 'center' },
   recordButton: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255, 255, 255, 0.3)', justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: 'white' },

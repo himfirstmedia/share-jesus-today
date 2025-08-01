@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -93,10 +93,10 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   const [hasBeenTrimmed, setHasBeenTrimmed] = useState(false);
   const [originalDuration, setOriginalDuration] = useState(0);
   
-  // Upload progress states
+  // Upload progress states - Enhanced like CameraUpload
   const [uploadState, setUploadState] = useState<UploadState>(UploadState.IDLE);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const progressAnimation = new Animated.Value(0);
+  const progressAnimation = useRef(new Animated.Value(0)).current;
 
   const player = useVideoPlayer(selectedVideo?.uri || '', (player) => {
     player.loop = false;
@@ -130,52 +130,13 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     return () => subscription?.remove();
   }, [player, videoLoaded, selectedVideo, showTrimmer]);
 
-  // Animate progress bar
+  // Enhanced progress animation like CameraUpload
   const animateProgress = (progress: number) => {
     Animated.timing(progressAnimation, {
       toValue: progress,
-      duration: 500,
+      duration: 300,
       useNativeDriver: false,
     }).start();
-  };
-
-  // Simulate progress updates for different stages
-  const simulateProgress = async (state: UploadState) => {
-    setUploadState(state);
-    
-    switch (state) {
-      case UploadState.COMPRESSING:
-        // Simulate compression progress
-        for (let i = 0; i <= 30; i += 5) {
-          setUploadProgress(i);
-          animateProgress(i);
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-        break;
-        
-      case UploadState.UPLOADING:
-        // Simulate upload progress
-        for (let i = 30; i <= 80; i += 10) {
-          setUploadProgress(i);
-          animateProgress(i);
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        break;
-        
-      case UploadState.PROCESSING:
-        // Simulate server processing
-        for (let i = 80; i <= 95; i += 5) {
-          setUploadProgress(i);
-          animateProgress(i);
-          await new Promise(resolve => setTimeout(resolve, 400));
-        }
-        break;
-        
-      case UploadState.COMPLETE:
-        setUploadProgress(100);
-        animateProgress(100);
-        break;
-    }
   };
 
   const getUploadStateText = () => {
@@ -189,7 +150,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       case UploadState.COMPLETE:
         return t('videoUploadInterface.uploadComplete') || 'Upload complete!';
       default:
-        return '';
+        return t('videoUploadInterface.uploadButton') || 'Upload Video';
     }
   };
 
@@ -225,7 +186,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         // Reset upload progress
         setUploadState(UploadState.IDLE);
         setUploadProgress(0);
-        progressAnimation.setValue(0);
+        animateProgress(0);
       }
     } catch (error) {
       console.error(error);
@@ -275,12 +236,21 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     setIsLoading(true);
     
     try {
-      // Step 1: Compression
-      await simulateProgress(UploadState.COMPRESSING);
-      const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri);
-      
-      // Step 2: Upload
-      await simulateProgress(UploadState.UPLOADING);
+      // --- Stage 1: Compression (0% -> 45%) ---
+      setUploadState(UploadState.COMPRESSING);
+      const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri, {
+        maxSizeMB: 15,
+        progressCallback: (progress: number) => {
+          const progressPercentage = Math.round(progress * 45);
+          setUploadProgress(progressPercentage);
+          animateProgress(progressPercentage);
+        },
+      });
+      setUploadProgress(45);
+      animateProgress(45);
+
+      // --- Stage 2: Uploading (45% -> 90%) ---
+      setUploadState(UploadState.UPLOADING);
       const metadata = {
         name: selectedVideo.name,
         title: videoTitle.trim(),
@@ -290,45 +260,53 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       };
       const videoToUpload = { ...selectedVideo, uri: compressedUri };
       
-      // Step 3: Server Processing
-      await simulateProgress(UploadState.PROCESSING);
-      const response = await videoApiService.uploadVideo(videoToUpload, metadata);
-
-      // Step 4: Complete
-      await simulateProgress(UploadState.COMPLETE);
+      const uploadPromise = videoApiService.uploadVideo(videoToUpload, metadata);
+      for (let i = 46; i <= 90; i += 3) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        if (uploadState === UploadState.UPLOADING) {
+          setUploadProgress(i);
+          animateProgress(i);
+        }
+      }
       
+      // --- Stage 3: Server Processing (90% -> 99%) ---
+      setUploadState(UploadState.PROCESSING);
+      animateProgress(95); // Jump to 95 to show processing has started
+      const response = await uploadPromise;
+
       if (response.success) {
-        // Small delay to show completion
+        // --- Stage 4: Complete (100%) ---
+        setUploadState(UploadState.COMPLETE);
+        setUploadProgress(100);
+        animateProgress(100);
         setTimeout(() => {
           Alert.alert(t('videoUploadInterface.alertSuccess'), t('videoUploadInterface.alertVideoUploaded'), [
             { text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }
           ]);
         }, 1000);
       } else {
-        Alert.alert(t('videoUploadInterface.alertError'), response.error || t('alerts.unexpectedError'));
+        throw new Error(response.error || t('alerts.unexpectedError'));
       }
-    } catch (error) {
-      console.error(error);
-      Alert.alert(t('videoUploadInterface.alertError'), t('alerts.unexpectedError'));
-      // Reset progress on error
+    } catch (error: any) {
+      console.error('VideoUpload - Upload error:', error);
+      Alert.alert(t('videoUploadInterface.alertError'), error.message || t('alerts.unexpectedError'));
+      setIsLoading(false);
       setUploadState(UploadState.IDLE);
       setUploadProgress(0);
-      progressAnimation.setValue(0);
-    } finally {
-      setIsLoading(false);
+      animateProgress(0);
     }
   };
 
+  // Enhanced progress rendering like CameraUpload
   const renderUploadProgress = () => {
-    if (!isLoading || uploadState === UploadState.IDLE) return null;
+    if (!isLoading) return null;
 
     return (
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressText}>{getUploadStateText()}</Text>
-          <Text style={styles.progressPercentage}>{uploadProgress}%</Text>
+          <Text style={styles.progressPercentage}>{Math.round(uploadProgress)}%</Text>
         </View>
-        
         <View style={styles.progressBarContainer}>
           <Animated.View
             style={[
@@ -342,41 +320,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
               },
             ]}
           />
-        </View>
-        
-        <View style={styles.progressSteps}>
-          <View style={[styles.progressStep, uploadProgress >= 30 && styles.progressStepActive]}>
-            <Ionicons 
-              name={uploadProgress >= 30 ? "checkmark-circle" : "ellipse-outline"} 
-              size={16} 
-              color={uploadProgress >= 30 ? "#28a745" : "#bdc3c7"} 
-            />
-            <Text style={[styles.progressStepText, uploadProgress >= 30 && styles.progressStepTextActive]}>
-              {t('videoUploadInterface.compress') || 'Compress'}
-            </Text>
-          </View>
-          
-          <View style={[styles.progressStep, uploadProgress >= 80 && styles.progressStepActive]}>
-            <Ionicons 
-              name={uploadProgress >= 80 ? "checkmark-circle" : "ellipse-outline"} 
-              size={16} 
-              color={uploadProgress >= 80 ? "#28a745" : "#bdc3c7"} 
-            />
-            <Text style={[styles.progressStepText, uploadProgress >= 80 && styles.progressStepTextActive]}>
-              {t('videoUploadInterface.upload') || 'Upload'}
-            </Text>
-          </View>
-          
-          <View style={[styles.progressStep, uploadProgress >= 100 && styles.progressStepActive]}>
-            <Ionicons 
-              name={uploadProgress >= 100 ? "checkmark-circle" : "ellipse-outline"} 
-              size={16} 
-              color={uploadProgress >= 100 ? "#28a745" : "#bdc3c7"} 
-            />
-            <Text style={[styles.progressStepText, uploadProgress >= 100 && styles.progressStepTextActive]}>
-              {t('videoUploadInterface.process') || 'Process'}
-            </Text>
-          </View>
         </View>
       </View>
     );
@@ -472,11 +415,9 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
                   onPress={handleSave}
                   disabled={!videoTitle.trim() || isLoading}
                 >
-                  {isLoading ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <Text style={styles.uploadButtonText}>{t('videoUploadInterface.uploadButton')}</Text>
-                  )}
+                  <Text style={styles.uploadButtonText}>
+                    {isLoading ? getUploadStateText() : (t('videoUploadInterface.uploadButton') || 'Upload Video')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -665,13 +606,13 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#bdc3c7'
   },
-  // Progress UI Styles
+  // Enhanced Progress UI Styles - matching CameraUpload
   progressContainer: {
     backgroundColor: 'white',
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 12,
-    padding: 20,
+    padding: 15,
     borderWidth: 1,
     borderColor: '#e0e0e0'
   },
@@ -679,23 +620,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15
+    marginBottom: 10
   },
   progressText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#333'
   },
   progressPercentage: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#3260ad'
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#e9ecef',
     borderRadius: 4,
-    marginBottom: 20,
     overflow: 'hidden'
   },
   progressBar: {
@@ -703,25 +643,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#3260ad',
     borderRadius: 4
   },
-  progressSteps: {
-    flexDirection: 'row',
-    justifyContent: 'space-between'
-  },
-  progressStep: {
-    alignItems: 'center',
-    flex: 1
-  },
-  progressStepActive: {},
-  progressStepText: {
-    fontSize: 12,
-    color: '#bdc3c7',
-    marginTop: 5,
-    textAlign: 'center'
-  },
-  progressStepTextActive: {
-    color: '#28a745',
-    fontWeight: '600'
-  }
 });
 
 export default VideoUploadInterface;

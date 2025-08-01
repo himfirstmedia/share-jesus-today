@@ -2,9 +2,10 @@
 import { t } from '@/utils/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AuthManager from '../../utils/authManager';
 import CameraRecord from '../camera';
 import VideoUploadInterface from '../VideoUpload'; // Import the new component
 
@@ -15,6 +16,12 @@ const { width, height } = Dimensions.get('window');
 export default function PostVideoScreen() {
   const [mode, setMode] = useState<PostMode>('options');
   const [videoToUpload, setVideoToUpload] = useState<any>(null);
+
+  useEffect(() => {
+    if (!AuthManager.isAuthenticated()) {
+      router.replace('/(tabs)/AuthLanding');
+    }
+  }, []);
 
   const handleRecordingComplete = (videoFile: any) => {
     if (videoFile && videoFile.uri) {
@@ -63,10 +70,9 @@ export default function PostVideoScreen() {
             <View style={styles.noticeContainer}>
               <Text style={styles.noticeText}>
                 {t('postScreen.notice1')}
+                 {t('postScreen.notice2')}
               </Text>
-              <Text style={styles.noticeText}>
-                {t('postScreen.notice2')}
-              </Text>
+   
             </View>
             
             <View style={styles.buttonsContainer}>
@@ -185,7 +191,7 @@ const styles = StyleSheet.create({
     color: '#333333',
     lineHeight: 22,
     marginBottom:1,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   buttonsContainer: {
     flex: 1,

@@ -14,7 +14,7 @@
     "customerSupport": "Kundsupport",
     "share": "Dela",
     "shareApp": "Dela app",
-    "shareProfile": "Dela profil",
+    "shareProfile": "Dela profil {{profileUrl}}",
     "shareVideos": "Dela videor",
     "language": "Språk: Engelska",
     "termsAndConditions": "Villkor och bestämmelser",

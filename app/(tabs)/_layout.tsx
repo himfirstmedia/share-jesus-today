@@ -39,7 +39,9 @@ export default function TabLayout() {
 
     // Set the bottom system navigation bar color to blue permanently.
     // This will now apply to all screens.
-    SystemUI.setBackgroundColorAsync('#3260ad');
+    SystemUI.setBackgroundColorAsync('#3260ad'
+  
+    );
   }, []); // Runs only once when the layout is first loaded.
 
   const insets = useSafeAreaInsets();
@@ -147,8 +149,13 @@ export default function TabLayout() {
 
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => {
-            if (currentRoute !== centerTabName) navigation.navigate(centerTabName);
+          onPress={async () => {
+            const isLoggedIn = AuthManager.isAuthenticated();
+            if (!isLoggedIn) {
+              navigation.navigate('AuthLanding');
+            } else {
+              if (currentRoute !== centerTabName) navigation.navigate(centerTabName);
+            }
           }}
           style={[
             styles.floatingButton,
@@ -195,6 +202,13 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon name={focused ? 'menu' : 'menu-outline'} color={color} />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="AuthLanding"
+          options={{
+            href: null, // This tab will not be directly navigable via the tab bar
+            title: 'Video Options',
           }}
         />
       </Tabs>

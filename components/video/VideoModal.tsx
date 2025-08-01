@@ -22,8 +22,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { t } from '@/utils/i18n';
 import videoCacheService from '@/services/videoCacheService';
+import { t } from '@/utils/i18n';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -96,9 +96,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [playerReady, setPlayerReady] = React.useState(false);
   const router = useRouter();
 
-  // Fixed: Use number type for React Native timeouts
-  const controlsTimeoutRef = React.useRef<number | null>(null);
-  const loadingTimeoutRef = React.useRef<number | null>(null);
+  // Fixed: Use NodeJS.Timeout type for React Native timeouts
+  const controlsTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const loadingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null); // Added missing ref
   const cleanupFunctionsRef = React.useRef<(() => void)[]>([]);
 
   const [resolvedVideoUrl, setResolvedVideoUrl] = React.useState<string | null>(null);
@@ -106,23 +106,35 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const isSwipeInProgress = useSharedValue(false);
 
   React.useEffect(() => {
-    const handleVideoLoading = () => {
+    const resolveVideoUrl = async () => {
       if (visible && video?.url) {
         setShowLoading(true);
-        // Always use the remote URL for playback to avoid source errors with local files.
-        setResolvedVideoUrl(video.url);
-        console.log(`[Player] Using remote URI for playback: ${video.url}`);
-
-        // Trigger caching in the background for future use.
-        videoCacheService.startCachingVideo(video.url).catch(e => {
-          console.error(`[Player] Background caching failed:`, e);
-        });
+        let resolvedUri: string | null = null;
+        try {
+          // Check if the video is already cached.
+          const cachedUri = await videoCacheService.getCachedVideoUri(video.url);
+          if (cachedUri) {
+            console.log('[Player] Cache hit. Using local URI:', cachedUri);
+            resolvedUri = cachedUri;
+          } else {
+            console.log('[Player] Cache miss. Using remote URI and caching in background.');
+            resolvedUri = video.url;
+            // Don't await this; let it run in the background.
+            videoCacheService.startCachingVideo(video.url).catch(e => {
+              console.error(`[Player] Background caching failed:`, e);
+            });
+          }
+          setResolvedVideoUrl(resolvedUri);
+        } catch (error) {
+          console.error('[Player] Error resolving video URL. Falling back to remote URI.', error);
+          setResolvedVideoUrl(video.url);
+        }
       } else if (!visible) {
         setResolvedVideoUrl(null);
       }
     };
 
-    handleVideoLoading();
+    resolveVideoUrl();
   }, [visible, video?.url]);
 
   // Create a new video source when video changes
@@ -349,6 +361,18 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       resetControlsTimeout();
       translateX.value = 0;
       isSwipeInProgress.value = false;
+
+      // Clear any existing timeout
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      
+      // Fallback timeout for loading
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.log('Loading timeout reached, setting player ready');
+        setShowLoading(false);
+        setPlayerReady(true);
+      }, 8000); // Increased timeout
     } else if (!visible) {
       setShowControls(true);
       setShowLoading(true);
@@ -367,6 +391,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       // Clear timeouts
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     }
   }, [visible, video?.url, video?.id, resetControlsTimeout, player]); // Added video?.id to dependencies
@@ -527,12 +554,14 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   // Check if navigation is available
   const canSwipeLeft = onNextVideo && videoList && currentVideoIndex < videoList.length - 1;
   const canSwipeRight = onPreviousVideo && currentVideoIndex > 0;
+  
   const handleProfilePress = () => {
     if (currentUserId) {
       onClose(); // Close the modal first
       router.push(`/userProfile?userId=${currentUserId}`);
     }
   };
+
   return (
     <Modal
       visible={visible}
@@ -546,116 +575,115 @@ export const VideoModal: React.FC<VideoModalProps> = ({
             <Animated.View style={[styles.videoContentWrapper, animatedStyle]}>
               <View style={styles.videoContainer}>
                 {/* Video Player */}
-                
-                  {visible && video?.url && player && (
-                    <VideoView
-                      style={styles.video}
-                      player={player}
-                      allowsFullscreen={false}
-                      allowsPictureInPicture={false}
-                      nativeControls={false}
-                      autoplay={true}
-                      onLoad={handleVideoLoad}
-                      onError={handleVideoError}
-                    />
-                  )}
+                {visible && video?.url && player && (
+                  <VideoView
+                    style={styles.video}
+                    player={player}
+                    allowsFullscreen={false}
+                    allowsPictureInPicture={false}
+                    nativeControls={false}
+                    autoplay={true}
+                    onLoad={handleVideoLoad}
+                    onError={handleVideoError}
+                  />
+                )}
 
-                  {/* Loading indicator */}
-                  {showLoading && (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="large" color="#fff" />
-                      <Text style={styles.loadingText}>{t('videoModal.loadingVideo')}</Text>
-                    </View>
-                  )}
-
-                  {/* Always visible critical controls */}
-                  <View style={styles.persistentControls}>
-                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                      <Ionicons name="close" size={28} color="#fff" />
-                    </TouchableOpacity>
-
-                    <View style={styles.rightControls}>
-                      {onFlagPress && (
-                        <TouchableOpacity
-                          style={styles.flagButton}
-                          onPress={onFlagPress}
-                        >
-                          <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                {/* Loading indicator */}
+                {showLoading && (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.loadingText}>{t('videoModal.loadingVideo')}</Text>
                   </View>
+                )}
 
-                  {/* Conditional playback controls */}
-                  {showControls && (
-                    <View style={styles.controlsOverlay}>
-                      {/* Top controls - without close and flag buttons */}
-                      <View style={styles.topControls}>
-                        <View style={styles.rightControls}>
-                          {/* Swipe instruction */}
-                          <Text style={styles.swipeInstruction}>
-                            {t('videoModal.swipeInstruction')}
+                {/* Always visible critical controls */}
+                <View style={styles.persistentControls}>
+                  <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                    <Ionicons name="close" size={28} color="#fff" />
+                  </TouchableOpacity>
+
+                  <View style={styles.rightControls}>
+                    {onFlagPress && (
+                      <TouchableOpacity
+                        style={styles.flagButton}
+                        onPress={onFlagPress}
+                      >
+                        <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+
+                {/* Conditional playback controls */}
+                {showControls && (
+                  <View style={styles.controlsOverlay}>
+                    {/* Top controls - without close and flag buttons */}
+                    <View style={styles.topControls}>
+                      <View style={styles.rightControls}>
+                        {/* Swipe instruction */}
+                        <Text style={styles.swipeInstruction}>
+                          {t('videoModal.swipeInstruction')}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Center play/pause button */}
+                    {playerReady && (
+                      <View style={styles.centerControls}>
+                        <TouchableOpacity
+                          style={styles.playPauseButton}
+                          onPress={togglePlayPause}
+                        >
+                          <Ionicons
+                            name={isPlaying ? "pause" : "play"}
+                            size={50}
+                            color="#fff"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    <TouchableOpacity style={styles.toggleButton} onPress={toggleControls} />
+
+                    {/* Bottom controls */}
+                    <View style={styles.bottomControls}>
+                      {/* Progress bar */}
+                      {playerReady && duration > 0 && (
+                        <View style={styles.progressContainer}>
+                          <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+                          <View style={styles.progressBar}>
+                            <View
+                              style={[
+                                styles.progressFill,
+                                { width: `${(currentTime / duration) * 100}%` }
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.timeText}>{formatTime(duration)}</Text>
+                        </View>
+                      )}
+
+                      {/* Video navigation indicators */}
+                      <View style={styles.navigationIndicators}>
+                        <View style={styles.navIndicator}>
+                          <Text style={styles.navIndicatorText}>
+                            {canSwipeRight ? t('videoModal.previous') : ''}
+                          </Text>
+                        </View>
+                        
+                        {/* <Text style={styles.videoCounter}>
+                          {currentVideoIndex + 1} of {videoList?.length || 1}
+                        </Text> */}
+                        
+                        <View style={styles.navIndicator}>
+                          <Text style={styles.navIndicatorText}>
+                            {canSwipeLeft ? t('videoModal.next') : ''}
                           </Text>
                         </View>
                       </View>
-
-                      {/* Center play/pause button */}
-                      {playerReady && (
-                        <View style={styles.centerControls}>
-                          <TouchableOpacity
-                            style={styles.playPauseButton}
-                            onPress={togglePlayPause}
-                          >
-                            <Ionicons
-                              name={isPlaying ? "pause" : "play"}
-                              size={50}
-                              color="#fff"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      )}
-
-                      <TouchableOpacity style={styles.toggleButton} onPress={toggleControls} />
-
-                      {/* Bottom controls */}
-                      <View style={styles.bottomControls}>
-                        {/* Progress bar */}
-                        {playerReady && duration > 0 && (
-                          <View style={styles.progressContainer}>
-                            <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
-                            <View style={styles.progressBar}>
-                              <View
-                                style={[
-                                  styles.progressFill,
-                                  { width: `${(currentTime / duration) * 100}%` }
-                                ]}
-                              />
-                            </View>
-                            <Text style={styles.timeText}>{formatTime(duration)}</Text>
-                          </View>
-                        )}
-
-                        {/* Video navigation indicators */}
-                        <View style={styles.navigationIndicators}>
-                          <View style={styles.navIndicator}>
-                            <Text style={styles.navIndicatorText}>
-                              {canSwipeRight ? t('videoModal.previous') : ''}
-                            </Text>
-                          </View>
-                          
-                          {/* <Text style={styles.videoCounter}>
-                            {currentVideoIndex + 1} of {videoList?.length || 1}
-                          </Text> */}
-                          
-                          <View style={styles.navIndicator}>
-                            <Text style={styles.navIndicatorText}>
-                              {canSwipeLeft ? t('videoModal.next') : ''}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
                     </View>
-                  )}
+                  </View>
+                )}
               </View>
 
               {/* Video info section */}
@@ -690,7 +718,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                   </View>
                 </View>
               </View>
-              </Animated.View>
+            </Animated.View>
           </GestureDetector>
         </SafeAreaView>
       </GestureHandlerRootView>

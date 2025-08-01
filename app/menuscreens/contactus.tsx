@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -103,12 +104,14 @@ export default function ContactUsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#1e1b1b" />
+          <Ionicons name="chevron-back" size={24} color="white" />
           <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t('contactUsScreen.title')}</Text>
       </View>
 
       {/* Content */}
@@ -117,9 +120,6 @@ export default function ContactUsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
-        {/* Title */}
-        <Text style={styles.title}>{t('contactUsScreen.title')}</Text>
-
         {/* Form */}
         <View style={styles.formContainer}>
           <Text style={styles.label}>{t('contactUsScreen.nameLabel')}</Text>
@@ -188,26 +188,36 @@ export default function ContactUsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#3260ad',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#d0d0d0',
+    paddingVertical: 45,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   backButton: {
+    position: 'absolute',
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
   backText: {
-    fontSize: 18,
-    color: '#1e1b1b',
-    marginLeft: 8,
+    color: 'white',
+    fontSize: 16,
+    marginLeft: 5,
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
+    backgroundColor: '#f0f0f0',
   },
   contentContainer: {
     paddingHorizontal: 24,

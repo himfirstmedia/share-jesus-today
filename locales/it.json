@@ -14,7 +14,7 @@
     "customerSupport": "Supporto clienti",
     "share": "Condividi",
     "shareApp": "Condividi app",
-    "shareProfile": "Condividi profilo",
+    "shareProfile": "Condividi profilo {{profileUrl}}",
     "shareVideos": "Condividi video",
     "language": "Lingua: Inglese",
     "termsAndConditions": "Termini e condizioni",

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "share-jesus-today",
-    "slug": "share-jesus-today",
-    "version": "15.0.0",
+    "name": "share jesus today",
+    "slug": "share jesus today",
+    "version": "16.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/easylogo.png",
     "scheme": "sharejesustodayui",
@@ -19,7 +19,7 @@
       },
       "edgeToEdgeEnabled": false,
       "package": "com.himfirstapps.sharejesustoday",
-      "versionCode": 142,
+      "versionCode": 157,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",

@@ -5,6 +5,7 @@ import {
   Alert,
   Linking,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -27,10 +28,11 @@ export default function TermsAndConditionsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3260ad" barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={20} color="#1e1b1b" />
+          <Ionicons name="chevron-back" size={24} color="white" />
           <Text style={styles.backText}>{t('common.back')}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('termsScreen.title')}</Text>
@@ -181,35 +183,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#3260ad',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 45,
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    justifyContent: 'center',
+    position: 'relative',
   },
   backButton: {
+    position: 'absolute',
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 9,
   },
   backText: {
-    fontSize: 20,
-    color: '#1e1b1b',
-    marginLeft: 8,
+    color: 'white',
+    fontSize: 16,
+    marginLeft: 5,
   },
   headerTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#1e1b1b',
-    flex: 1,
-    textAlign: 'center',
+    color: 'white',
+    fontSize: 20,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -217,7 +213,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
   },
   mainTitle: {
     fontSize: 24,
