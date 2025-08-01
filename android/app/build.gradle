@@ -98,8 +98,8 @@ android {
         applicationId 'com.himfirstapps.sharejesustoday'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 161
-        versionName "16.0.1"
+        versionCode 162
+        versionName "16.0.2"
     }
     signingConfigs {
         debug {

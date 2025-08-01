@@ -14,7 +14,7 @@
     "customerSupport": "Customer Support",
     "share": "Share",
     "shareApp": "Share App",
-    "shareProfile": "Check out my profile on Share Jesus Today: {{profileUrl}}",
+    "shareProfile": "Share Profile {{profileUrl}}",
     "shareVideos": "Share Videos",
     "language": "Language: English",
     "termsAndConditions": "Terms and Conditions",
@@ -120,7 +120,7 @@
     "loadingVideos": "Loading videos..."
   },
   "share": {
-    "profileMessage": "Check out my profile on Share Jesus Today: {{url}}",
+    "profileMessage": "Check out my profile on Share Jesus Today: ",
     "profileTitle": "Share Profile",
     "appMessage": "Check out the Share Jesus Today app! Download it now: {{url}}",
     "appTitle": "Share Jesus Today App"

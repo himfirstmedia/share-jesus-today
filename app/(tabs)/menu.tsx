@@ -1,7 +1,7 @@
 // app/(tabs)/menu.tsx - Updated menu screen with i18n support
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -90,29 +90,31 @@ export default function MenuScreen() {
   const [currentLanguage, setCurrentLanguage] = useState(getCurrentLanguage());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Load profile data and initialize language when component mounts
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        await initializeLanguage();
-        setCurrentLanguage(getCurrentLanguage());
-        
-        const authenticated = await AuthManager.isAuthenticated();
-        setIsAuthenticated(authenticated);
+  const loadProfileData = useCallback(async () => {
+    try {
+      await initializeLanguage();
+      setCurrentLanguage(getCurrentLanguage());
 
-        if (authenticated) {
-          const userData = await profileService.getUserProfile();
-          if (userData) {
-            setProfile(userData);
-          }
+      const authenticated = await AuthManager.isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      if (authenticated) {
+        const userData = await profileService.getUserProfile();
+        if (userData) {
+          setProfile(userData);
         }
-      } catch (error) {
-        console.error('Error loading profile for sharing:', error);
       }
-    };
-
-    loadProfile();
+    } catch (error) {
+      console.error('Error loading profile for sharing:', error);
+    }
   }, []);
+
+  // useFocusEffect to reload data when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileData();
+    }, [loadProfileData])
+  );
 
   const handleLogout = async () => {
     Alert.alert(
@@ -217,10 +219,11 @@ export default function MenuScreen() {
     }
 
     try {
+      const shareUrl = profileService.getProfileShareUrl(profile.id);
+      const message = t('menu.shareProfile', { profileUrl: shareUrl });
+      
       await Share.share({
-        message: t('share.profileMessage', { 
-          url: `https://sharejesustoday.org/profile/?sh=${profile.id}` 
-        }),
+        message,
         title: t('share.profileTitle')
       });
     } catch (error) {
@@ -269,7 +272,7 @@ export default function MenuScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('menu.title')}</Text>
         {/* <Text style={styles.version}>{t('common.version')}</Text> */}
-        <Text style={styles.version}>{'v16.0.0'}</Text>
+        <Text style={styles.version}>{'v16.0.2'}</Text>
       </View>
 
       <ScrollView
@@ -362,7 +365,7 @@ export default function MenuScreen() {
               />
 
               <ShareSubItem
-                title={t('menu.shareProfile')}
+                title={t('share.profileTitle')}
                 onPress={handleShareProfile}
               />
 
