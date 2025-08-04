@@ -21,7 +21,7 @@ import { t } from '../utils/i18n';
 import VideoTrimmer from './VideoTrimmer';
 
 const { width } = Dimensions.get('window');
-const MAX_VIDEO_DURATION = 30.10;
+const MAX_VIDEO_DURATION = 30.1;
 
 enum UploadState {
   IDLE = 'idle',
@@ -123,7 +123,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         const durationSeconds = player.duration || 0;
         setVideoDuration(durationSeconds);
 
-        if (durationSeconds > MAX_VIDEO_DURATION + 0.1) {
+        if (durationSeconds > MAX_VIDEO_DURATION+200) {
           setNeedsTrimming(true);
         } else {
           setNeedsTrimming(false);
