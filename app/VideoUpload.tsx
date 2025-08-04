@@ -123,7 +123,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         const durationSeconds = player.duration || 0;
         setVideoDuration(durationSeconds);
 
-        if (durationSeconds > MAX_VIDEO_DURATION+200) {
+        if (durationSeconds > MAX_VIDEO_DURATION) {
           setNeedsTrimming(true);
         } else {
           setNeedsTrimming(false);
