@@ -15,15 +15,14 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import videoApiService from '../services/videoApiService'; // Import actual service
-import VideoCompressionService from '../services/videoCompressionService'; // Import actual service
-import { t } from '../utils/i18n'; // Import t
-import VideoTrimmer from './VideoTrimmer'; // Our new native video trimmer
+import videoApiService from '../services/videoApiService';
+import VideoCompressionService from '../services/videoCompressionService';
+import { t } from '../utils/i18n';
+import VideoTrimmer from './VideoTrimmer';
 
 const { width } = Dimensions.get('window');
-const MAX_VIDEO_DURATION = 30.10; // 30 seconds
+const MAX_VIDEO_DURATION = 30.10;
 
-// Upload progress states
 enum UploadState {
   IDLE = 'idle',
   COMPRESSING = 'compressing',
@@ -32,7 +31,6 @@ enum UploadState {
   COMPLETE = 'complete'
 }
 
-// Utility Functions
 const initializeVideoFilesDirectory = async () => {
   try {
     const videoFilesDirectory = `${FileSystem.documentDirectory}videofiles/`;
@@ -44,19 +42,27 @@ const initializeVideoFilesDirectory = async () => {
   }
 };
 
+const normalizeUri = (uri: string): string => {
+  // Ensure consistent file:// protocol for Expo FileSystem
+  return uri.startsWith('file://') ? uri : `file://${uri}`;
+};
+
 const ensureVideoIsPersistent = async (temporaryUri: string): Promise<string> => {
   try {
     const videoFilesDirectory = await initializeVideoFilesDirectory();
     const fileName = `video_${Date.now()}.mp4`;
     const permanentUri = `${videoFilesDirectory}${fileName}`;
 
-    await FileSystem.copyAsync({ from: temporaryUri, to: permanentUri });
+    const sourceUri = normalizeUri(temporaryUri);
+    const destUri = normalizeUri(permanentUri);
 
-    const fileInfo = await FileSystem.getInfoAsync(permanentUri);
+    await FileSystem.copyAsync({ from: sourceUri, to: destUri });
+
+    const fileInfo = await FileSystem.getInfoAsync(destUri);
     if (!fileInfo.exists || !fileInfo.size) {
       throw new Error('Failed to copy video to persistent storage.');
     }
-    return permanentUri;
+    return destUri;
   } catch (error) {
     console.error('ERROR: Failed to make video persistent:', error);
     throw error;
@@ -74,14 +80,14 @@ interface VideoUploadProps {
   initialVideo?: VideoFile;
   onCancel?: () => void;
   onComplete: (videoData?: any) => void;
-  isFromRecording?: boolean; // Add this prop
+  isFromRecording?: boolean;
 }
 
 const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   initialVideo,
   onCancel,
   onComplete,
-  isFromRecording, // Use the new prop
+  isFromRecording,
 }) => {
   const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(initialVideo || null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -93,7 +99,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   const [hasBeenTrimmed, setHasBeenTrimmed] = useState(false);
   const [originalDuration, setOriginalDuration] = useState(0);
   
-  // Upload progress states - Enhanced like CameraUpload
   const [uploadState, setUploadState] = useState<UploadState>(UploadState.IDLE);
   const [uploadProgress, setUploadProgress] = useState(0);
   const progressAnimation = useRef(new Animated.Value(0)).current;
@@ -123,14 +128,16 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         } else {
           setNeedsTrimming(false);
         }
-        setOriginalDuration(durationSeconds);
+        
+        if (!hasBeenTrimmed) {
+            setOriginalDuration(durationSeconds);
+        }
       }
     });
 
     return () => subscription?.remove();
-  }, [player, videoLoaded, selectedVideo, showTrimmer]);
+  }, [player, videoLoaded, selectedVideo, showTrimmer, hasBeenTrimmed]);
 
-  // Enhanced progress animation like CameraUpload
   const animateProgress = (progress: number) => {
     Animated.timing(progressAnimation, {
       toValue: progress,
@@ -141,16 +148,11 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const getUploadStateText = () => {
     switch (uploadState) {
-      case UploadState.COMPRESSING:
-        return t('videoUploadInterface.compressingVideo') || 'Compressing video...';
-      case UploadState.UPLOADING:
-        return t('videoUploadInterface.uploadingVideo') || 'Uploading video...';
-      case UploadState.PROCESSING:
-        return t('videoUploadInterface.processingVideo') || 'Processing video...';
-      case UploadState.COMPLETE:
-        return t('videoUploadInterface.uploadComplete') || 'Upload complete!';
-      default:
-        return t('videoUploadInterface.uploadButton') || 'Upload Video';
+      case UploadState.COMPRESSING: return t('videoUploadInterface.compressingVideo');
+      case UploadState.UPLOADING: return t('videoUploadInterface.uploadingVideo');
+      case UploadState.PROCESSING: return t('videoUploadInterface.processingVideo');
+      case UploadState.COMPLETE: return t('videoUploadInterface.uploadComplete');
+      default: return t('videoUploadInterface.uploadButton');
     }
   };
 
@@ -161,10 +163,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const handleSelectVideo = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'video/*',
-        copyToCacheDirectory: true,
-      });
+      const result = await DocumentPicker.getDocumentAsync({ type: 'video/*', copyToCacheDirectory: true });
 
       if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
@@ -183,7 +182,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         setVideoLoaded(false);
         setVideoDuration(0);
         setSelectedVideo(videoFile);
-        // Reset upload progress
         setUploadState(UploadState.IDLE);
         setUploadProgress(0);
         animateProgress(0);
@@ -194,29 +192,36 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     }
   };
 
-  const handleTrimSave = async (startTime: number, endTime: number, outputPath: string) => {
-    if (!outputPath) {
+  const handleTrimSave = async (startTime: number, endTime: number, persistentUri: string) => {
+    if (!persistentUri) {
       Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.trimmingFailedOutput'));
       setShowTrimmer(false);
       return;
     }
+    
+    try {
+      console.log('Trim save completed and file made persistent:', { persistentUri });
 
-    if (selectedVideo) {
-      console.log('Trim save completed:', { startTime, endTime, outputPath });
+      if (selectedVideo) {
+        const updatedVideo: VideoFile = {
+          ...selectedVideo,
+          uri: persistentUri, // Use the new permanent URI
+          name: `trimmed_${selectedVideo.name}`,
+        };
 
-      setShowTrimmer(false);
-
-      const updatedVideo: VideoFile = {
-        ...selectedVideo,
-        uri: outputPath,
-        name: `trimmed_${selectedVideo.name}`,
-      };
-
-      setHasBeenTrimmed(true);
-      setVideoLoaded(false);
-      setVideoDuration(0);
-      setSelectedVideo(updatedVideo);
+        setHasBeenTrimmed(true);
+        setVideoLoaded(false);
+        setVideoDuration(0);
+        setSelectedVideo(updatedVideo);
+      }
+    } catch (error) {
+      console.error("Failed to process trimmed video", error);
+      Alert.alert(t('alerts.error'), t('alerts.saveErrorMessageGeneric'));
     }
+  };
+
+  const handleTrimComplete = (videoData: { startTime: number, endTime: number, uri: string }) => {
+    setShowTrimmer(false);
   };
 
   const handleTrimCancel = () => {
@@ -232,11 +237,14 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.SelectVideoTitle'));
       return;
     }
+    if (needsTrimming) {
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.videoTooLong', { maxDuration: MAX_VIDEO_DURATION }));
+      return;
+    }
 
     setIsLoading(true);
     
     try {
-      // --- Stage 1: Compression (0% -> 45%) ---
       setUploadState(UploadState.COMPRESSING);
       const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri, {
         maxSizeMB: 15,
@@ -249,7 +257,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       setUploadProgress(45);
       animateProgress(45);
 
-      // --- Stage 2: Uploading (45% -> 90%) ---
       setUploadState(UploadState.UPLOADING);
       const metadata = {
         name: selectedVideo.name,
@@ -269,13 +276,11 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         }
       }
       
-      // --- Stage 3: Server Processing (90% -> 99%) ---
       setUploadState(UploadState.PROCESSING);
-      animateProgress(95); // Jump to 95 to show processing has started
+      animateProgress(95);
       const response = await uploadPromise;
 
       if (response.success) {
-        // --- Stage 4: Complete (100%) ---
         setUploadState(UploadState.COMPLETE);
         setUploadProgress(100);
         animateProgress(100);
@@ -297,10 +302,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     }
   };
 
-  // Enhanced progress rendering like CameraUpload
   const renderUploadProgress = () => {
     if (!isLoading) return null;
-
     return (
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
@@ -311,13 +314,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           <Animated.View
             style={[
               styles.progressBar,
-              {
-                width: progressAnimation.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ['0%', '100%'],
-                  extrapolate: 'clamp',
-                }),
-              },
+              { width: progressAnimation.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'], extrapolate: 'clamp' }) },
             ]}
           />
         </View>
@@ -334,7 +331,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         </View>
       );
     }
-
     return (
       <View style={styles.videoContainer}>
         <VideoView style={styles.video} player={player} contentFit="contain" />
@@ -354,23 +350,15 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     <ScrollView style={styles.container}>
       {onCancel && (
         <View style={styles.header}>
-          <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
+          <TouchableOpacity onPress={onCancel} style={styles.closeButton}><Ionicons name="close" size={24} color="#333" /></TouchableOpacity>
           <Text style={styles.headerTitle}>{t('videoUploadInterface.selectVideoTitle')}</Text>
           <View style={styles.placeholder} />
         </View>
       )}
 
       {!isFromRecording && (
-        <TouchableOpacity
-          style={styles.selectVideoButton}
-          onPress={handleSelectVideo}
-          disabled={isLoading}
-        >
-          <Text style={styles.selectVideoText}>
-            {selectedVideo ? t('videoUploadInterface.selectDifferentVideoButton') : t('videoUploadInterface.selectVideoButton')}
-          </Text>
+        <TouchableOpacity style={styles.selectVideoButton} onPress={handleSelectVideo} disabled={isLoading}>
+          <Text style={styles.selectVideoText}>{selectedVideo ? t('videoUploadInterface.selectDifferentVideoButton') : t('videoUploadInterface.selectVideoButton')}</Text>
         </TouchableOpacity>
       )}
 
@@ -378,7 +366,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         <>
           <View style={styles.previewSection}>
             {renderVideoPreview()}
-            {videoDuration > 0 && (
+            {videoLoaded && videoDuration > 0 && (
               needsTrimming ? (
                 <View style={styles.warningContainer}>
                   <Text style={styles.warningText}>{t('videoUploadInterface.videoTooLong', { maxDuration: MAX_VIDEO_DURATION })}</Text>
@@ -388,13 +376,13 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
                 </View>
               ) : (
                 <Text style={styles.durationText}>
-                  {t('videoUploadInterface.duration', { duration: Math.floor(videoDuration), trimmedStatus: hasBeenTrimmed ? t('videoUploadInterface.trimmed') : '' })}
+                  {t('videoUploadInterface.duration', { duration: Math.floor(videoDuration), trimmedStatus: hasBeenTrimmed ? ` (${t('videoUploadInterface.trimmed')})` : '' })}
                 </Text>
               )
             )}
           </View>
 
-          {!showTrimmer && !needsTrimming && (
+          {!showTrimmer && (
             <>
               <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>{t('videoUploadInterface.titleLabel')}</Text>
@@ -411,13 +399,11 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
               <View style={styles.uploadSection}>
                 <TouchableOpacity
-                  style={[styles.uploadButton, (!videoTitle.trim() || isLoading) && styles.disabledButton]}
+                  style={[styles.uploadButton, (!videoTitle.trim() || isLoading || needsTrimming) && styles.disabledButton]}
                   onPress={handleSave}
-                  disabled={!videoTitle.trim() || isLoading}
+                  disabled={!videoTitle.trim() || isLoading || needsTrimming}
                 >
-                  <Text style={styles.uploadButtonText}>
-                    {isLoading ? getUploadStateText() : (t('videoUploadInterface.uploadButton') || 'Upload Video')}
-                  </Text>
+                  <Text style={styles.uploadButtonText}>{isLoading ? getUploadStateText() : t('videoUploadInterface.uploadButton')}</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -426,11 +412,12 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       )}
 
       {showTrimmer && selectedVideo && (
-        <VideoTrimmer
-          videoUri={selectedVideo.uri}
-          maxDuration={MAX_VIDEO_DURATION}
-          onCancel={handleTrimCancel}
-          onSave={handleTrimSave}
+        <VideoTrimmer 
+            videoUri={selectedVideo.uri} 
+            maxDuration={MAX_VIDEO_DURATION} 
+            onCancel={handleTrimCancel} 
+            onSave={handleTrimSave} 
+            onTrimComplete={handleTrimComplete}
         />
       )}
     </ScrollView>
@@ -438,211 +425,38 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
-  },
-  closeButton: {
-    padding: 5
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333'
-  },
-  placeholder: {
-    width: 34
-  },
-  selectVideoButton: {
-    backgroundColor: '#3260ad',
-    marginHorizontal: 20,
-    marginVertical: 20,
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center'
-  },
-  selectVideoText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  previewSection: {
-    marginHorizontal: 20,
-    marginBottom: 20
-  },
-  videoContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative'
-  },
-  video: { 
-    width: '100%', 
-    height: 200, 
-    backgroundColor: '#000' 
-  },
-  playButton: { 
-    position: 'absolute', 
-    top: '50%', 
-    left: '50%', 
-    transform: [{ translateX: -25 }, { translateY: -25 }], 
-    backgroundColor: 'rgba(0,0,0,0.6)', 
-    borderRadius: 25, 
-    width: 50, 
-    height: 50, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  loadingOverlay: { 
-    ...StyleSheet.absoluteFillObject, 
-    backgroundColor: 'rgba(0,0,0,0.3)', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  warningContainer: { 
-    backgroundColor: '#fff3cd', 
-    borderColor: '#ffeaa7', 
-    borderWidth: 1, 
-    borderRadius: 8, 
-    padding: 15, 
-    marginBottom: 15 
-  },
-  warningText: { 
-    color: '#856404', 
-    fontSize: 14, 
-    textAlign: 'center', 
-    marginBottom: 10 
-  },
-  durationText: { 
-    color: '#28a745', 
-    fontSize: 14, 
-    textAlign: 'center', 
-    backgroundColor: '#d4edda', 
-    borderColor: '#c3e6cb', 
-    borderWidth: 1, 
-    borderRadius: 8, 
-    padding: 10 
-  },
-  videoPlaceholder: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-    borderStyle: 'dashed'
-  },
-  placeholderText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 16
-  },
-  actionsContainer: {
-    padding: 15,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  trimButton: {
-    backgroundColor: '#FF6B35',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  trimButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  inputSection: {
-    marginHorizontal: 20,
-    marginBottom: 20
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8
-  },
-  titleInput: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0'
-  },
-  uploadSection: {
-    marginHorizontal: 20,
-    marginBottom: 20
-  },
-  uploadButton: {
-    backgroundColor: '#3260ad',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center'
-  },
-  uploadButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  disabledButton: {
-    backgroundColor: '#bdc3c7'
-  },
-  // Enhanced Progress UI Styles - matching CameraUpload
-  progressContainer: {
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 12,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0'
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10
-  },
-  progressText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333'
-  },
-  progressPercentage: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#3260ad'
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#e9ecef',
-    borderRadius: 4,
-    overflow: 'hidden'
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#3260ad',
-    borderRadius: 4
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  closeButton: { padding: 5 },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
+  placeholder: { width: 34 },
+  selectVideoButton: { backgroundColor: '#3260ad', marginHorizontal: 20, marginVertical: 20, paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
+  selectVideoText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  previewSection: { marginHorizontal: 20, marginBottom: 20 },
+  videoContainer: { backgroundColor: 'white', borderRadius: 12, overflow: 'hidden', position: 'relative' },
+  video: { width: '100%', height: 200, backgroundColor: '#000' },
+  playButton: { position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }], backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 25, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  warningContainer: { backgroundColor: '#fff3cd', borderColor: '#ffeaa7', borderWidth: 1, borderRadius: 8, padding: 15, marginTop: 15 },
+  warningText: { color: '#856404', fontSize: 14, textAlign: 'center', marginBottom: 10 },
+  durationText: { color: '#28a745', fontSize: 14, textAlign: 'center', backgroundColor: '#d4edda', borderColor: '#c3e6cb', borderWidth: 1, borderRadius: 8, padding: 10, marginTop: 15 },
+  videoPlaceholder: { backgroundColor: 'white', borderRadius: 12, height: 200, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e0e0e0', borderStyle: 'dashed' },
+  placeholderText: { marginTop: 10, color: '#666', fontSize: 16 },
+  trimButton: { backgroundColor: '#FF6B35', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  trimButtonText: { color: 'white', fontSize: 14, fontWeight: '600' },
+  inputSection: { marginHorizontal: 20, marginBottom: 20 },
+  inputLabel: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8 },
+  titleInput: { backgroundColor: 'white', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, borderWidth: 1, borderColor: '#e0e0e0' },
+  uploadSection: { marginHorizontal: 20, marginBottom: 20 },
+  uploadButton: { backgroundColor: '#3260ad', paddingVertical: 15, borderRadius: 8, alignItems: 'center' },
+  uploadButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  disabledButton: { backgroundColor: '#bdc3c7' },
+  progressContainer: { backgroundColor: 'white', marginHorizontal: 20, marginBottom: 20, borderRadius: 12, padding: 15, borderWidth: 1, borderColor: '#e0e0e0' },
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  progressText: { fontSize: 14, fontWeight: '500', color: '#333' },
+  progressPercentage: { fontSize: 14, fontWeight: '600', color: '#3260ad' },
+  progressBarContainer: { height: 8, backgroundColor: '#e9ecef', borderRadius: 4, overflow: 'hidden' },
+  progressBar: { height: '100%', backgroundColor: '#3260ad', borderRadius: 4 },
 });
 
 export default VideoUploadInterface;

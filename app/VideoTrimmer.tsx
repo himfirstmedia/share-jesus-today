@@ -72,6 +72,7 @@ interface VideoTrimmerProps {
   maxDuration: number;
   onCancel: () => void;
   onSave: (startTime: number, endTime: number, outputPath: string) => Promise<void>;
+  onTrimComplete: (videoData: { startTime: number, endTime: number, uri: string }) => void;
 }
 
 const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
@@ -79,6 +80,7 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
   maxDuration,
   onCancel,
   onSave,
+  onTrimComplete,
 }) => {
   const listenerSubscription = useRef<Record<string, EventSubscription>>({});
   const isMountedRef = useRef(true);
@@ -107,6 +109,12 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
   const validateAndPrepareVideo = useCallback(async (uri: string): Promise<string> => {
     try {
       console.log('Validating video file at:', uri);
+
+      // Explicitly validate the file path first
+      const isValid = await validateFilePath(uri);
+      if (!isValid) {
+        throw new Error(`File validation failed for URI: ${uri}`);
+      }
       
       // Normalize the URI for consistent handling
       const normalizedUri = normalizeUri(uri);
@@ -194,9 +202,15 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
           throw new Error('Invalid output path provided');
         }
 
-        if (typeof startTime !== 'number' || typeof endTime !== 'number') {
-          throw new Error('Invalid time parameters provided');
+        // Convert and validate time parameters - they might come as strings
+        const validStartTime = typeof startTime === 'number' ? startTime : parseFloat(String(startTime)) || 0;
+        const validEndTime = typeof endTime === 'number' ? endTime : parseFloat(String(endTime)) || 0;
+        
+        if (isNaN(validStartTime) || isNaN(validEndTime)) {
+          console.warn('Invalid time parameters, using defaults:', { startTime, endTime });
         }
+
+        console.log('Validated time parameters:', { validStartTime, validEndTime });
 
         const outputPathWithProtocol = normalizeUri(outputPath);
         const trimmedFileInfo = await FileSystem.getInfoAsync(outputPathWithProtocol);
@@ -210,15 +224,18 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
         const persistentTrimmedUri = await ensureVideoIsPersistent(outputPath);
         console.log('Trimmed video moved to persistent storage:', persistentTrimmedUri);
 
-        await onSave(startTime, endTime, persistentTrimmedUri);
+        // Call the actual callback with the persistent URI and validated times
+        await onSave(validStartTime, validEndTime, persistentTrimmedUri);
         console.log('onSave callback completed successfully');
+        
+        onTrimComplete({ startTime: validStartTime, endTime: validEndTime, uri: persistentTrimmedUri });
         
       } catch (error) {
         console.error('Error in onSave callback:', error);
         
         Alert.alert(
-          t('alerts.saveErrorTitle',),
-          t('alerts.saveErrorMessageGeneric'),
+          t('alerts.saveErrorTitle'),
+          t('alerts.saveErrorMessageGeneric', { message: error instanceof Error ? error.message : 'Unknown error' }),
           [
             {
               text: t('alerts.ok'),
@@ -239,7 +256,7 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
         }, 500);
       }
     }, Platform.OS === 'ios' ? 400 : 300);
-  }, [onSave, onCancel]);
+  }, [onSave, onCancel, onTrimComplete]);
 
   const safeOnCancel = useCallback(() => {
     if (callbackExecutedRef.current || processingRef.current) {
@@ -262,14 +279,12 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
     }, 100);
   }, [onCancel]);
 
+  // Single execution gate for event handlers
   const executeOnce = useCallback((callback: () => void, delay = 0) => {
     if (callbackExecutedRef.current || processingRef.current || !isMountedRef.current) {
       console.log('Execution blocked - already processed or unmounted');
       return;
     }
-    
-    callbackExecutedRef.current = true;
-    processingRef.current = true;
     
     setTimeout(callback, delay);
   }, []);
@@ -303,29 +318,47 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
 
       listenerSubscription.current.onFinishTrimming = NativeVideoTrim.onFinishTrimming(
         ({ outputPath, startTime, endTime, duration }) => {
-          console.log('VideoTrim onFinishTrimming', { outputPath, startTime, endTime, duration });
+          console.log('VideoTrim onFinishTrimming - Raw params:', { 
+            outputPath, 
+            startTime: `${startTime} (${typeof startTime})`, 
+            endTime: `${endTime} (${typeof endTime})`, 
+            duration 
+          });
           
-          if (!outputPath || typeof outputPath !== 'string') {
-            console.error('Invalid output path received:', outputPath);
-            Alert.alert(
-              t('alerts.error'), 
-              t('alerts.trimmingErrorMessageGeneric'),
-              [{ text: t('alerts.ok'), onPress: () => safeOnCancel() }]
-            );
-            return;
-          }
-          safeOnSave(startTime || 0, endTime || 0, outputPath);
+          executeOnce(() => {
+            if (!outputPath || typeof outputPath !== 'string') {
+              console.error('Invalid output path received:', outputPath);
+              Alert.alert(
+                t('alerts.error'), 
+                t('alerts.trimmingErrorMessageGeneric'),
+                [{ text: t('alerts.ok'), onPress: () => safeOnCancel() }]
+              );
+              return;
+            }
+            
+            // Convert time parameters to ensure they're numbers
+            const safeStartTime = typeof startTime === 'number' ? startTime : (parseFloat(String(startTime)) || 0);
+            const safeEndTime = typeof endTime === 'number' ? endTime : (parseFloat(String(endTime)) || 0);
+            
+            console.log('Calling safeOnSave with validated params:', { 
+              safeStartTime, 
+              safeEndTime, 
+              outputPath 
+            });
+            
+            safeOnSave(safeStartTime, safeEndTime, outputPath);
+          }, Platform.OS === 'ios' ? 600 : 400); // Longer delay for iOS modal dismissal
         }
       );
 
       listenerSubscription.current.onCancelTrimming = NativeVideoTrim.onCancelTrimming(() => {
         console.log('VideoTrim onCancelTrimming - User cancelled trimming');
-        safeOnCancel();
+        executeOnce(() => safeOnCancel(), Platform.OS === 'ios' ? 400 : 200);
       });
 
       listenerSubscription.current.onCancel = NativeVideoTrim.onCancel(() => {
         console.log('VideoTrim onCancel - General cancel event');
-        safeOnCancel();
+        executeOnce(() => safeOnCancel(), Platform.OS === 'ios' ? 400 : 200);
       });
 
       listenerSubscription.current.onHide = NativeVideoTrim.onHide(() => {
@@ -376,6 +409,7 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
       
       console.log('Video file prepared:', preparedUri);
       
+      // isValidFile may require a clean path, so we still generate it.
       const cleanUriForValidation = getCleanPath(preparedUri);
       
       const validationTimeout = Platform.OS === 'ios' ? 10000 : 15000;
@@ -405,12 +439,9 @@ const VideoTrimmer: React.FC<VideoTrimmerProps> = ({
 
       console.log('VideoTrimmer - Using config:', trimmerConfig);
       
-      // FIX: Use file:// on iOS, plain path on Android when calling showEditor
-      const editorInput = Platform.OS === 'ios'
-        ? normalizeUri(preparedUri)
-        : getCleanPath(preparedUri);
-
-      await showEditor(editorInput, trimmerConfig);
+      // CORRECTED: Pass the full URI with `file://` to showEditor on iOS.
+      // The native module requires the full URI for its internal file operations.
+      await showEditor(preparedUri, trimmerConfig);
       
     } catch (error) {
       console.error('Error initializing video trimmer:', error);

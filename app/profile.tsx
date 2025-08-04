@@ -715,7 +715,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     flex: 2,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   videosSection: {
     paddingHorizontal: 20,
