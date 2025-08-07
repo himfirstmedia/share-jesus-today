@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native';
 // Import services
+// import CameraCompressionService from '../services/cameraCompressionService';
 import CameraCompressionService from '../services/cameraCompressionService';
 import videoApiService from '../services/videoApiService';
 import { t } from '../utils/i18n';
@@ -26,7 +27,7 @@ enum UploadState {
   IDLE = 'idle',
   COMPRESSING = 'compressing',
   UPLOADING = 'uploading',
-  PROCESSING = 'processing', // Added for consistency
+  PROCESSING = 'processing',
   COMPLETE = 'complete',
 }
 
@@ -47,9 +48,10 @@ const CameraUpload: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
 
-  // --- State for Progress UI ---
+  // --- Enhanced State for Progress UI ---
   const [uploadState, setUploadState] = useState<UploadState>(UploadState.IDLE);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState<string>('');
   const progressAnimation = useRef(new Animated.Value(0)).current;
 
   const player = useVideoPlayer(videoFile?.uri || '', (player) => {
@@ -89,7 +91,7 @@ const CameraUpload: React.FC = () => {
     player.playing ? player.pause() : player.play();
   }, [player]);
 
-  // --- Progress and State Management Functions ---
+  // --- Enhanced Progress and State Management Functions ---
 
   const animateProgress = (progress: number) => {
     Animated.timing(progressAnimation, {
@@ -102,21 +104,42 @@ const CameraUpload: React.FC = () => {
   const getUploadStateText = () => {
     switch (uploadState) {
       case UploadState.COMPRESSING:
-        // Using correct key from VideoUploadInterface
-        return t('videoUploadInterface.compressingVideo') || 'Compressing video...';
+        return uploadPhase || t('videoUploadInterface.compressingVideo');
       case UploadState.UPLOADING:
-        // Using correct key from VideoUploadInterface
-        return t('videoUploadInterface.uploadingVideo') || 'Uploading video...';
+        return uploadPhase || t('videoUploadInterface.uploadingVideo');
       case UploadState.PROCESSING:
-        // Using correct key from VideoUploadInterface
-        return t('videoUploadInterface.processingVideo') || 'Processing video...';
+        return uploadPhase || t('videoUploadInterface.processingVideo');
       case UploadState.COMPLETE:
-        // Using correct key from VideoUploadInterface
-        return t('videoUploadInterface.uploadComplete') || 'Upload complete!';
+        return t('videoUploadInterface.uploadComplete');
       default:
-        // Default text for the button
-        return t('videoUploadInterface.uploadButton') || 'Upload Video';
+        return t('videoUploadInterface.uploadButton');
     }
+  };
+
+  // Cancel upload function
+  const handleCancelUpload = () => {
+    Alert.alert(
+      t('videoActions.cancel'),
+      t('videoActions.cancel'), // Need to add proper cancel upload confirmation text
+      [
+        {
+          text: t('videoUploadInterface.uploadButton'),
+          style: 'cancel',
+        },
+        {
+          text: t('alerts.cancel'),
+          style: 'destructive',
+          onPress: () => {
+            videoApiService.cancelUpload();
+            setIsLoading(false);
+            setUploadState(UploadState.IDLE);
+            setUploadProgress(0);
+            setUploadPhase('');
+            animateProgress(0);
+          },
+        },
+      ]
+    );
   };
 
   const handleSave = async () => {
@@ -126,60 +149,155 @@ const CameraUpload: React.FC = () => {
     }
 
     setIsLoading(true);
+    setUploadProgress(0);
+    setUploadPhase('');
+    animateProgress(0);
 
     try {
-      // --- Stage 1: Compression (0% -> 45%) ---
+      console.log('Starting complete upload process with video:', videoFile);
+
+      // --- Phase 1: Compression (0% - 50%) ---
       setUploadState(UploadState.COMPRESSING);
+      setUploadPhase(t('cameraScreen.preparingVideo'));
+      
+      setUploadPhase(t('videoUploadInterface.compressingVideo'));
+      
       const compressedUri = await CameraCompressionService.createCompressedCopy(videoFile.uri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
-          const progressPercentage = Math.round(progress * 45);
+          // Map compression progress to 0-50% of total progress
+          const progressPercentage = Math.round(progress * 50);
           setUploadProgress(progressPercentage);
           animateProgress(progressPercentage);
+          
+          if (progress > 0.1) {
+            setUploadPhase(`${t('videoUploadInterface.compressingVideo')} ${Math.round(progress * 100)}%`);
+          }
         },
       });
-      setUploadProgress(45);
-      animateProgress(45);
+      
+      console.log('Video compressed successfully:', compressedUri);
+      
+      // Ensure we're at 50% after compression
+      setUploadProgress(50);
+      animateProgress(50);
+      setUploadPhase(t('videoUploadInterface.uploadComplete'));
+      
+      // Small delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // --- Stage 2: Uploading (45% -> 90%) ---
-      setUploadState(UploadState.UPLOADING);
-      const metadata = { name: videoFile.name, title: videoTitle.trim(), caption: '' };
-      const fileToUpload = { ...videoFile, uri: compressedUri };
+      // --- Phase 2: Upload (50% - 90%) + Processing (90% - 100%) ---
+      const metadata = { 
+        name: videoFile.name, 
+        title: videoTitle.trim(), 
+        caption: '',
+        originalDuration: 0,
+        wasTrimmed: false,
+      };
       
-      const uploadPromise = videoApiService.uploadVideo(fileToUpload, metadata);
-      for (let i = 46; i <= 90; i+=3) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        if (uploadState === UploadState.UPLOADING) {
-          setUploadProgress(i);
-          animateProgress(i);
-        }
-      }
+      const fileToUpload = { 
+        ...videoFile, 
+        uri: compressedUri,
+        mimeType: videoFile.type,
+      };
+
+      console.log('Starting upload with comprehensive tracking:', { fileToUpload, metadata });
       
-      // --- Stage 3: Server Processing (90% -> 99%) ---
-      setUploadState(UploadState.PROCESSING);
-      animateProgress(95); // Jump to 95 to show processing has started
-      const response = await uploadPromise;
+      // Upload with comprehensive progress tracking
+      const response = await videoApiService.uploadVideo(fileToUpload, metadata, {
+        onUploadProgress: (progressEvent) => {
+          // Map upload progress to 50-90% of total progress (40% range)
+          const uploadProgressPercent = (progressEvent.progress / 100) * 40;
+          const totalProgress = 50 + uploadProgressPercent;
+          
+          console.log(`Upload progress: ${progressEvent.progress}% -> Total: ${Math.round(totalProgress)}%`);
+          setUploadProgress(Math.round(totalProgress));
+          animateProgress(Math.round(totalProgress));
+          
+          // Update phase text with actual progress
+          if (progressEvent.progress > 0) {
+            setUploadPhase(`${t('videoUploadInterface.uploadingVideo')} ${Math.round(progressEvent.progress)}%`);
+          }
+        },
+        onStateChange: (state) => {
+          console.log('Upload state changed:', state);
+          
+          switch (state) {
+            case 'preparing':
+              setUploadPhase(t('cameraScreen.preparingVideo'));
+              // Already at 50% from compression
+              break;
+            case 'uploading':
+              setUploadState(UploadState.UPLOADING);
+              setUploadPhase(t('videoUploadInterface.uploadingVideo'));
+              break;
+            case 'processing':
+              setUploadState(UploadState.PROCESSING);
+              setUploadPhase(t('videoUploadInterface.processingVideo'));
+              
+              // Gradual processing progress from 90% to 98%
+              let processingProgress = 90;
+              const processingInterval = setInterval(() => {
+                processingProgress += 1;
+                if (processingProgress >= 98) {
+                  processingProgress = 98;
+                  clearInterval(processingInterval);
+                }
+                setUploadProgress(processingProgress);
+                animateProgress(processingProgress);
+                setUploadPhase(`${t('videoUploadInterface.processingVideo')} ${processingProgress}%`);
+              }, 300);
+              break;
+            case 'complete':
+              setUploadState(UploadState.COMPLETE);
+              setUploadProgress(100);
+              animateProgress(100);
+              setUploadPhase(t('videoUploadInterface.uploadComplete'));
+              break;
+          }
+        },
+        timeout: 300000, // 5 minutes timeout
+      });
+
+      console.log('Upload response received:', response);
 
       if (response.success) {
-        // --- Stage 4: Complete (100%) ---
-        setUploadState(UploadState.COMPLETE);
-        setUploadProgress(100);
-        animateProgress(100);
+        // Show completion state briefly before navigating
         setTimeout(() => {
+          setIsLoading(false);
           router.replace('/watchVideos');
-        }, 1000);
+        }, 1000); // Give user time to see 100% completion
       } else {
         throw new Error(response.error || t('alerts.unexpectedError'));
       }
 
     } catch (error: any) {
-      console.error('CameraUpload - Upload error:', error);
-      // Using correct alert keys from VideoUploadInterface
-      Alert.alert(t('videoUploadInterface.alertError'), error.message || t('alerts.unexpectedError'));
+      console.error('CameraUpload - Complete upload process error:', error);
+      
+      // Reset all states on error
       setIsLoading(false);
       setUploadState(UploadState.IDLE);
       setUploadProgress(0);
+      setUploadPhase('');
       animateProgress(0);
+      
+      // Show error alert with specific message
+      let errorMessage = t('alerts.unexpectedError');
+      if (error.message) {
+        if (error.message.includes('Authentication')) {
+          errorMessage = t('alerts.authRequired');
+        } else if (error.message.includes('timeout')) {
+          errorMessage = t('alerts.trimmingErrorMessageTimeout');
+        } else if (error.message.includes('Network') || error.message.includes('network')) {
+          errorMessage = t('forgotPassword.alertNetworkError');
+        } else if (error.message.includes('cancel')) {
+          errorMessage = t('alerts.cancel');
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert(t('videoUploadInterface.alertError'), errorMessage);
     }
   };
 
@@ -189,7 +307,12 @@ const CameraUpload: React.FC = () => {
     return (
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
-          <Text style={styles.progressText}>{getUploadStateText()}</Text>
+          <View style={styles.progressTextContainer}>
+            <Text style={styles.progressText}>{getUploadStateText()}</Text>
+            {uploadPhase && (
+              <Text style={styles.progressPhase}>{uploadPhase}</Text>
+            )}
+          </View>
           <Text style={styles.progressPercentage}>{Math.round(uploadProgress)}%</Text>
         </View>
         <View style={styles.progressBarContainer}>
@@ -205,6 +328,26 @@ const CameraUpload: React.FC = () => {
               },
             ]}
           />
+        </View>
+        
+        {/* Show cancel button during upload */}
+        {(uploadState === UploadState.UPLOADING || uploadState === UploadState.PROCESSING) && (
+          <TouchableOpacity 
+            style={styles.cancelUploadButton} 
+            onPress={handleCancelUpload}
+          >
+            <Text style={styles.cancelUploadText}>{t('alerts.cancel')}</Text>
+          </TouchableOpacity>
+        )}
+        
+        {/* Show upload details */}
+        <View style={styles.uploadDetails}>
+          <Text style={styles.uploadDetailText}>
+            {uploadState === UploadState.COMPRESSING && t('videoUploadInterface.compressingVideo')}
+            {uploadState === UploadState.UPLOADING && t('videoUploadInterface.uploadingVideo')}
+            {uploadState === UploadState.PROCESSING && t('videoUploadInterface.processingVideo')}
+            {uploadState === UploadState.COMPLETE && t('videoUploadInterface.uploadComplete')}
+          </Text>
         </View>
       </View>
     );
@@ -222,7 +365,11 @@ const CameraUpload: React.FC = () => {
     return (
       <View style={styles.videoContainer}>
         <VideoView style={styles.video} player={player} contentFit="contain" />
-        <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
+        <TouchableOpacity 
+          style={styles.playButton} 
+          onPress={handlePlayPause}
+          disabled={isLoading}
+        >
           <Ionicons name={player?.playing ? 'pause' : 'play'} size={40} color="white" />
         </TouchableOpacity>
         {!videoLoaded && (
@@ -237,7 +384,11 @@ const CameraUpload: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/post')} style={styles.closeButton}>
+        <TouchableOpacity 
+          onPress={() => router.replace('/(tabs)/post')} 
+          style={styles.closeButton}
+          disabled={isLoading}
+        >
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('cameraUpload.recordVideo')}</Text>
@@ -251,7 +402,7 @@ const CameraUpload: React.FC = () => {
           <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>{t('videoUploadInterface.titleLabel')}</Text>
             <TextInput
-              style={styles.titleInput}
+              style={[styles.titleInput, isLoading && styles.disabledInput]}
               placeholder={t('videoUploadInterface.enterTitlePlaceholder')}
               value={videoTitle}
               onChangeText={setVideoTitle}
@@ -263,15 +414,24 @@ const CameraUpload: React.FC = () => {
 
           <View style={styles.uploadSection}>
             <TouchableOpacity
-              style={[styles.uploadButton, (!videoFile || !videoTitle.trim() || isLoading) && styles.disabledButton]}
+              style={[
+                styles.uploadButton, 
+                (!videoFile || !videoTitle.trim() || isLoading) && styles.disabledButton
+              ]}
               onPress={handleSave}
               disabled={!videoFile || !videoTitle.trim() || isLoading}
             >
-              <Ionicons name="cloud-upload-outline" size={24} color="white" style={styles.buttonIcon} />
-              <Text style={styles.uploadButtonText}>
-                {/* Using the correct key for the button text */}
-                {isLoading ? getUploadStateText() : (t('videoUploadInterface.uploadButton') || 'Upload Video')}
-              </Text>
+              {isLoading ? (
+                <View style={styles.uploadButtonLoading}>
+                  <ActivityIndicator size="small" color="white" style={{ marginRight: 10 }} />
+                  <Text style={styles.uploadButtonText}>{getUploadStateText()}</Text>
+                </View>
+              ) : (
+                <>
+                  <Ionicons name="cloud-upload-outline" size={24} color="white" style={styles.buttonIcon} />
+                  <Text style={styles.uploadButtonText}>{t('videoUploadInterface.uploadButton')}</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -291,25 +451,96 @@ const CameraUpload: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 20, 
+    paddingVertical: 15, 
+    backgroundColor: 'white', 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#e0e0e0' 
+  },
   closeButton: { padding: 5 },
   headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
   placeholder: { width: 34 },
   scrollContainer: { paddingBottom: 20 },
   previewSection: { marginHorizontal: 20, marginTop: 20 },
-  videoContainer: { backgroundColor: 'white', borderRadius: 12, overflow: 'hidden', position: 'relative' },
+  videoContainer: { 
+    backgroundColor: 'white', 
+    borderRadius: 12, 
+    overflow: 'hidden', 
+    position: 'relative' 
+  },
   video: { width: '100%', height: 200, backgroundColor: '#000' },
-  videoPlaceholder: { backgroundColor: 'white', borderRadius: 12, height: 200, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#e0e0e0', borderStyle: 'dashed' },
+  videoPlaceholder: { 
+    backgroundColor: 'white', 
+    borderRadius: 12, 
+    height: 200, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    borderWidth: 2, 
+    borderColor: '#e0e0e0', 
+    borderStyle: 'dashed' 
+  },
   placeholderText: { marginTop: 10, color: '#666', fontSize: 16 },
-  playButton: { position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }], backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 25, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
+  playButton: { 
+    position: 'absolute', 
+    top: '50%', 
+    left: '50%', 
+    transform: [{ translateX: -25 }, { translateY: -25 }], 
+    backgroundColor: 'rgba(0,0,0,0.6)', 
+    borderRadius: 25, 
+    width: 50, 
+    height: 50, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  loadingOverlay: { 
+    ...StyleSheet.absoluteFillObject, 
+    backgroundColor: 'rgba(0,0,0,0.3)', 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
   inputSection: { marginHorizontal: 20, marginTop: 20 },
   inputLabel: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8 },
-  titleInput: { backgroundColor: 'white', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, fontSize: 16, borderWidth: 1, borderColor: '#e0e0e0' },
+  titleInput: { 
+    backgroundColor: 'white', 
+    borderRadius: 8, 
+    paddingHorizontal: 15, 
+    paddingVertical: 12, 
+    fontSize: 16, 
+    borderWidth: 1, 
+    borderColor: '#e0e0e0' 
+  },
+  disabledInput: { 
+    backgroundColor: '#f8f9fa', 
+    color: '#6c757d' 
+  },
   uploadSection: { marginHorizontal: 20, marginTop: 20 },
-  uploadButton: { backgroundColor: '#3260ad', paddingVertical: 15, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  uploadButton: { 
+    backgroundColor: '#3260ad', 
+    paddingVertical: 15, 
+    borderRadius: 8, 
+    alignItems: 'center', 
+    flexDirection: 'row', 
+    justifyContent: 'center' 
+  },
   uploadButtonText: { color: 'white', fontSize: 16, fontWeight: '600', marginLeft: 10 },
-  recordButton: { backgroundColor: '#e0e0e0', paddingVertical: 15, borderRadius: 8, alignItems: 'center', marginTop: 15, flexDirection: 'row', justifyContent: 'center' },
+  uploadButtonLoading: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  recordButton: { 
+    backgroundColor: '#e0e0e0', 
+    paddingVertical: 15, 
+    borderRadius: 8, 
+    alignItems: 'center', 
+    marginTop: 15, 
+    flexDirection: 'row', 
+    justifyContent: 'center' 
+  },
   recordButtonText: { color: '#3260ad', fontSize: 16, fontWeight: '600', marginLeft: 10 },
   buttonIcon: { marginRight: 5 },
   disabledButton: { backgroundColor: '#bdc3c7' },
@@ -320,7 +551,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
+    borderColor: '#e0e0e0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -328,10 +564,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10
   },
+  progressTextContainer: { flex: 1, paddingRight: 10 },
   progressText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#333'
+  },
+  progressPhase: { 
+    fontSize: 12, 
+    color: '#666', 
+    marginTop: 2,
+    fontStyle: 'italic' 
   },
   progressPercentage: {
     fontSize: 14,
@@ -348,6 +591,31 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#3260ad',
     borderRadius: 4
+  },
+  cancelUploadButton: {
+    backgroundColor: '#dc3545',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+  cancelUploadText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  uploadDetails: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  uploadDetailText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

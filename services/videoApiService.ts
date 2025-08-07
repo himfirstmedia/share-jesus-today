@@ -1,6 +1,7 @@
-// services/videoApiService.ts - Updated with Progress Tracking Support
-import 'react-native-url-polyfill/auto';
+// services/videoApiService.ts - Complete Implementation with Expo FileSystem
+import * as FileSystem from 'expo-file-system';
 import { ReactNode } from "react";
+import 'react-native-url-polyfill/auto';
 import AuthManager from '../utils/authManager';
 
 interface ApiResponse<T = any> {
@@ -14,12 +15,15 @@ interface VideoUploadMetadata {
   name: string;
   title: string;
   caption: string;
+  originalDuration?: number;
+  wasTrimmed?: boolean;
 }
 
 interface VideoFile {
   uri: string;
   name: string;
   type: string;
+  mimeType?: string;
 }
 
 interface UploadProgressEvent {
@@ -63,7 +67,7 @@ export interface VideoPage {
 class VideoApiService {
   private baseURL = 'https://himfirstapis.com';
   private unsubscribeAuth: (() => void) | null = null;
-  private activeUploads = new Map<string, AbortController>();
+  private activeUploads = new Map<string, FileSystem.UploadTask>();
 
   constructor() {
     // Subscribe to auth token changes
@@ -83,7 +87,7 @@ class VideoApiService {
     return AuthManager.isAuthenticated();
   }
 
-  // Helper method for making API requests
+  // Helper method for making API requests (for non-upload requests)
   private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -172,85 +176,144 @@ class VideoApiService {
     }
   }
 
-  // Enhanced upload method with progress tracking using XMLHttpRequest
-  private async uploadWithProgress(
+  // Enhanced upload method with Expo FileSystem progress tracking
+  private async uploadWithExpoFileSystem(
     url: string,
-    formData: FormData,
+    videoFile: VideoFile,
+    metadata: VideoUploadMetadata,
     options: UploadOptions = {}
   ): Promise<ApiResponse<VideoModel>> {
     return new Promise(async (resolve) => {
       try {
         const token = await this.getAuthToken();
         const uploadId = Date.now().toString();
-        const abortController = new AbortController();
-        this.activeUploads.set(uploadId, abortController);
-
-        // Notify state change to preparing
+        
+        console.log('VideoAPI: Starting Expo FileSystem upload preparation');
         options.onStateChange?.('preparing');
 
-        const xhr = new XMLHttpRequest();
+        // Prepare headers
+        const headers: { [key: string]: string } = {};
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+          console.log('VideoAPI: Added auth header to upload');
+        }
 
-        // Handle upload progress
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
+        // Prepare upload parameters
+        const uploadParams = {
+          title: metadata.title,
+          caption: metadata.caption || '',
+        };
+
+        // Add optional metadata if available
+        if (metadata.originalDuration !== undefined) {
+          uploadParams['originalDuration'] = metadata.originalDuration.toString();
+        }
+        if (metadata.wasTrimmed !== undefined) {
+          uploadParams['wasTrimmed'] = metadata.wasTrimmed.toString();
+        }
+
+        console.log('VideoAPI: Upload parameters:', uploadParams);
+        console.log('VideoAPI: Video file details:', {
+          uri: videoFile.uri,
+          name: videoFile.name,
+          type: videoFile.type,
+        });
+
+        // Create upload task with progress tracking
+        const uploadTask = FileSystem.createUploadTask(
+          url,
+          videoFile.uri,
+          {
+            fieldName: 'file',
+            httpMethod: 'POST',
+            uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+            parameters: uploadParams,
+            headers: headers,
+            sessionType: FileSystem.FileSystemSessionType.BACKGROUND, // Enable background uploads
+          },
+          (uploadProgressData) => {
+            const { totalBytesSent, totalBytesExpectedToSend } = uploadProgressData;
+            
+            // Calculate progress percentage
+            const progress = totalBytesExpectedToSend > 0 
+              ? Math.round((totalBytesSent / totalBytesExpectedToSend) * 100)
+              : 0;
+            
             const progressEvent: UploadProgressEvent = {
-              loaded: event.loaded,
-              total: event.total,
-              progress: progress
+              loaded: totalBytesSent,
+              total: totalBytesExpectedToSend,
+              progress: progress,
             };
             
-            console.log('VideoAPI: Upload progress:', progressEvent);
+            console.log(`VideoAPI: Upload progress: ${progress}% (${totalBytesSent}/${totalBytesExpectedToSend})`);
+            
+            // Notify upload state change when upload actually starts
+            if (totalBytesSent > 0 && progress > 0) {
+              options.onStateChange?.('uploading');
+            }
+            
             options.onUploadProgress?.(progressEvent);
           }
-        });
+        );
 
-        // Handle load start (uploading begins)
-        xhr.upload.addEventListener('loadstart', () => {
-          console.log('VideoAPI: Upload started');
-          options.onStateChange?.('uploading');
-        });
+        // Store the task for potential cancellation
+        this.activeUploads.set(uploadId, uploadTask);
 
-        // Handle successful completion
-        xhr.addEventListener('load', async () => {
+        console.log('VideoAPI: Starting upload task execution');
+
+        try {
+          // Execute the upload
+          const response = await uploadTask.uploadAsync();
+          
+          // Remove from active uploads
           this.activeUploads.delete(uploadId);
           
-          if (xhr.status >= 200 && xhr.status < 300) {
-            console.log('VideoAPI: Upload completed successfully');
+          console.log('VideoAPI: Upload completed, response:', {
+            status: response?.status,
+            headers: response?.headers,
+            bodyLength: response?.body?.length,
+          });
+
+          // Check response status
+          if (response && response.status >= 200 && response.status < 300) {
+            console.log('VideoAPI: Upload successful');
             options.onStateChange?.('processing');
             
+            let responseData;
             try {
-              const responseData = JSON.parse(xhr.responseText);
-              console.log('VideoAPI: Upload response:', responseData);
-              
-              // Simulate processing delay
-              setTimeout(() => {
-                options.onStateChange?.('complete');
-                resolve({
-                  success: true,
-                  data: responseData
-                });
-              }, 1000);
-            } catch (error) {
-              console.error('VideoAPI: Error parsing response:', error);
-              resolve({
-                success: false,
-                error: 'Invalid response from server'
-              });
+              responseData = response.body ? JSON.parse(response.body) : {};
+              console.log('VideoAPI: Parsed response data:', responseData);
+            } catch (parseError) {
+              console.error('VideoAPI: Error parsing response body:', parseError);
+              console.log('VideoAPI: Raw response body:', response.body);
+              responseData = {}; // Fallback to empty object
             }
+            
+            // Simulate processing delay
+            setTimeout(() => {
+              options.onStateChange?.('complete');
+              resolve({
+                success: true,
+                data: responseData,
+              });
+            }, 1000);
+            
           } else {
-            console.error('VideoAPI: Upload failed with status:', xhr.status);
+            console.error('VideoAPI: Upload failed with status:', response?.status);
             let errorMessage = 'Upload failed';
             
             try {
-              const errorData = JSON.parse(xhr.responseText);
-              errorMessage = errorData.message || errorData.error || errorMessage;
+              if (response?.body) {
+                const errorData = JSON.parse(response.body);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+              }
             } catch {
-              errorMessage = `HTTP ${xhr.status}: ${xhr.statusText}`;
+              errorMessage = response?.status ? `HTTP ${response.status}` : 'Upload failed';
             }
 
-            // Special handling for auth errors
-            if (xhr.status === 401) {
+            // Handle auth errors
+            if (response?.status === 401) {
               console.error('VideoAPI: Authentication failed during upload');
               await AuthManager.clearAuthToken();
               errorMessage = 'Authentication failed. Please login again.';
@@ -258,76 +321,45 @@ class VideoApiService {
 
             resolve({
               success: false,
-              error: errorMessage
+              error: errorMessage,
             });
           }
-        });
-
-        // Handle errors
-        xhr.addEventListener('error', () => {
+        } catch (uploadError: any) {
+          // Remove from active uploads on error
           this.activeUploads.delete(uploadId);
-          console.error('VideoAPI: Upload network error');
+          
+          console.error('VideoAPI: Upload execution error:', uploadError);
+          
+          let errorMessage = 'Upload failed';
+          if (uploadError.message) {
+            if (uploadError.message.includes('canceled') || uploadError.message.includes('cancelled')) {
+              errorMessage = 'Upload cancelled';
+            } else if (uploadError.message.includes('timeout')) {
+              errorMessage = 'Upload timeout';
+            } else if (uploadError.message.includes('network') || uploadError.message.includes('connection')) {
+              errorMessage = 'Network error during upload';
+            } else {
+              errorMessage = uploadError.message;
+            }
+          }
+
           resolve({
             success: false,
-            error: 'Network error during upload'
+            error: errorMessage,
           });
-        });
-
-        // Handle abort
-        xhr.addEventListener('abort', () => {
-          this.activeUploads.delete(uploadId);
-          console.log('VideoAPI: Upload aborted');
-          resolve({
-            success: false,
-            error: 'Upload cancelled'
-          });
-        });
-
-        // Handle timeout
-        xhr.addEventListener('timeout', () => {
-          this.activeUploads.delete(uploadId);
-          console.error('VideoAPI: Upload timeout');
-          resolve({
-            success: false,
-            error: 'Upload timeout'
-          });
-        });
-
-        // Set up abort signal
-        abortController.signal.addEventListener('abort', () => {
-          xhr.abort();
-        });
-
-        // Configure and send request
-        xhr.open('POST', url);
-        xhr.timeout = options.timeout || 300000; // 5 minutes timeout by default
-
-        // Set auth header if available
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-          console.log('VideoAPI: Added auth header to XMLHttpRequest');
         }
 
-        console.log('VideoAPI: Starting XMLHttpRequest upload to:', url);
-        xhr.send(formData);
-
-      } catch (error) {
+      } catch (error: any) {
         console.error('VideoAPI: Upload setup error:', error);
-        if (error instanceof Error) {
-          resolve({
-            success: false,
-            error: error.message
-          });
-        }
         resolve({
           success: false,
-          error: 'Upload setup failed'
+          error: error.message || 'Upload setup failed',
         });
       }
     });
   }
 
-  // Upload video with progress support
+  // Upload video with progress support using Expo FileSystem
   async uploadVideo(
     videoFile: VideoFile,
     metadata: VideoUploadMetadata,
@@ -338,7 +370,7 @@ class VideoApiService {
       if (!this.isAuthenticated()) {
         console.error('VideoAPI: Not authenticated for upload');
         
-        // Debug auth status
+        // Debug auth status in development
         if (__DEV__) {
           await AuthManager.debugAuthStatus();
         }
@@ -349,45 +381,20 @@ class VideoApiService {
         };
       }
 
-      const formData = new FormData();
-      
-      // Append the video file
-      formData.append('file', {
-        uri: videoFile.uri,
-        name: videoFile.name,
-        type: videoFile.type,
-      } as any);
-
-      // Add metadata fields
-      if (metadata.title) {
-        formData.append('title', metadata.title);
-      }
-      
-      if (metadata.caption) {
-        formData.append('caption', metadata.caption);
-      }
-
-      console.log('VideoAPI: Uploading video with metadata:', {
+      console.log('VideoAPI: Starting video upload with Expo FileSystem:', {
         fileName: videoFile.name,
         fileType: videoFile.type,
         title: metadata.title,
         caption: metadata.caption,
         isAuthenticated: this.isAuthenticated(),
         hasProgressCallback: !!options.onUploadProgress,
+        hasStateCallback: !!options.onStateChange,
       });
 
       const uploadUrl = `${this.baseURL}/api/v1/video/upload`;
 
-      // Use progress-enabled upload if callback provided
-      if (options.onUploadProgress || options.onStateChange) {
-        return await this.uploadWithProgress(uploadUrl, formData, options);
-      } else {
-        // Fallback to regular upload
-        return await this.makeRequest('/api/v1/video/upload', {
-          method: 'POST',
-          body: formData,
-        });
-      }
+      // Use Expo FileSystem upload with progress tracking
+      return await this.uploadWithExpoFileSystem(uploadUrl, videoFile, metadata, options);
 
     } catch (error) {
       console.error('VideoAPI: Upload error:', error);
@@ -407,17 +414,18 @@ class VideoApiService {
   // Cancel active upload
   cancelUpload(uploadId?: string): void {
     if (uploadId && this.activeUploads.has(uploadId)) {
-      const controller = this.activeUploads.get(uploadId);
-      controller?.abort();
+      const uploadTask = this.activeUploads.get(uploadId);
+      uploadTask?.cancelAsync();
       this.activeUploads.delete(uploadId);
       console.log('VideoAPI: Upload cancelled:', uploadId);
     } else {
       // Cancel all active uploads
-      this.activeUploads.forEach((controller, id) => {
-        controller.abort();
+      this.activeUploads.forEach(async (uploadTask, id) => {
+        await uploadTask.cancelAsync();
         console.log('VideoAPI: Upload cancelled:', id);
       });
       this.activeUploads.clear();
+      console.log('VideoAPI: All active uploads cancelled');
     }
   }
 
@@ -426,7 +434,7 @@ class VideoApiService {
     return this.activeUploads.size;
   }
 
-  // Get all videos
+  // Get all public videos
   async fetchPublicVideos(
     page: number = 0, 
     size: number = 10, 
@@ -453,7 +461,7 @@ class VideoApiService {
     });
   }
 
-  // Cleanup subscription when service is destroyed
+  // Cleanup subscription and cancel uploads when service is destroyed
   destroy(): void {
     // Cancel all active uploads
     this.cancelUpload();
@@ -462,6 +470,8 @@ class VideoApiService {
       this.unsubscribeAuth();
       this.unsubscribeAuth = null;
     }
+    
+    console.log('VideoAPI: Service destroyed and cleaned up');
   }
 }
 

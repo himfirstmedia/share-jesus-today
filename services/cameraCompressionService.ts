@@ -1,9 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'react-native-compressor';
 
-// --- Type Definitions (FIXED) ---
-// Using a discriminated union for VideoInfo to make it type-safe.
-// If 'exists' is true, 'size' and 'sizeMB' are guaranteed to be numbers.
+// --- Type Definitions ---
 type ExistingVideoInfo = {
   uri: string;
   exists: true;
@@ -18,7 +16,6 @@ type NonExistingVideoInfo = {
 
 type VideoInfo = ExistingVideoInfo | NonExistingVideoInfo;
 
-
 interface CompressionOptions {
   maxSizeMB?: number;
   minFileSizeForCompression?: number;
@@ -26,205 +23,327 @@ interface CompressionOptions {
 }
 
 // --- Helper Functions ---
-
-/**
- * A simple delay utility.
- * @param ms - Milliseconds to wait.
- */
 const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
-/**
- * Initializes a dedicated directory within the app's document folder to store video files.
- * This is a persistent location, not a temporary cache.
- */
 const initializeVideoFilesDirectory = async (): Promise<string> => {
   try {
     const videoFilesDirectory = `${FileSystem.documentDirectory}videofiles/`;
     await FileSystem.makeDirectoryAsync(videoFilesDirectory, { intermediates: true });
     return videoFilesDirectory;
   } catch (error) {
-    console.error('ERROR: Failed to initialize videofiles directory in compression service:', error);
+    console.error('ERROR: Failed to initialize videofiles directory:', error);
     throw error;
   }
 };
 
 /**
- * A highly robust file verification utility designed to handle file system race conditions.
- * It waits for a file to exist and for its size to stabilize, indicating that the
- * write operation has completed.
- *
- * @param uri The URI of the file to verify.
- * @param initialDelayMs The initial time to wait before the first check.
- * @param maxRetries The maximum number of times to check for the file.
- * @returns A promise that resolves with the file's info if stable, or null if verification fails.
+ * PRODUCTION FIX: Transfer compressed file from native cache to Expo accessible directory
+ * Uses base64 encoding as a bridge between native and Expo file systems
  */
-const verifyFileIsStable = async (
-  uri: string,
-  initialDelayMs = 500,
-  maxRetries = 15
-): Promise<FileSystem.FileInfo | null> => {
-  console.log(`LOG: Starting stability verification for: ${uri}`);
-  await sleep(initialDelayMs); // Initial wait for the file system to catch up.
+const transferCompressedFile = async (
+  compressedCacheUri: string, 
+  targetUri: string,
+  progressCallback?: (progress: number) => void
+): Promise<boolean> => {
+  try {
+    console.log(`LOG: Starting file transfer from cache to accessible directory`);
+    console.log(`LOG: Source (cache): ${compressedCacheUri}`);
+    console.log(`LOG: Target (accessible): ${targetUri}`);
 
-  let previousSize = -1;
-  let stableChecks = 0;
+    if (progressCallback) progressCallback(0.1);
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    // Method 1: Direct copy attempt (sometimes works)
     try {
-      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
-
-      // Type guard: proceed only if the file exists.
-      if (fileInfo.exists) {
-        // File exists and has size, now check for stability.
-        if (fileInfo.size === previousSize) {
-          stableChecks++;
-          console.log(`LOG: File size is stable. Check ${stableChecks}/2.`);
-          // Require 2 consecutive checks with the same size to be sure.
-          if (stableChecks >= 2) {
-            console.log(`LOG: File verification successful and stable on attempt ${attempt}: ${uri} (${fileInfo.size} bytes)`);
-            return fileInfo;
-          }
-        } else {
-          // Size has changed, reset stability counter.
-          console.log(`LOG: File size changed: ${previousSize} -> ${fileInfo.size}. Resetting stability check.`);
-          stableChecks = 0;
-          previousSize = fileInfo.size;
-        }
-      } else {
-        console.warn(`WARN: File check failed on attempt ${attempt}: file does not exist.`);
+      await FileSystem.copyAsync({
+        from: compressedCacheUri,
+        to: targetUri,
+      });
+      
+      const verifyInfo = await FileSystem.getInfoAsync(targetUri, { size: true });
+      if (verifyInfo.exists && verifyInfo.size > 0) {
+        console.log(`LOG: Direct copy successful: ${verifyInfo.size} bytes`);
+        if (progressCallback) progressCallback(1.0);
+        return true;
       }
-    } catch (error: any) {
-      console.warn(`WARN: File verification attempt ${attempt} threw an error:`, error.message);
+    } catch (directCopyError) {
+      console.log(`LOG: Direct copy failed, trying alternative methods`);
     }
 
-    // Wait before the next attempt.
-    await sleep(500 * attempt); // Increasing delay (500ms, 1000ms, 1500ms...)
-  }
+    if (progressCallback) progressCallback(0.3);
 
-  console.error(`ERROR: File verification failed after ${maxRetries} attempts for URI: ${uri}`);
-  return null;
+    // Method 2: Base64 bridge (most reliable for cache -> document transfer)
+    try {
+      console.log(`LOG: Attempting base64 transfer method`);
+      
+      // Read the compressed file as base64 (this can access native cache)
+      const base64Content = await FileSystem.readAsStringAsync(compressedCacheUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      if (!base64Content || base64Content.length === 0) {
+        throw new Error('Failed to read compressed file as base64');
+      }
+
+      console.log(`LOG: Successfully read compressed file as base64: ${base64Content.length} chars`);
+      if (progressCallback) progressCallback(0.7);
+
+      // Write the base64 content to accessible directory
+      await FileSystem.writeAsStringAsync(targetUri, base64Content, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Verify the written file
+      const finalCheck = await FileSystem.getInfoAsync(targetUri, { size: true });
+      if (finalCheck.exists && finalCheck.size > 0) {
+        console.log(`LOG: Base64 transfer successful: ${finalCheck.size} bytes`);
+        if (progressCallback) progressCallback(1.0);
+        return true;
+      }
+
+    } catch (base64Error) {
+      console.error('ERROR: Base64 transfer failed:', base64Error);
+    }
+
+    // Method 3: Try with URI variations
+    const uriVariations = [
+      compressedCacheUri.replace('file://', ''),
+      `file://${compressedCacheUri.replace('file://', '')}`,
+      compressedCacheUri.replace(/^file:\/\//, ''),
+    ];
+
+    for (const uri of uriVariations) {
+      try {
+        console.log(`LOG: Trying URI variation: ${uri}`);
+        
+        const base64Content = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        if (base64Content && base64Content.length > 0) {
+          await FileSystem.writeAsStringAsync(targetUri, base64Content, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          const verifyInfo = await FileSystem.getInfoAsync(targetUri, { size: true });
+          if (verifyInfo.exists && verifyInfo.size > 0) {
+            console.log(`LOG: URI variation transfer successful: ${verifyInfo.size} bytes`);
+            if (progressCallback) progressCallback(1.0);
+            return true;
+          }
+        }
+      } catch (variationError) {
+        console.warn(`WARN: URI variation ${uri} failed:`, variationError.message);
+        continue;
+      }
+    }
+
+    console.error('ERROR: All transfer methods failed');
+    return false;
+
+  } catch (error) {
+    console.error('ERROR: Transfer process failed:', error);
+    return false;
+  }
 };
 
+class ProductionCameraCompressionService {
 
-class CameraCompressionService {
-
-  /**
-   * Retrieves basic information about a video file.
-   * @param uri The URI of the video file.
-   * @returns A promise that resolves with the video's information.
-   */
   public async getVideoInfo(uri: string): Promise<VideoInfo> {
-    const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
-    // Type guard: if the file doesn't exist or is empty, return the NonExistingVideoInfo type.
-    if (!fileInfo.exists || fileInfo.size === 0) {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+      if (!fileInfo.exists || fileInfo.size === 0) {
+        return { uri, exists: false };
+      }
+      return {
+        uri,
+        exists: true,
+        size: fileInfo.size,
+        sizeMB: Math.round((fileInfo.size / (1024 * 1024)) * 100) / 100,
+      };
+    } catch (error) {
+      console.error('ERROR: Failed to get video info:', error);
       return { uri, exists: false };
     }
-    // If we get here, TypeScript knows fileInfo.exists is true and fileInfo.size is a number.
-    return {
-      uri,
-      exists: true,
-      size: fileInfo.size,
-      sizeMB: Math.round((fileInfo.size / (1024 * 1024)) * 100) / 100,
-    };
   }
 
   /**
-   * Compresses a video, handling the entire lifecycle from cache to persistent storage
-   * with robust verification at each step.
-   *
-   * @param sourceUri The original URI of the video to compress.
-   * @param options Configuration for the compression process.
-   * @returns The URI of the final compressed file in persistent storage, or the original URI if compression was skipped or failed.
+   * PRODUCTION VERSION: Real video compression with proper file transfer
    */
   public async createCompressedCopy(sourceUri: string, options: CompressionOptions = {}): Promise<string> {
     const {
-      minFileSizeForCompression = 1, // Don't compress files smaller than 1MB
+      minFileSizeForCompression = 1,
+      maxSizeMB = 15,
       progressCallback,
     } = options;
 
-    let compressedTempUri: string | null = null;
-
     try {
-      // 1. Validate the source file before starting.
+      // 1. Validate source
       const sourceInfo = await this.getVideoInfo(sourceUri);
-      
-      // **FIXED**: This check now acts as a type guard.
-      // If sourceInfo.exists is false, we return.
-      // If it's true, TypeScript knows `sourceInfo` is of type `ExistingVideoInfo`.
       if (!sourceInfo.exists) {
-        console.error('ERROR: Source video for compression not found or is empty:', sourceUri);
-        return sourceUri; // Fallback to original
-      }
-
-      // After the guard, `sourceInfo.sizeMB` is guaranteed to be a number.
-      if (sourceInfo.sizeMB < minFileSizeForCompression) {
-        console.log(`LOG: Video size (${sourceInfo.sizeMB}MB) is below threshold. Skipping compression.`);
+        console.error('ERROR: Source video not found:', sourceUri);
         return sourceUri;
       }
 
-      console.log(`LOG: Starting compression for: ${sourceUri} (${sourceInfo.sizeMB}MB)`);
+      if (sourceInfo.sizeMB < minFileSizeForCompression) {
+        console.log(`LOG: Video size (${sourceInfo.sizeMB}MB) below compression threshold`);
+        return sourceUri;
+      }
 
-      // 2. Perform compression. The result is a new file in a temporary cache directory.
-      const result = await Video.compress(
-        sourceUri,
-        { compressionMethod: 'auto' },
-        (progress) => {
+      console.log(`LOG: Starting PRODUCTION compression: ${sourceUri} (${sourceInfo.sizeMB}MB)`);
+
+      // 2. Compress using react-native-compressor (80% of progress)
+      let compressedCacheUri: string;
+      try {
+        compressedCacheUri = await Video.compress(
+          sourceUri,
+          { 
+            compressionMethod: 'auto',
+            // Specify output directory as the app's cache (where compressor can write)
+            outputExtension: '.mp4',
+            // Additional options for better compression
+            includeAudio: true,
+            minimumFileSizeForCompress: minFileSizeForCompression,
+          },
+          (progress) => {
+            if (progressCallback) {
+              // Reserve 20% progress for file transfer
+              progressCallback(progress * 0.8);
+            }
+          }
+        );
+
+        if (!compressedCacheUri) {
+          throw new Error('Video compression returned null result');
+        }
+
+        console.log(`LOG: Compression completed. Cache file: ${compressedCacheUri}`);
+
+      } catch (compressionError) {
+        console.error('ERROR: Video compression failed:', compressionError);
+        throw compressionError;
+      }
+
+      // 3. Set up target location in accessible directory
+      const videoFilesDirectory = await initializeVideoFilesDirectory();
+      const fileName = `compressed_${Date.now()}.mp4`;
+      const accessibleUri = `${videoFilesDirectory}${fileName}`;
+
+      // 4. Transfer from cache to accessible directory (20% of progress)
+      console.log(`LOG: Starting file transfer from cache to accessible location`);
+      
+      const transferSuccess = await transferCompressedFile(
+        compressedCacheUri, 
+        accessibleUri,
+        (transferProgress) => {
           if (progressCallback) {
-            progressCallback(progress);
+            // Map transfer progress to the final 20%
+            const totalProgress = 0.8 + (transferProgress * 0.2);
+            progressCallback(totalProgress);
           }
         }
       );
 
-      if (!result) {
-        throw new Error('Video.compress returned a null or undefined result.');
-      }
-      compressedTempUri = result;
-      console.log(`LOG: Compression process finished. Temp file should be at: ${compressedTempUri}`);
-
-      // 3. **CRITICAL STEP**: Verify the compressed file is stable in the cache.
-      const compressedFileInfo = await verifyFileIsStable(compressedTempUri);
-      if (!compressedFileInfo) {
-        throw new Error('Verification of compressed file in cache failed. The file is not stable or does not exist.');
+      if (!transferSuccess) {
+        console.error('ERROR: Failed to transfer compressed file to accessible directory');
+        throw new Error('File transfer from cache failed');
       }
 
-      // 4. Move the verified file from cache to our persistent directory.
-      const videoFilesDirectory = await initializeVideoFilesDirectory();
-      const fileName = `compressed_${Date.now()}.mp4`;
-      const persistentUri = `${videoFilesDirectory}${fileName}`;
-
-      console.log(`LOG: Moving verified file from cache to persistent storage: ${persistentUri}`);
-      await FileSystem.moveAsync({
-        from: compressedTempUri,
-        to: persistentUri,
-      });
-
-      compressedTempUri = null; // Mark as moved
-
-      // 5. Final verification that the file exists in its new persistent home.
-      const finalCheck = await FileSystem.getInfoAsync(persistentUri);
-      if (!finalCheck.exists) {
-        throw new Error('Failed to move compressed file to persistent storage.');
+      // 5. Verify final result
+      const finalInfo = await this.getVideoInfo(accessibleUri);
+      if (!finalInfo.exists) {
+        console.error('ERROR: Final compressed file verification failed');
+        throw new Error('Compressed file verification failed');
       }
 
-      console.log(`LOG: Successfully moved and verified compressed video in persistent storage.`);
-      return persistentUri;
+      const compressionRatio = ((sourceInfo.sizeMB - finalInfo.sizeMB) / sourceInfo.sizeMB * 100).toFixed(1);
+      console.log(`LOG: PRODUCTION compression successful!`);
+      console.log(`LOG: ${sourceInfo.sizeMB}MB -> ${finalInfo.sizeMB}MB (${compressionRatio}% reduction)`);
+
+      // 6. Cleanup: The cache file will be cleaned up by the system
+      // We don't need to manually delete it as it's outside our accessible directory
+
+      return accessibleUri;
 
     } catch (error: any) {
-      console.error('ERROR: Video compression pipeline failed:', error.message);
+      console.error('ERROR: Production compression pipeline failed:', error.message);
+      console.log('LOG: Falling back to original, uncompressed video');
+      
+      // In production, you might want to try alternative compression or show error
+      return sourceUri;
+    }
+  }
 
-      if (compressedTempUri) {
-        try {
-          await FileSystem.deleteAsync(compressedTempUri, { idempotent: true });
-          console.log(`LOG: Cleaned up orphaned temp file after error: ${compressedTempUri}`);
-        } catch (cleanupError: any) {
-          console.warn('WARN: Failed to cleanup temp file after error:', cleanupError.message);
+  /**
+   * Alternative compression with different settings if first attempt fails
+   */
+  public async createCompressedCopyWithFallback(sourceUri: string, options: CompressionOptions = {}): Promise<string> {
+    try {
+      // First attempt with standard settings
+      const result = await this.createCompressedCopy(sourceUri, options);
+      
+      // If we got back the original URI, compression failed
+      if (result === sourceUri) {
+        console.log('LOG: Attempting compression with fallback settings');
+        
+        // Try with more aggressive compression settings
+        const fallbackResult = await Video.compress(
+          sourceUri,
+          { 
+            compressionMethod: 'manual',
+            // More aggressive settings for fallback
+            quality: 'low',
+            outputExtension: '.mp4',
+          },
+          options.progressCallback
+        );
+        
+        if (fallbackResult && fallbackResult !== sourceUri) {
+          const videoFilesDirectory = await initializeVideoFilesDirectory();
+          const fileName = `fallback_compressed_${Date.now()}.mp4`;
+          const targetUri = `${videoFilesDirectory}${fileName}`;
+          
+          const transferSuccess = await transferCompressedFile(fallbackResult, targetUri);
+          if (transferSuccess) {
+            console.log('LOG: Fallback compression successful');
+            return targetUri;
+          }
+        }
+      } else {
+        return result;
+      }
+      
+    } catch (error) {
+      console.error('ERROR: All compression attempts failed:', error);
+    }
+    
+    return sourceUri;
+  }
+
+  public async cleanup(): Promise<void> {
+    try {
+      const videoFilesDirectory = await initializeVideoFilesDirectory();
+      const files = await FileSystem.readDirectoryAsync(videoFilesDirectory);
+      
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      
+      for (const file of files) {
+        if (file.startsWith('compressed_') || file.startsWith('fallback_compressed_')) {
+          const filePath = `${videoFilesDirectory}${file}`;
+          try {
+            const fileInfo = await FileSystem.getInfoAsync(filePath, { size: true });
+            if (fileInfo.exists && fileInfo.modificationTime && fileInfo.modificationTime < oneDayAgo) {
+              await FileSystem.deleteAsync(filePath, { idempotent: true });
+              console.log(`LOG: Cleaned up old compressed file: ${file}`);
+            }
+          } catch (cleanupError) {
+            console.warn(`WARN: Failed to cleanup file ${file}:`, cleanupError);
+          }
         }
       }
-
-      console.log('LOG: Falling back to use the original, uncompressed video.');
-      return sourceUri;
+    } catch (error) {
+      console.warn('WARN: Cleanup operation failed:', error);
     }
   }
 }
 
-export default new CameraCompressionService();
+export default new ProductionCameraCompressionService();
