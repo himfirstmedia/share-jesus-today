@@ -124,7 +124,7 @@
     "searchProfiles": "PESQUISAR PERFIS",
     "postVideo": "PUBLICAR VÍDEO",
     "watchVideos": "ASSISTIR VÍDEOS",
-    "createAccount": "CRIAR CONTA"
+    "createAccount": "ENTRAR / CRIAR CONTA"
   },
   "login": {
     "noAccountSignUp": "Não tem uma conta? Cadastre-se",
@@ -143,7 +143,9 @@
     "enterYourPassword": "Digite sua senha",
     "signingIn": "Entrando...",
     "signIn": "Entrar",
-    "forgotPassword": "Esqueceu a senha?"
+    "forgotPassword": "Esqueceu a senha?",
+    "noAccount": "Se você não tem uma conta, crie uma aqui."
+
   },
   "post": {
     "videoOptions": "Opções de vídeo",

@@ -103,7 +103,7 @@
     "searchProfiles": "ТЪРСЕНЕ НА ПРОФИЛИ",
     "postVideo": "ПУБЛИКУВАНЕ НА ВИДЕО",
     "watchVideos": "ГЛЕДАНЕ НА ВИДЕО",
-    "createAccount": "СЪЗДАВАНЕ НА АКАУНТ"
+    "createAccount": "ВХОД / СЪЗДАЙ АКАУНТ"
   },
   "login": {
     "noAccountSignUp": "Нямате акаунт? Регистрирайте се",
@@ -122,7 +122,8 @@
     "enterYourPassword": "Въведете вашата парола",
     "signingIn": "Влизане...",
     "signIn": "Вход",
-    "forgotPassword": "Забравена парола?"
+    "forgotPassword": "Забравена парола?",
+    "noAccount": "Ако нямате акаунт, моля, създайте такъв тук."
   },
   "post": {
     "videoOptions": "Опции за видео",

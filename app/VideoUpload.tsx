@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -163,19 +163,77 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const handleSelectVideo = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: 'video/*', copyToCacheDirectory: true });
+      // Request media library permissions
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert(
+          t('videoUploadInterface.alertError'), 
+          'Permission to access gallery is required!'
+        );
+        return;
+      }
+
+      console.log('Launching image library picker...');
+
+      // Launch the image library with video-only option
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: false,
+        quality: 1,
+        videoMaxDuration: 300, // Optional: limit video duration in seconds
+      });
+
+      console.log('ImagePicker result:', JSON.stringify(result, null, 2));
 
       if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
+        console.log('Selected asset:', JSON.stringify(asset, null, 2));
+        
         if (!asset.uri) throw new Error('No URI in selected video');
 
         const persistentUri = await ensureVideoIsPersistent(asset.uri);
+        console.log('Video made persistent:', persistentUri);
+
+        // Get file info to determine proper MIME type and name
+        const fileInfo = await FileSystem.getInfoAsync(persistentUri);
+        console.log('File info:', fileInfo);
+        
+        // Create a proper filename if one doesn't exist
+        const fileName = asset.fileName || `video_${Date.now()}.mp4`;
+        
+        // Determine MIME type based on file extension or use default
+        let mimeType = 'video/mp4';
+        
+        // Fix the MIME type detection
+        if (asset.type && asset.type.includes('/')) {
+          // If asset.type is already a proper MIME type
+          mimeType = asset.type;
+        } else if (asset.type === 'video') {
+          // If asset.type is just 'video', determine from filename
+          if (fileName.toLowerCase().endsWith('.mov')) {
+            mimeType = 'video/quicktime';
+          } else if (fileName.toLowerCase().endsWith('.avi')) {
+            mimeType = 'video/x-msvideo';
+          } else {
+            mimeType = 'video/mp4'; // default
+          }
+        } else if (fileName.toLowerCase().endsWith('.mov')) {
+          mimeType = 'video/quicktime';
+        } else if (fileName.toLowerCase().endsWith('.avi')) {
+          mimeType = 'video/x-msvideo';
+        }
+        
+        console.log('Determined MIME type:', mimeType, 'from asset.type:', asset.type);
+
         const videoFile: VideoFile = {
           uri: persistentUri,
-          name: asset.name || `video_${Date.now()}.mp4`,
-          type: asset.mimeType || 'video/mp4',
-          mimeType: asset.mimeType,
+          name: fileName,
+          type: mimeType,
+          mimeType: mimeType,
         };
+
+        console.log('Created video file object:', videoFile);
 
         setHasBeenTrimmed(false);
         setOriginalDuration(0);
@@ -187,8 +245,11 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         animateProgress(0);
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.failedToSelectVideo'));
+      console.error('Error in handleSelectVideo:', error);
+      Alert.alert(
+        t('videoUploadInterface.alertError'), 
+        t('videoUploadInterface.failedToSelectVideo')
+      );
     }
   };
 
@@ -245,7 +306,18 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     setIsLoading(true);
     
     try {
+      console.log('Starting upload process with video:', selectedVideo);
+
       setUploadState(UploadState.COMPRESSING);
+      
+      // Add file existence check before compression
+      const videoExists = await FileSystem.getInfoAsync(selectedVideo.uri);
+      console.log('Video file exists before compression:', videoExists);
+      
+      if (!videoExists.exists) {
+        throw new Error('Video file not found before compression');
+      }
+      
       const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
@@ -254,6 +326,17 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           animateProgress(progressPercentage);
         },
       });
+      
+      console.log('Video compressed successfully:', compressedUri);
+      
+      // Verify compressed file exists
+      const compressedExists = await FileSystem.getInfoAsync(compressedUri);
+      console.log('Compressed file exists:', compressedExists);
+      
+      if (!compressedExists.exists) {
+        throw new Error('Compressed video file not found after compression');
+      }
+      
       setUploadProgress(45);
       animateProgress(45);
 
@@ -265,9 +348,20 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         originalDuration: originalDuration,
         wasTrimmed: hasBeenTrimmed,
       };
-      const videoToUpload = { ...selectedVideo, uri: compressedUri };
+
+      // Create the video object for upload - ensure all required properties are present
+      const videoToUpload = {
+        uri: compressedUri,
+        name: selectedVideo.name,
+        type: selectedVideo.type,
+        mimeType: selectedVideo.mimeType || selectedVideo.type,
+      };
+
+      console.log('Uploading video with metadata:', { videoToUpload, metadata });
       
       const uploadPromise = videoApiService.uploadVideo(videoToUpload, metadata);
+      
+      // Simulate progress for upload phase
       for (let i = 46; i <= 90; i += 3) {
         await new Promise(resolve => setTimeout(resolve, 100));
         if (uploadState === UploadState.UPLOADING) {
@@ -279,6 +373,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       setUploadState(UploadState.PROCESSING);
       animateProgress(95);
       const response = await uploadPromise;
+
+      console.log('Upload response:', response);
 
       if (response.success) {
         setUploadState(UploadState.COMPLETE);

@@ -428,6 +428,7 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
+            <Text style={{color: '#333', marginBottom: 10, marginTop: 10, textAlign: 'center'}}>{t('login.noAccount')}</Text>
             <TouchableOpacity
               style={dynamicStyles.createAccountButton}
               onPress={() => router.push('/Signup')}

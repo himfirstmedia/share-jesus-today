@@ -124,7 +124,7 @@
     "searchProfiles": "CUARDAIGH PRÓIFÍLÍ",
     "postVideo": "FOILSIGH FÍSEÁN",
     "watchVideos": "FÉACH AR FHÍSEÁIN",
-    "createAccount": "CRUTHAIGH CUNTAS"
+    "createAccount": "LOGÁIL ISTEACH / CRUTHAIGH CUNTAS"
   },
   "login": {
     "noAccountSignUp": "Níl cuntas agat? Cláraigh",
@@ -143,7 +143,8 @@
     "enterYourPassword": "Iontráil do phasfhocal",
     "signingIn": "Ag logáil isteach...",
     "signIn": "Logáil Isteach",
-    "forgotPassword": "Pasfhocal Dearmadta?"
+    "forgotPassword": "Pasfhocal Dearmadta?",
+    "noAccount": "Mura bhfuil cuntas agat, cruthaigh ceann anseo, le do thoil."
   },
   "post": {
     "videoOptions": "Roghanna Físeáin",

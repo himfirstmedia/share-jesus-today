@@ -132,7 +132,7 @@
     "searchProfiles": "SEARCH PROFILES",
     "postVideo": "POST VIDEO",
     "watchVideos": "WATCH VIDEOS",
-    "createAccount": "CREATE ACCOUNT"
+    "createAccount": "LOGIN / CREATE ACCOUNT"
   },
   "authLanding": {
     "welcome": "Welcome to Share Jesus Today",
@@ -158,7 +158,8 @@
     "enterYourPassword": "Enter your password",
     "signingIn": "Signing In",
     "signIn": "Sign In",
-    "forgotPassword": "Forgot Password?"
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "If you don’t have an account, please create one here."
   },
   "post": {
     "videoOptions": "Video Options",

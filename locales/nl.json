@@ -124,7 +124,7 @@
     "searchProfiles": "ZOEK PROFIELEN",
     "postVideo": "VIDEO PLAATSEN",
     "watchVideos": "BEKIJK VIDEO'S",
-    "createAccount": "ACCOUNT AANMAKEN"
+    "createAccount": "INLOGGEN / ACCOUNT AANMAKEN"
   },
   "login": {
     "noAccountSignUp": "Geen account? Meld u aan",
@@ -143,7 +143,8 @@
     "enterYourPassword": "Voer uw wachtwoord in",
     "signingIn": "Inloggen...",
     "signIn": "Inloggen",
-    "forgotPassword": "Wachtwoord vergeten?"
+    "forgotPassword": "Wachtwoord vergeten?",
+     "noAccount": "Als je geen account hebt, maak er dan hier een aan."
   },
   "post": {
     "videoOptions": "Video-opties",

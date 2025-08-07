@@ -124,7 +124,7 @@
     "searchProfiles": "SÖK PROFILER",
     "postVideo": "LÄGG UPP VIDEO",
     "watchVideos": "TITTA PÅ VIDEOR",
-    "createAccount": "SKAPA KONTO"
+    "createAccount": "LOGGA IN / SKAPA KONTO"
   },
   "login": {
     "noAccountSignUp": "Har du inget konto? Registrera dig",
@@ -143,7 +143,8 @@
     "enterYourPassword": "Ange ditt lösenord",
     "signingIn": "Loggar in",
     "signIn": "Logga in",
-    "forgotPassword": "Glömt lösenord?"
+    "forgotPassword": "Glömt lösenord?",
+    "noAccount": "Om du inte har ett konto, skapa ett här."
   },
   "post": {
     "videoOptions": "Videoalternativ",

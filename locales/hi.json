@@ -124,7 +124,7 @@
     "searchProfiles": "प्रोफाइल खोजें",
     "postVideo": "वीडियो पोस्ट करें",
     "watchVideos": "वीडियो देखें",
-    "createAccount": "खाता बनाएँ"
+    "createAccount": "लॉग इन / खाता बनाएं"
   },
   "login": {
     "noAccountSignUp": "क्या आपके पास खाता नहीं है? साइन अप करें",
@@ -143,7 +143,8 @@
     "enterYourPassword": "अपना पासवर्ड दर्ज करें",
     "signingIn": "साइन इन हो रहा है...",
     "signIn": "साइन इन करें",
-    "forgotPassword": "पासवर्ड भूल गए?"
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "noAccount": "यदि आपका कोई खाता नहीं है, तो कृपया यहां एक बनाएं।"
   },
   "post": {
     "videoOptions": "वीडियो विकल्प",
