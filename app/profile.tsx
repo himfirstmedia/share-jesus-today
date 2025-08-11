@@ -20,7 +20,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { VideoModal } from '../components/video/VideoModal';
+// import { VideoModal } from '../components/video/VideoModal';
 import { profileService } from '../services/profileService';
 import AuthManager from '../utils/authManager';
 import { t } from '../utils/i18n';

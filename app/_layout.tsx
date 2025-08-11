@@ -86,6 +86,7 @@ const InitialLayout = () => {
       'menuscreens/terms',
       'userProfile',
       'watchVideos',
+      'videoPlayer',
       'menuscreens/contactus',
       'forgotpassword',
       'otpresetpassword',

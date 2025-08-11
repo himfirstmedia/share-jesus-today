@@ -17,16 +17,17 @@ const ensureDirExists = async () => {
 
 /**
  * Generates a consistent local file path from a remote URL.
+ * @param url The remote URL.
+ * @param temp A boolean to indicate if the temporary file path is needed.
  */
-const getFilePath = (url: string) => {
+const getFilePath = (url: string, temp: boolean = false) => {
   const filename = url.split('/').pop()?.replace(/[^a-zA-Z0-9.-]/g, '_') || `video_${Date.now()}`;
-  return CACHE_DIR + filename;
+  return CACHE_DIR + filename + (temp ? '.tmp' : '');
 };
 
 class VideoCacheService {
   constructor() {
-    // Calling async code in a constructor is an anti-pattern.
-    // We will ensure the directory exists just-in-time.
+    ensureDirExists();
   }
 
   /**
@@ -41,44 +42,50 @@ class VideoCacheService {
   }
 
   /**
-   * Starts caching a video from a remote URL. This is the main function to call.
+   * Caches a video from a remote URL. It streams the video if caching fails.
    * It won't re-download if the video is already cached or if a download is in progress.
    * @param remoteUrl The remote URL of the video to cache.
-   * @returns A promise that resolves to the local file URI.
+   * @returns A promise that resolves to the local file URI or the remote URL if caching fails.
    */
-  async startCachingVideo(remoteUrl: string): Promise<string> {
-    // Ensure the cache directory exists before any operation.
-    await ensureDirExists();
-
-    const cachedUri = await this.getCachedVideoUri(remoteUrl);
-    if (cachedUri) {
-      console.log(`[Cache] Hit for: ${remoteUrl}`);
-      return cachedUri;
-    }
-
-    if (ongoingDownloads.has(remoteUrl)) {
-      console.log(`[Cache] Download already in progress for: ${remoteUrl}`);
-      return ongoingDownloads.get(remoteUrl)!;
-    }
-
-    const filePath = getFilePath(remoteUrl);
-    console.log(`[Cache] Miss, starting download: ${remoteUrl}`);
-    
-    const downloadPromise = (async () => {
-      try {
-        const { uri } = await FileSystem.downloadAsync(remoteUrl, filePath);
-        console.log(`[Cache] Download successful, stored at: ${uri}`);
-        return uri;
-      } catch (e) {
-        console.error('[Cache] Download error:', e);
-        throw new Error(`Failed to download video: ${remoteUrl}`);
-      } finally {
-        ongoingDownloads.delete(remoteUrl);
+  async getVideoUri(remoteUrl: string): Promise<string> {
+    try {
+      const cachedUri = await this.getCachedVideoUri(remoteUrl);
+      if (cachedUri) {
+        console.log(`[Cache] Hit for: ${remoteUrl}`);
+        return cachedUri;
       }
-    })();
 
-    ongoingDownloads.set(remoteUrl, downloadPromise);
-    return downloadPromise;
+      if (ongoingDownloads.has(remoteUrl)) {
+        console.log(`[Cache] Download already in progress for: ${remoteUrl}`);
+        return await ongoingDownloads.get(remoteUrl)!;
+      }
+
+      const finalFilePath = getFilePath(remoteUrl);
+      const tempFilePath = getFilePath(remoteUrl, true);
+      console.log(`[Cache] Miss, starting download: ${remoteUrl}`);
+
+      const downloadPromise = (async () => {
+        try {
+          const { uri } = await FileSystem.downloadAsync(remoteUrl, tempFilePath);
+          await FileSystem.moveAsync({ from: uri, to: finalFilePath });
+          console.log(`[Cache] Download successful, stored at: ${finalFilePath}`);
+          return finalFilePath;
+        } catch (e) {
+          console.error('[Cache] Download error:', e);
+          // If download fails, fall back to streaming the remote URL
+          return remoteUrl;
+        } finally {
+          ongoingDownloads.delete(remoteUrl);
+        }
+      })();
+
+      ongoingDownloads.set(remoteUrl, downloadPromise);
+      return await downloadPromise;
+    } catch (error) {
+      console.error('[Cache] General error in getVideoUri:', error);
+      // Fallback to remote URL in case of any unexpected error
+      return remoteUrl;
+    }
   }
 }
 
