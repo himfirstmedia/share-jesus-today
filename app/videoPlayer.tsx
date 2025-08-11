@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   video: {
     width: '100%',
-    height: '100%',
+    height: '90%',
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
-    minHeight: 100, // Ensure minimum height for content
+    minHeight: 200, // Ensure minimum height for content
   },
   videoTitle: {
     fontSize: 16,
@@ -504,16 +504,16 @@ const styles = StyleSheet.create({
     marginRight: 10, // Add some space from share button
   },
   uploaderImage: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40, // Slightly larger for better visibility
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
     backgroundColor: '#e0e0e0',
   },
   uploaderImagePlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40, // Match the image size
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#e0e0e0',
     justifyContent: 'center',
     alignItems: 'center',
