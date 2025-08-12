@@ -67,7 +67,7 @@ interface VideoModalProps {
   onFlagPress?: () => void;
 }
 
-export const VideoModal: React.FC<VideoModalProps> = ({
+export const VideoModal: React.FC<VideoModalProps> = React.memo(({
   visible,
   video,
   isLoading,
@@ -95,10 +95,31 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   // Ref for the react-native-video component
   const videoPlayerRef = React.useRef<Video>(null);
   const controlsTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const progressUpdateTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Reanimated shared values for swipe animation
   const translateX = useSharedValue(0);
   const isSwipeInProgress = useSharedValue(false);
+
+  // Optimized buffer configuration for smoother playback
+  const bufferConfig = React.useMemo(() => ({
+    minBufferMs: Platform.OS === 'ios' ? 2000 : 3000,
+    maxBufferMs: Platform.OS === 'ios' ? 120000 : 150000,
+    bufferForPlaybackMs: Platform.OS === 'ios' ? 1000 : 1500,
+    bufferForPlaybackAfterRebufferMs: Platform.OS === 'ios' ? 1000 : 2000,
+    cacheSizeMB: 200,
+    backBufferDurationMs: 120000,
+  }), []);
+
+  // Throttled progress update to reduce re-renders
+  const throttledProgressUpdate = React.useCallback((currentTime: number) => {
+    if (progressUpdateTimeoutRef.current) return;
+    
+    progressUpdateTimeoutRef.current = setTimeout(() => {
+      setCurrentTime(currentTime);
+      progressUpdateTimeoutRef.current = null;
+    }, 500); // Update every 500ms instead of every frame
+  }, []);
 
   // Handle video load success
   const handleVideoLoad = React.useCallback(
@@ -106,8 +127,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       console.log('Video loaded successfully');
       setDuration(data.duration);
       setPlayerReady(true);
-      // Defer hiding the loader slightly to prevent flicker
-      setTimeout(() => setShowLoading(false), 100);
+      setShowLoading(false);
       onVideoLoad();
     },
     [onVideoLoad]
@@ -115,27 +135,16 @@ export const VideoModal: React.FC<VideoModalProps> = ({
 
   // Handle video error
   const handleVideoError = React.useCallback(
-    async (error: any) => {
+    (error: any) => {
       console.error('Video error:', error);
       setShowLoading(false);
       setPlayerReady(false);
       onVideoError(error);
-
-      // Fallback to cached version if available
-      if (video?.url) {
-        const cachedUri = await videoCacheService.getCachedVideoUri(video.url);
-        if (cachedUri && cachedUri !== videoUri) {
-          console.log('Retrying with cached URI:', cachedUri);
-          setVideoUri(cachedUri);
-          setShowLoading(true); // Show loader for the retry
-          setIsPlaying(true);
-        }
-      }
     },
-    [onVideoError, video?.url, videoUri]
+    [onVideoError]
   );
 
-  // Auto-hide controls after 3 seconds
+  // Debounced controls timeout
   const resetControlsTimeout = React.useCallback(() => {
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
@@ -166,16 +175,16 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     }
   }, [playerReady, resetControlsTimeout]);
 
-  // Format time for display
-  const formatTime = (timeInSeconds: number): string => {
+  // Memoized time formatter
+  const formatTime = React.useCallback((timeInSeconds: number): string => {
     if (!timeInSeconds || isNaN(timeInSeconds)) return '0:00';
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
   // Share video with native Share API
-  const shareVideo = async () => {
+  const shareVideo = React.useCallback(async () => {
     if (!video) return;
     try {
       const originalUrl = video.url;
@@ -194,7 +203,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     } catch (error) {
       console.error('Error sharing video:', error);
     }
-  };
+  }, [video]);
 
   // Handle swipe to next video
   const handleSwipeToNext = React.useCallback(() => {
@@ -243,24 +252,44 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
+      if (progressUpdateTimeoutRef.current) {
+        clearTimeout(progressUpdateTimeoutRef.current);
+        progressUpdateTimeoutRef.current = null;
+      }
     }
   }, [visible, video?.id, resetControlsTimeout]);
 
+  // Optimized video URI fetching with error handling
   React.useEffect(() => {
     if (video?.url) {
-      // Prioritize streaming
-      setVideoUri(video.url);
-      
-      // Start caching in the background
-      videoCacheService.startCachingVideo(video.url).catch(err => {
-        console.warn('Background caching failed:', err);
-      });
+      let isMounted = true;
+
+      const fetchVideoUri = async () => {
+        try {
+          const uri = await videoCacheService.getVideoUriForPlayback(video.url);
+          if (isMounted) {
+            setVideoUri(uri);
+          }
+        } catch (error) {
+          console.error('Failed to get video URI for playback:', error);
+          if (isMounted) {
+            setVideoUri(video.url);
+          }
+        }
+      };
+
+      fetchVideoUri();
+
+      return () => {
+        isMounted = false;
+      };
     }
   }, [video?.url]);
 
-  // Player status monitoring
+  // Optimized playback status monitoring with reduced frequency
   React.useEffect(() => {
     if (!visible || !playerReady) return;
+    
     const interval = setInterval(() => {
       onPlaybackStatusUpdate({
         isLoaded: playerReady,
@@ -268,7 +297,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         positionMillis: currentTime * 1000,
         durationMillis: duration * 1000,
       });
-    }, 1000);
+    }, 2000); // Reduced frequency to every 2 seconds
+    
     return () => clearInterval(interval);
   }, [visible, playerReady, isPlaying, currentTime, duration, onPlaybackStatusUpdate]);
 
@@ -276,17 +306,20 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   React.useEffect(() => {
     return () => {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      if (progressUpdateTimeoutRef.current) clearTimeout(progressUpdateTimeoutRef.current);
     };
   }, []);
 
-  // Native-optimized swipe gesture
-  const panGesture = Gesture.Pan()
+  // Optimized swipe gesture with better performance
+  const panGesture = React.useMemo(() => Gesture.Pan()
     .activeOffsetX([-15, 15])
     .failOffsetY([-60, 60])
     .onStart(() => {
+      'worklet';
       isSwipeInProgress.value = true;
     })
     .onUpdate((event) => {
+      'worklet';
       const { translationX } = event;
       const resistanceFactor = Platform.OS === 'ios' ? 0.15 : 0.2;
       const canSwipeLeft = onNextVideo && videoList && currentVideoIndex < videoList.length - 1;
@@ -299,6 +332,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       }
     })
     .onEnd((event) => {
+      'worklet';
       const { translationX, velocityX } = event;
       const swipeThreshold = screenWidth * (Platform.OS === 'ios' ? 0.15 : 0.2);
       const velocityThreshold = Platform.OS === 'ios' ? 500 : 600;
@@ -339,27 +373,35 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         bounceBack();
       }
       isSwipeInProgress.value = false;
-    });
+    }), [onNextVideo, onPreviousVideo, videoList, currentVideoIndex, handleSwipeToNext, handleSwipeToPrevious]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
-  }));
+  }), []);
 
-  if (!visible || !video) {
-    return null;
-  }
+  // Memoized derived values to prevent unnecessary re-renders
+  const { currentUserId, currentProfileImageUrl, canSwipeLeft, canSwipeRight } = React.useMemo(() => ({
+    currentUserId: userId || video?.uploader?.id,
+    currentProfileImageUrl: profileImageUrl || video?.uploader?.profilePicture,
+    canSwipeLeft: onNextVideo && videoList && currentVideoIndex < videoList.length - 1,
+    canSwipeRight: onPreviousVideo && currentVideoIndex > 0,
+  }), [userId, video?.uploader, profileImageUrl, onNextVideo, videoList, currentVideoIndex, onPreviousVideo]);
 
-  const currentUserId = userId || video.uploader?.id;
-  const currentProfileImageUrl = profileImageUrl || video.uploader?.profilePicture;
-  const canSwipeLeft = onNextVideo && videoList && currentVideoIndex < videoList.length - 1;
-  const canSwipeRight = onPreviousVideo && currentVideoIndex > 0;
-
-  const handleProfilePress = () => {
+  const handleProfilePress = React.useCallback(() => {
     if (currentUserId) {
       onClose();
       router.push(`/userProfile?userId=${currentUserId}`);
     }
-  };
+  }, [currentUserId, onClose, router]);
+
+  // Memoized progress bar width calculation
+  const progressWidth = React.useMemo(() => 
+    duration > 0 ? `${(currentTime / duration) * 100}%` : '0%'
+  , [currentTime, duration]);
+
+  if (!visible || !video) {
+    return null;
+  }
 
   return (
     <Modal
@@ -384,10 +426,11 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     controls={false}
                     resizeMode="contain"
                     repeat={false}
+                    bufferConfig={bufferConfig}
                     onLoadStart={() => setShowLoading(true)}
                     onLoad={handleVideoLoad}
                     onError={handleVideoError}
-                    onProgress={(data: OnProgressData) => setCurrentTime(data.currentTime)}
+                    onProgress={(data: OnProgressData) => throttledProgressUpdate(data.currentTime)}
                     onReadyForDisplay={() => {
                       setShowLoading(false);
                       setPlayerReady(true);
@@ -395,12 +438,16 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                     onEnd={() => setIsPlaying(false)}
                     playInBackground={false}
                     playWhenInactive={false}
+                    progressUpdateInterval={1000} // Reduce progress update frequency
+                    reportBandwidth={false} // Disable bandwidth reporting for better performance
+                    poster={video.thumbnailUrl} // Add poster for better loading experience
+                    posterResizeMode="cover"
                   />
                 )}
 
                 {showLoading && (
                   <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#fff" animating />
+                    <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>{t('videoModal.loadingVideo')}</Text>
                   </View>
                 )}
@@ -453,10 +500,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                           <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
                           <View style={styles.progressBar}>
                             <View
-                              style={[
-                                styles.progressFill,
-                                { width: `${(currentTime / duration) * 100}%` },
-                              ]}
+                              style={[styles.progressFill, { width: progressWidth }]}
                             />
                           </View>
                           <Text style={styles.timeText}>{formatTime(duration)}</Text>
@@ -476,7 +520,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               </View>
 
               <View style={styles.infoSection}>
-                <Text style={styles.videoTitle}>{video.title}</Text>
+                <Text style={styles.videoTitle} numberOfLines={2} ellipsizeMode="tail">
+                  {video.title}
+                </Text>
                 <View style={styles.uploaderInfo}>
                   <TouchableOpacity
                     style={styles.uploaderContainer}
@@ -494,7 +540,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                         <Ionicons name="person" size={20} color="#666" />
                       </View>
                     )}
-                    <Text style={styles.uploaderName}>
+                    <Text style={styles.uploaderName} numberOfLines={1} ellipsizeMode="tail">
                       {video.uploader.firstName} {video.uploader.lastName}
                     </Text>
                   </TouchableOpacity>
@@ -513,7 +559,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       </GestureHandlerRootView>
     </Modal>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -560,12 +606,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   controlsOverlay: {
-    display:'none',
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     zIndex: 5,
-    
   },
   topControls: {
     flexDirection: 'row',

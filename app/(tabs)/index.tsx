@@ -28,6 +28,7 @@ import apiService, { type ApiResponse, type Video } from '@/services/apiService'
 import { t } from '@/utils/i18n';
 import { homeStyles } from '../../styles/HomeStyles';
 
+import AppIntroScreen from '../AppIntro';
 import AuthManager from '../../utils/authManager';
 import VideoCardSkeleton from '../../components/videoCardSkeleton';
 
@@ -211,6 +212,11 @@ export default function HomeTabScreen() {
   // Block Menu State
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [selectedVideoForBlocking, setSelectedVideoForBlocking] = useState<Video | null>(null);
+  const [showIntro, setShowIntro] = useState(true);
+
+  const handleIntroFinish = () => {
+    setShowIntro(false);
+  };
 
   const VIDEO_LOAD_COUNT = 6;
 
@@ -620,6 +626,10 @@ export default function HomeTabScreen() {
           onUserBlocked={handleUserBlocked}
         />
       )}
+
+      <Modal visible={showIntro} transparent={true} animationType="slide" onRequestClose={handleIntroFinish}>
+        <AppIntroScreen onIntroFinish={handleIntroFinish} />
+      </Modal>
     </SafeAreaView>
   );
 }

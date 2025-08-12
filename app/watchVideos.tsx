@@ -230,15 +230,7 @@ const WatchVideosScreen = () => {
     );
   };
 
-  const preCacheVideos = (videos: VideoModel[]) => {
-    videos.forEach(video => {
-      if (video.url) {
-        videoCacheService.startCachingVideo(video.url).catch(e => {
-          console.error(`Failed to cache video ${video.url}:`, e);
-        });
-      }
-    });
-  };
+
 
   const loadInitialVideos = async () => {
     if (isLoading) return;
@@ -255,7 +247,7 @@ const WatchVideosScreen = () => {
         setTotalPages(response.data.totalPages);
         setCurrentPage(response.data.number !== undefined ? response.data.number : 0);
         console.log(`Initial load: Fetched ${fetchedVideos.length}, Displaying ${nonBlockedVideos.length} (after filtering).`);
-        preCacheVideos(nonBlockedVideos);
+
       } else {
         console.error('Failed to load initial videos:', response.error);
         Alert.alert('Error', 'Failed to load videos. Please try again.');

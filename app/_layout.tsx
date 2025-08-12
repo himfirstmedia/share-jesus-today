@@ -11,49 +11,30 @@ import AppIntroScreen from './AppIntro';
 const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
-  const [isReady, setIsReady] = useState(false);
+  const [isAppReady, setAppReady] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [introFinished, setIntroFinished] = useState(false);
-  const [introChecked, setIntroChecked] = useState(false);
 
   useEffect(() => {
-    const checkIntroStatus = async () => {
+    const prepareApp = async () => {
       try {
-        const value = await AsyncStorage.getItem('introFinished');
-        if (value !== null) {
-          setIntroFinished(true);
+        const introFinished = await AsyncStorage.getItem('introFinished');
+        
+        await AuthManager.initialize();
+        const authStatus = AuthManager.isAuthenticated();
+        setIsAuthenticated(authStatus);
+
+        if (introFinished === null) {
+          setShowIntro(true);
+        } else {
+          setAppReady(true);
         }
       } catch (e) {
-        console.error('Failed to load intro status.', e);
-      } finally {
-        setIntroChecked(true);
+        console.error('Failed to initialize the app', e);
+        setAppReady(true); // Continue without intro on error
       }
     };
 
-    checkIntroStatus();
-  }, []);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      console.log('AuthGuard: checkAuth - Initializing AuthManager...');
-      await AuthManager.initialize();
-      const authStatus = AuthManager.isAuthenticated();
-      setIsAuthenticated(authStatus);
-      setIsReady(true);
-      console.log('AuthGuard: checkAuth - AuthManager initialized. isAuthenticated:', authStatus, 'isReady:', true);
-    };
-
-    checkAuth();
-
-    const unsubscribe = AuthManager.subscribe((token) => {
-      console.log('AuthGuard: AuthManager subscription update. Token present:', !!token);
-      setIsAuthenticated(!!token);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const preCachePublicVideos = async () => {
       try {
         console.log('[AppLoadCache] Fetching public videos for pre-caching...');
@@ -76,17 +57,18 @@ const InitialLayout = () => {
       }
     };
 
+    prepareApp();
     preCachePublicVideos();
+
+    const unsubscribe = AuthManager.subscribe((token) => {
+      setIsAuthenticated(!!token);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!introFinished) {
-        return;
-    }
-    console.log('AuthGuard: Routing useEffect triggered. isReady:', isReady, 'isAuthenticated:', isAuthenticated, 'segments:', segments);
-
-    if (!isReady || isAuthenticated === null) {
-      console.log('AuthGuard: Waiting for isReady or isAuthenticated to be set.');
+    if (!isAppReady) {
       return;
     }
 
@@ -115,7 +97,6 @@ const InitialLayout = () => {
       'otpresetpassword',
       'resetPassword',
       '(tabs)/AuthLanding',
-    
     ];
 
     const isPublicRoute = publicRoutes.includes(path);
@@ -128,18 +109,19 @@ const InitialLayout = () => {
       console.log('AuthGuard: Authenticated and on an auth page. Redirecting to /(tabs).');
       router.replace('/(tabs)');
     }
-  }, [isReady, isAuthenticated, segments, router, introFinished]);
+  }, [isAppReady, isAuthenticated, segments, router]);
 
   const handleIntroFinish = async () => {
     try {
       await AsyncStorage.setItem('introFinished', 'true');
-      setIntroFinished(true);
+      setShowIntro(false);
+      setAppReady(true);
     } catch (e) {
       console.error('Failed to save intro status.', e);
     }
   };
 
-  if (!introChecked) {
+  if (!isAppReady && !showIntro) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -147,16 +129,8 @@ const InitialLayout = () => {
     );
   }
 
-  if (!introFinished) {
+  if (showIntro) {
     return <AppIntroScreen onIntroFinish={handleIntroFinish} />;
-  }
-
-  if (!isReady) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
   }
 
   return <Slot />;

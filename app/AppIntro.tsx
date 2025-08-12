@@ -1,7 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Asset } from 'expo-asset';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const videoAsset = Asset.fromModule(require('../assets/video/sharejesustoday.mp4'));
 
@@ -48,15 +49,15 @@ export default function AppIntroScreen({ onIntroFinish }: { onIntroFinish: () =>
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.closeButton} onPress={handleSkip}>
+        <Ionicons name="close" size={30} color="white" />
+      </TouchableOpacity>
       <VideoView
         player={player}
         style={styles.video}
         contentFit="contain"
         allowsFullscreen={false}
       />
-      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-        <Text style={styles.skipButtonText}>Skip Intro</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -66,22 +67,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    height:'60%'
   },
   video: {
     width: '80%',
-    height: '80%',
+    height: '60%',
   },
-  skipButton: {
+  closeButton: {
     position: 'absolute',
-    bottom: 50,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#3260ad',
-    borderRadius: 5,
-  },
-  skipButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    top: 100,
+    right: 20,
+    zIndex: 1,
   },
 });
