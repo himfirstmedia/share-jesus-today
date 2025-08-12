@@ -1,4 +1,4 @@
-// VideoUploadInterface.tsx - Complete Implementation with Better Progress (Translated)
+// VideoUploadInterface.tsx - Corrected Implementation (Translated)
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
@@ -44,7 +44,6 @@ const initializeVideoFilesDirectory = async () => {
 };
 
 const normalizeUri = (uri: string): string => {
-  // Ensure consistent file:// protocol for Expo FileSystem
   return uri.startsWith('file://') ? uri : `file://${uri}`;
 };
 
@@ -151,7 +150,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   const getUploadStateText = () => {
     switch (uploadState) {
       case UploadState.COMPRESSING: 
-        return uploadPhase || t('videoUploadInterface.compressingVideo');
+        return t('videoUploadInterface.compressingVideo');
       case UploadState.UPLOADING: 
         return uploadPhase || t('videoUploadInterface.uploadingVideo');
       case UploadState.PROCESSING: 
@@ -170,65 +169,32 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const handleSelectVideo = async () => {
     try {
-      // Request media library permissions
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
       if (permissionResult.granted === false) {
-        Alert.alert(
-          t('videoUploadInterface.alertError'), 
-          t('cameraScreen.mediaLibraryPermissionMessage')
-        );
+        Alert.alert(t('videoUploadInterface.alertError'), t('cameraScreen.mediaLibraryPermissionMessage'));
         return;
       }
 
-      console.log('Launching image library picker...');
-
-      // Launch the image library with video-only option
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Videos,
         allowsEditing: false,
         quality: 1,
-        videoMaxDuration: 300, // Optional: limit video duration in seconds
+        videoMaxDuration: 300,
       });
-
-      console.log('ImagePicker result:', JSON.stringify(result, null, 2));
 
       if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
-        console.log('Selected asset:', JSON.stringify(asset, null, 2));
-        
         if (!asset.uri) throw new Error('No URI in selected video');
 
         const persistentUri = await ensureVideoIsPersistent(asset.uri);
-        console.log('Video made persistent:', persistentUri);
-
-        // Get file info to determine proper MIME type and name
-        const fileInfo = await FileSystem.getInfoAsync(persistentUri);
-        console.log('File info:', fileInfo);
-        
-        // Create a proper filename if one doesn't exist
         const fileName = asset.fileName || `video_${Date.now()}.mp4`;
         
-        // Determine MIME type based on file extension or use default
         let mimeType = 'video/mp4';
-        
         if (asset.type && asset.type.includes('/')) {
           mimeType = asset.type;
-        } else if (asset.type === 'video') {
-          if (fileName.toLowerCase().endsWith('.mov')) {
-            mimeType = 'video/quicktime';
-          } else if (fileName.toLowerCase().endsWith('.avi')) {
-            mimeType = 'video/x-msvideo';
-          } else {
-            mimeType = 'video/mp4';
-          }
         } else if (fileName.toLowerCase().endsWith('.mov')) {
           mimeType = 'video/quicktime';
-        } else if (fileName.toLowerCase().endsWith('.avi')) {
-          mimeType = 'video/x-msvideo';
         }
-        
-        console.log('Determined MIME type:', mimeType, 'from asset.type:', asset.type);
 
         const videoFile: VideoFile = {
           uri: persistentUri,
@@ -236,8 +202,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           type: mimeType,
           mimeType: mimeType,
         };
-
-        console.log('Created video file object:', videoFile);
 
         setHasBeenTrimmed(false);
         setOriginalDuration(0);
@@ -251,26 +215,18 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       }
     } catch (error) {
       console.error('Error in handleSelectVideo:', error);
-      Alert.alert(
-        t('videoUploadInterface.alertError'), 
-        t('videoUploadInterface.alertFailedSelectVideo')
-      );
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertFailedSelectVideo'));
     }
   };
 
   const handleTrimSave = async (startTime: number, endTime: number, persistentUri: string) => {
     if (!persistentUri) {
-      Alert.alert(
-        t('videoUploadInterface.alertError'), 
-        t('alerts.trimmingErrorMessageGeneric')
-      );
+      Alert.alert(t('videoUploadInterface.alertError'), t('alerts.trimmingErrorMessageGeneric'));
       setShowTrimmer(false);
       return;
     }
     
     try {
-      console.log('Trim save completed and file made persistent:', { persistentUri });
-
       if (selectedVideo) {
         const updatedVideo: VideoFile = {
           ...selectedVideo,
@@ -299,24 +255,15 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const handleSave = async () => {
     if (!videoTitle.trim()) {
-      Alert.alert(
-        t('videoUploadInterface.alertError'), 
-        t('videoUploadInterface.alertEnterTitle')
-      );
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertEnterTitle'));
       return;
     }
     if (!selectedVideo || !selectedVideo.uri) {
-      Alert.alert(
-        t('videoUploadInterface.alertError'), 
-        t('videoUploadInterface.alertSelectVideoUri')
-      );
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.alertSelectVideoUri'));
       return;
     }
     if (needsTrimming) {
-      Alert.alert(
-        t('videoUploadInterface.alertError'), 
-        t('videoUploadInterface.videoTooLongError')
-      );
+      Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.videoTooLongError'));
       return;
     }
 
@@ -326,53 +273,34 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     animateProgress(0);
     
     try {
-      console.log('Starting complete upload process with video:', selectedVideo);
-
-      // Phase 1: Compression (0% - 50%)
       setUploadState(UploadState.COMPRESSING);
       setUploadPhase(t('cameraScreen.preparingVideo'));
       
-      // Add file existence check before compression
       const videoExists = await FileSystem.getInfoAsync(selectedVideo.uri);
-      console.log('Video file exists before compression:', videoExists);
-      
-      if (!videoExists.exists) {
-        throw new Error('Video file not found before compression');
-      }
+      if (!videoExists.exists) throw new Error('Video file not found before compression');
       
       setUploadPhase(t('videoUploadInterface.compressingVideo'));
       
       const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
-          // Map compression progress to 0-50% of total progress
           const progressPercentage = Math.round(progress * 50);
           setUploadProgress(progressPercentage);
           animateProgress(progressPercentage);
-          
           if (progress > 0.1) {
             setUploadPhase(`${t('videoUploadInterface.compressingVideo')} ${Math.round(progress * 100)}%`);
           }
         },
       });
       
-      console.log('Video compressed successfully:', compressedUri);
-      
-      // Verify compressed file exists
       const compressedExists = await FileSystem.getInfoAsync(compressedUri);
-      if (!compressedExists.exists) {
-        throw new Error('Compressed video file not found after compression');
-      }
+      if (!compressedExists.exists) throw new Error('Compressed video file not found after compression');
       
-      // Ensure we're at 50% after compression
       setUploadProgress(50);
       animateProgress(50);
       setUploadPhase(t('videoUploadInterface.uploadComplete'));
-      
-      // Small delay to show completion
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Phase 2: Upload (50% - 90%) + Processing (90% - 100%)
       const metadata = {
         name: selectedVideo.name,
         title: videoTitle.trim(),
@@ -381,7 +309,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         wasTrimmed: hasBeenTrimmed,
       };
 
-      // Create the video object for upload
       const videoToUpload = {
         uri: compressedUri,
         name: selectedVideo.name,
@@ -389,31 +316,20 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         mimeType: selectedVideo.mimeType || selectedVideo.type,
       };
 
-      console.log('Starting upload with comprehensive tracking:', { videoToUpload, metadata });
-      
-      // Upload with comprehensive progress tracking using Expo FileSystem
       const response = await videoApiService.uploadVideo(videoToUpload, metadata, {
         onUploadProgress: (progressEvent) => {
-          // Map upload progress to 50-90% of total progress (40% range)
           const uploadProgressPercent = (progressEvent.progress / 100) * 40;
           const totalProgress = 50 + uploadProgressPercent;
-          
-          console.log(`Upload progress: ${progressEvent.progress}% -> Total: ${Math.round(totalProgress)}%`);
           setUploadProgress(Math.round(totalProgress));
           animateProgress(Math.round(totalProgress));
-          
-          // Update phase text with actual progress
           if (progressEvent.progress > 0) {
             setUploadPhase(`${t('videoUploadInterface.uploadingVideo')} ${Math.round(progressEvent.progress)}%`);
           }
         },
         onStateChange: (state) => {
-          console.log('Upload state changed:', state);
-          
           switch (state) {
             case 'preparing':
               setUploadPhase(t('cameraScreen.preparingVideo'));
-              // Already at 50% from compression
               break;
             case 'uploading':
               setUploadState(UploadState.UPLOADING);
@@ -422,8 +338,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
             case 'processing':
               setUploadState(UploadState.PROCESSING);
               setUploadPhase(t('videoUploadInterface.processingVideo'));
-              
-              // Gradual processing progress from 90% to 98%
               let processingProgress = 90;
               const processingInterval = setInterval(() => {
                 processingProgress += 1;
@@ -444,71 +358,50 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
               break;
           }
         },
-        timeout: 300000, // 5 minutes timeout
+        timeout: 300000,
       });
 
-      console.log('Upload response received:', response);
-
       if (response.success) {
-        // Show completion state briefly before showing success dialog
         setTimeout(() => {
           setIsLoading(false);
           Alert.alert(
             t('videoUploadInterface.alertSuccess'), 
             t('videoUploadInterface.alertVideoUploaded'), 
-            [
-              { 
-                text: t('languageScreen.okButton'), 
-                onPress: () => onComplete(response.data) 
-              }
-            ]
+            [{ text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }]
           );
-        }, 1000); // Give user time to see 100% completion
+        }, 1000);
       } else {
         throw new Error(response.error || t('alerts.unexpectedError'));
       }
-      
     } catch (error: any) {
       console.error('VideoUpload - Complete upload process error:', error);
-      
-      // Reset all states on error
       setIsLoading(false);
       setUploadState(UploadState.IDLE);
       setUploadProgress(0);
       setUploadPhase('');
       animateProgress(0);
-      
-      // Show error alert with specific message
       let errorMessage = t('alerts.unexpectedError');
       if (error.message) {
-        if (error.message.includes('Authentication')) {
-          errorMessage = t('alerts.authRequired');
-        } else if (error.message.includes('timeout')) {
-          errorMessage = t('alerts.trimmingErrorMessageTimeout');
-        } else if (error.message.includes('Network') || error.message.includes('network')) {
-          errorMessage = t('forgotPassword.alertNetworkError');
-        } else if (error.message.includes('cancel')) {
-          errorMessage = t('alerts.cancel');
-        } else {
-          errorMessage = error.message;
-        }
+        if (error.message.includes('Authentication')) errorMessage = t('alerts.authRequired');
+        else if (error.message.includes('timeout')) errorMessage = t('alerts.trimmingErrorMessageTimeout');
+        else if (error.message.includes('Network') || error.message.includes('network')) errorMessage = t('forgotPassword.alertNetworkError');
+        else if (error.message.includes('cancel')) errorMessage = t('alerts.cancel');
+        else errorMessage = error.message;
       }
-      
-      Alert.alert(
-        t('videoUploadInterface.alertError'), 
-        errorMessage
-      );
+      Alert.alert(t('videoUploadInterface.alertError'), errorMessage);
     }
   };
 
   const renderUploadProgress = () => {
     if (!isLoading) return null;
     
+    // Use the more specific 'uploadPhase' if available, otherwise fallback to the general state text.
+    const progressMessage = uploadPhase || getUploadStateText();
+
     return (
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
-          <Text style={styles.progressText}>{getUploadStateText()}</Text>
-          <Text style={styles.progressPercentage}>{Math.round(uploadProgress)}%</Text>
+          <Text style={styles.progressText}>{progressMessage}</Text>
         </View>
         <View style={styles.progressBarContainer}>
           <Animated.View
@@ -608,13 +501,14 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
                   {t('videoUploadInterface.duration', { 
                     duration: videoDuration.toFixed(1)
                   })}
-                  {hasBeenTrimmed ? ` (${t('profile.readLess')})` : ''}
+                  {hasBeenTrimmed ? ` (${t('videoUploadInterface.duration')})` : ''}
                 </Text>
               )
             )}
           </View>
 
-          {!showTrimmer && (
+          {/* Conditional rendering block */}
+          {!showTrimmer &&  !needsTrimming &&(
             <>
               <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>{t('videoUploadInterface.titleLabel')}</Text>
@@ -805,13 +699,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   progressHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
     alignItems: 'center', 
     marginBottom: 10 
   },
-  progressText: { fontSize: 14, fontWeight: '500', color: '#333' },
-  progressPercentage: { fontSize: 14, fontWeight: '600', color: '#3260ad' },
+  progressText: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    color: '#333', 
+    textAlign: 'center' 
+  },
   progressBarContainer: { 
     height: 8, 
     backgroundColor: '#e9ecef', 
@@ -820,3 +716,5 @@ const styles = StyleSheet.create({
   },
   progressBar: { height: '100%', backgroundColor: '#3260ad', borderRadius: 4 },
 });
+
+export default VideoUploadInterface;

@@ -1,37 +1,27 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import videoApiService from '../services/videoApiService';
 import videoCacheService from '../services/videoCacheService';
 import AuthManager from '../utils/authManager';
-import AppIntroScreen from './AppIntro';
 
 const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
   const [isAppReady, setAppReady] = useState(false);
-  const [showIntro, setShowIntro] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     const prepareApp = async () => {
       try {
-        const introFinished = await AsyncStorage.getItem('introFinished');
-        
         await AuthManager.initialize();
         const authStatus = AuthManager.isAuthenticated();
         setIsAuthenticated(authStatus);
-
-        if (introFinished === null) {
-          setShowIntro(true);
-        } else {
-          setAppReady(true);
-        }
+        setAppReady(true);
       } catch (e) {
         console.error('Failed to initialize the app', e);
-        setAppReady(true); // Continue without intro on error
+        setAppReady(true); // Continue on error
       }
     };
 
@@ -111,26 +101,12 @@ const InitialLayout = () => {
     }
   }, [isAppReady, isAuthenticated, segments, router]);
 
-  const handleIntroFinish = async () => {
-    try {
-      await AsyncStorage.setItem('introFinished', 'true');
-      setShowIntro(false);
-      setAppReady(true);
-    } catch (e) {
-      console.error('Failed to save intro status.', e);
-    }
-  };
-
-  if (!isAppReady && !showIntro) {
+  if (!isAppReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
       </View>
     );
-  }
-
-  if (showIntro) {
-    return <AppIntroScreen onIntroFinish={handleIntroFinish} />;
   }
 
   return <Slot />;
