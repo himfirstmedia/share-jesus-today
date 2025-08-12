@@ -1,6 +1,7 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import videoApiService from '../services/videoApiService';
 import videoCacheService from '../services/videoCacheService';
@@ -13,6 +14,24 @@ const InitialLayout = () => {
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [introFinished, setIntroFinished] = useState(false);
+  const [introChecked, setIntroChecked] = useState(false);
+
+  useEffect(() => {
+    const checkIntroStatus = async () => {
+      try {
+        const value = await AsyncStorage.getItem('introFinished');
+        if (value !== null) {
+          setIntroFinished(true);
+        }
+      } catch (e) {
+        console.error('Failed to load intro status.', e);
+      } finally {
+        setIntroChecked(true);
+      }
+    };
+
+    checkIntroStatus();
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -111,8 +130,25 @@ const InitialLayout = () => {
     }
   }, [isReady, isAuthenticated, segments, router, introFinished]);
 
+  const handleIntroFinish = async () => {
+    try {
+      await AsyncStorage.setItem('introFinished', 'true');
+      setIntroFinished(true);
+    } catch (e) {
+      console.error('Failed to save intro status.', e);
+    }
+  };
+
+  if (!introChecked) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   if (!introFinished) {
-    return <AppIntroScreen onIntroFinish={() => setIntroFinished(true)} />;
+    return <AppIntroScreen onIntroFinish={handleIntroFinish} />;
   }
 
   if (!isReady) {
