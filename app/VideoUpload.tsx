@@ -501,44 +501,13 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     }
   };
 
-  // Cancel upload function
-  const handleCancelUpload = () => {
-    Alert.alert(
-      t('videoActions.cancel'),
-      t('videoActions.cancel'), // Need to add proper cancel upload confirmation text
-      [
-        {
-          text: t('videoUploadInterface.uploadButton'),
-          style: 'cancel',
-        },
-        {
-          text: t('alerts.cancel'),
-          style: 'destructive',
-          onPress: () => {
-            videoApiService.cancelUpload();
-            setIsLoading(false);
-            setUploadState(UploadState.IDLE);
-            setUploadProgress(0);
-            setUploadPhase('');
-            animateProgress(0);
-          },
-        },
-      ]
-    );
-  };
-
   const renderUploadProgress = () => {
     if (!isLoading) return null;
     
     return (
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
-          <View style={styles.progressTextContainer}>
-            <Text style={styles.progressText}>{getUploadStateText()}</Text>
-            {uploadPhase && (
-              <Text style={styles.progressPhase}>{uploadPhase}</Text>
-            )}
-          </View>
+          <Text style={styles.progressText}>{getUploadStateText()}</Text>
           <Text style={styles.progressPercentage}>{Math.round(uploadProgress)}%</Text>
         </View>
         <View style={styles.progressBarContainer}>
@@ -554,26 +523,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
               },
             ]}
           />
-        </View>
-        
-        {/* Show cancel button during upload */}
-        {(uploadState === UploadState.UPLOADING || uploadState === UploadState.PROCESSING) && (
-          <TouchableOpacity 
-            style={styles.cancelUploadButton} 
-            onPress={handleCancelUpload}
-          >
-            <Text style={styles.cancelUploadText}>{t('alerts.cancel')}</Text>
-          </TouchableOpacity>
-        )}
-        
-        {/* Show upload details */}
-        <View style={styles.uploadDetails}>
-          <Text style={styles.uploadDetailText}>
-            {uploadState === UploadState.COMPRESSING && t('videoUploadInterface.compressingVideo')}
-            {uploadState === UploadState.UPLOADING && t('videoUploadInterface.uploadingVideo')}
-            {uploadState === UploadState.PROCESSING && t('videoUploadInterface.processingVideo')}
-            {uploadState === UploadState.COMPLETE && t('videoUploadInterface.uploadComplete')}
-          </Text>
         </View>
       </View>
     );
@@ -707,7 +656,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       {showTrimmer && selectedVideo && (
         <VideoTrimmer 
           videoUri={selectedVideo.uri} 
-          maxDuration={MAX_VIDEO_DURATION} 
+          maxDuration={30} 
           onCancel={handleTrimCancel} 
           onSave={handleTrimSave} 
           onTrimComplete={handleTrimComplete}
@@ -861,14 +810,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginBottom: 10 
   },
-  progressTextContainer: { flex: 1, paddingRight: 10 },
   progressText: { fontSize: 14, fontWeight: '500', color: '#333' },
-  progressPhase: { 
-    fontSize: 12, 
-    color: '#666', 
-    marginTop: 2,
-    fontStyle: 'italic' 
-  },
   progressPercentage: { fontSize: 14, fontWeight: '600', color: '#3260ad' },
   progressBarContainer: { 
     height: 8, 
@@ -877,31 +819,4 @@ const styles = StyleSheet.create({
     overflow: 'hidden' 
   },
   progressBar: { height: '100%', backgroundColor: '#3260ad', borderRadius: 4 },
-  cancelUploadButton: {
-    backgroundColor: '#dc3545',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignSelf: 'center',
-    marginTop: 10,
-  },
-  cancelUploadText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  uploadDetails: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  uploadDetailText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
 });
-
-export default VideoUploadInterface;

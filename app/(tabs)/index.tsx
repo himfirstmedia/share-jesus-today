@@ -19,8 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   EmptyState,
   HeaderSection,
-  HeroSection,
-  LoadingState
+  HeroSection
 } from '@/components/HomeComponents';
 import { VideoCard } from '@/components/video/VideoCard';
 import { VideoModal } from '@/components/video/VideoModal';
@@ -28,9 +27,9 @@ import apiService, { type ApiResponse, type Video } from '@/services/apiService'
 import { t } from '@/utils/i18n';
 import { homeStyles } from '../../styles/HomeStyles';
 
-import AppIntroScreen from '../AppIntro';
-import AuthManager from '../../utils/authManager';
 import VideoCardSkeleton from '../../components/videoCardSkeleton';
+import AuthManager from '../../utils/authManager';
+import AppIntroScreen from '../AppIntro';
 
 // Blocked Content Management
 const BLOCKED_USER_IDS_KEY = 'blockedUserIds';
@@ -212,10 +211,35 @@ export default function HomeTabScreen() {
   // Block Menu State
   const [showBlockMenu, setShowBlockMenu] = useState(false);
   const [selectedVideoForBlocking, setSelectedVideoForBlocking] = useState<Video | null>(null);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(false);
 
-  const handleIntroFinish = () => {
-    setShowIntro(false);
+  useEffect(() => {
+    const checkIntroStatus = async () => {
+      try {
+        const hasSeenIntro = await AsyncStorage.getItem('has_seen_intro');
+        if (hasSeenIntro === null) {
+          setShowIntro(true);
+        }
+      } catch (error) {
+        console.error('Failed to access AsyncStorage for intro status:', error);
+        // Decide on fallback behavior: show intro or not?
+        // Let's default to showing it if we can't check.
+        setShowIntro(true);
+      }
+    };
+
+    checkIntroStatus();
+  }, []);
+
+  const handleIntroFinish = async () => {
+    try {
+      await AsyncStorage.setItem('has_seen_intro', 'true');
+      setShowIntro(false);
+    } catch (error) {
+      console.error('Failed to save intro status to AsyncStorage:', error);
+      // Still hide the intro for the current session even if saving fails
+      setShowIntro(false);
+    }
   };
 
   const VIDEO_LOAD_COUNT = 6;
