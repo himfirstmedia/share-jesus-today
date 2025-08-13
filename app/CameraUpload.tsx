@@ -303,51 +303,28 @@ const CameraUpload: React.FC = () => {
 
   const renderUploadProgress = () => {
     if (!isLoading) return null;
+    
+    // Use the more specific 'uploadPhase' if available, otherwise fallback to the general state text.
+    const progressMessage = uploadPhase || getUploadStateText();
 
     return (
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
-          <View style={styles.progressTextContainer}>
-            <Text style={styles.progressText}>{getUploadStateText()}</Text>
-            {uploadPhase && (
-              <Text style={styles.progressPhase}>{uploadPhase}</Text>
-            )}
-          </View>
-          <Text style={styles.progressPercentage}>{Math.round(uploadProgress)}%</Text>
+          <Text style={styles.progressText}>{progressMessage}</Text>
         </View>
         <View style={styles.progressBarContainer}>
           <Animated.View
             style={[
               styles.progressBar,
-              {
-                width: progressAnimation.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ['0%', '100%'],
-                  extrapolate: 'clamp',
-                }),
+              { 
+                width: progressAnimation.interpolate({ 
+                  inputRange: [0, 100], 
+                  outputRange: ['0%', '100%'], 
+                  extrapolate: 'clamp' 
+                }) 
               },
             ]}
           />
-        </View>
-        
-        {/* Show cancel button during upload */}
-        {(uploadState === UploadState.UPLOADING || uploadState === UploadState.PROCESSING) && (
-          <TouchableOpacity 
-            style={styles.cancelUploadButton} 
-            onPress={handleCancelUpload}
-          >
-            <Text style={styles.cancelUploadText}>{t('alerts.cancel')}</Text>
-          </TouchableOpacity>
-        )}
-        
-        {/* Show upload details */}
-        <View style={styles.uploadDetails}>
-          <Text style={styles.uploadDetailText}>
-            {uploadState === UploadState.COMPRESSING && t('videoUploadInterface.compressingVideo')}
-            {uploadState === UploadState.UPLOADING && t('videoUploadInterface.uploadingVideo')}
-            {uploadState === UploadState.PROCESSING && t('videoUploadInterface.processingVideo')}
-            {uploadState === UploadState.COMPLETE && t('videoUploadInterface.uploadComplete')}
-          </Text>
         </View>
       </View>
     );
@@ -544,13 +521,13 @@ const styles = StyleSheet.create({
   recordButtonText: { color: '#3260ad', fontSize: 16, fontWeight: '600', marginLeft: 10 },
   buttonIcon: { marginRight: 5 },
   disabledButton: { backgroundColor: '#bdc3c7' },
-  progressContainer: {
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 12,
-    padding: 15,
-    borderWidth: 1,
+  progressContainer: { 
+    backgroundColor: 'white', 
+    marginHorizontal: 20, 
+    marginTop: 20, 
+    borderRadius: 12, 
+    padding: 15, 
+    borderWidth: 1, 
     borderColor: '#e0e0e0',
     elevation: 2,
     shadowColor: '#000',
@@ -558,65 +535,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10
+  progressHeader: { 
+    alignItems: 'center', 
+    marginBottom: 10 
   },
-  progressTextContainer: { flex: 1, paddingRight: 10 },
-  progressText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333'
+  progressText: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    color: '#333', 
+    textAlign: 'center' 
   },
-  progressPhase: { 
-    fontSize: 12, 
-    color: '#666', 
-    marginTop: 2,
-    fontStyle: 'italic' 
+  progressBarContainer: { 
+    height: 8, 
+    backgroundColor: '#e9ecef', 
+    borderRadius: 4, 
+    overflow: 'hidden' 
   },
-  progressPercentage: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#3260ad'
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: '#e9ecef',
-    borderRadius: 4,
-    overflow: 'hidden'
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#3260ad',
-    borderRadius: 4
-  },
-  cancelUploadButton: {
-    backgroundColor: '#dc3545',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignSelf: 'center',
-    marginTop: 10,
-  },
-  cancelUploadText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  uploadDetails: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  uploadDetailText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+  progressBar: { height: '100%', backgroundColor: '#3260ad', borderRadius: 4 },
 });
 
 export default CameraUpload;

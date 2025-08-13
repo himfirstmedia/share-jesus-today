@@ -26,7 +26,7 @@
       },
       "edgeToEdgeEnabled": false,
       "package": "com.himfirstapps.sharejesustoday",
-      "versionCode": 175,
+      "versionCode": 176,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",

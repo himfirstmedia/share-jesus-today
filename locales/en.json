@@ -228,7 +228,8 @@
     "process": "Process",
     "videoUploaded": "Video successfully uploaded.",
     "videoTooLongError": "Video is too long.",
-    "videoDurationError": "Video must be 30 seconds or less."
+    "videoDurationError": "Video must be 30 seconds or less.",
+    "trimmedDuration": "Trimmed Duration"
   },
   "searchScreen": {
     "headerTitle": "Search Profiles",

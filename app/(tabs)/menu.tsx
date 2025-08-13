@@ -202,7 +202,7 @@ export default function MenuScreen() {
     try {
       await Share.share({
         message: t('share.appMessage', { 
-          url: 'https://play.google.com/store/apps/details?id=com.himfirstapps.sharejesustoday' 
+          url: 'https://apps.apple.com/ug/app/share-jesus-today/id6739215196' 
         }),
         title: t('share.appTitle')
       });
@@ -272,7 +272,7 @@ export default function MenuScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('menu.title')}</Text>
         {/* <Text style={styles.version}>{t('common.version')}</Text> */}
-        <Text style={styles.version}>{'v17.5.0'}</Text>
+        <Text style={styles.version}>{'v17.6.0'}</Text>
       </View>
 
       <ScrollView

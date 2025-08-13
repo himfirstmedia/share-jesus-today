@@ -98,7 +98,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [hasBeenTrimmed, setHasBeenTrimmed] = useState(false);
   const [originalDuration, setOriginalDuration] = useState(0);
-  
+  const [isPlaying, setIsPlaying] = useState(false); // New state for play/pause button
+
   const [uploadState, setUploadState] = useState<UploadState>(UploadState.IDLE);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadPhase, setUploadPhase] = useState<string>('');
@@ -134,6 +135,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
             setOriginalDuration(durationSeconds);
         }
       }
+      // Update isPlaying state based on player's actual playing status
+      setIsPlaying(status.status === 'playing');
     });
 
     return () => subscription?.remove();
@@ -164,8 +167,13 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const handlePlayPause = useCallback(() => {
     if (!player) return;
-    player.playing ? player.pause() : player.play();
-  }, [player]);
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+    setIsPlaying(!isPlaying); // Toggle the local state
+  }, [player, isPlaying]);
 
   const handleSelectVideo = async () => {
     try {
@@ -212,6 +220,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         setUploadProgress(0);
         setUploadPhase('');
         animateProgress(0);
+        setIsPlaying(false); // Reset play state when new video is selected
       }
     } catch (error) {
       console.error('Error in handleSelectVideo:', error);
@@ -238,6 +247,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         setVideoLoaded(false);
         setVideoDuration(0);
         setSelectedVideo(updatedVideo);
+        setIsPlaying(false); // Reset play state after trimming
       }
     } catch (error) {
       console.error("Failed to process trimmed video", error);
@@ -380,6 +390,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       setUploadProgress(0);
       setUploadPhase('');
       animateProgress(0);
+      setIsPlaying(false); // Reset play state on error
       let errorMessage = t('alerts.unexpectedError');
       if (error.message) {
         if (error.message.includes('Authentication')) errorMessage = t('alerts.authRequired');
@@ -439,7 +450,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           onPress={handlePlayPause}
           disabled={isLoading}
         >
-          <Ionicons name={player?.playing ? "pause" : "play"} size={40} color="white" />
+          <Ionicons name={isPlaying ? "pause" : "play"} size={40} color="white" />
         </TouchableOpacity>
         {!videoLoaded && (
           <View style={styles.loadingOverlay}>
@@ -501,7 +512,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
                   {t('videoUploadInterface.duration', { 
                     duration: videoDuration.toFixed(1)
                   })}
-                  {hasBeenTrimmed ? ` (${t('videoUploadInterface.duration')})` : ''}
+                  {/* {hasBeenTrimmed ? ` (${t('videoUploadInterface.trimmedDuration')})` : ''} */}
                 </Text>
               )
             )}
