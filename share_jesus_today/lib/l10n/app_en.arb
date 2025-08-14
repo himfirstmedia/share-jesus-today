@@ -1,0 +1,21 @@
+{
+    "@@locale": "en",
+    "appTitle": "Share Jesus Today",
+    "@appTitle": {
+        "description": "The title of the application"
+    },
+    "home": "Home",
+    "menu": "Menu",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up",
+    "aboutUs": "About Us",
+    "contactUs": "Contact Us",
+    "termsOfService": "Terms of Service",
+    "create_new_account": "Create new account",
+    "i_already_have_an_account": "I already have an account",
+    "email_address": "Email Address",
+    "password": "Password",
+    "username": "Username"
+}

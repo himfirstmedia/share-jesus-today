@@ -1,0 +1,18 @@
+{
+    "@@locale": "es",
+    "appTitle": "Comparte a Jesús Hoy",
+    "home": "Inicio",
+    "menu": "Menú",
+    "profile": "Perfil",
+    "logout": "Cerrar Sesión",
+    "login": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "aboutUs": "Sobre Nosotros",
+    "contactUs": "Contáctenos",
+    "termsOfService": "Términos de Servicio",
+    "create_new_account": "Crear una cuenta nueva",
+    "i_already_have_an_account": "Ya tengo una cuenta",
+    "email_address": "Correo Electrónico",
+    "password": "Contraseña",
+    "username": "Nombre de Usuario"
+}

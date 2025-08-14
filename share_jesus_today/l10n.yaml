@@ -1,0 +1,7 @@
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+# The following two lines are needed for null-safety
+# and to avoid generating a class for every ARB file.
+output-class: AppLocalizations
+nullable-getter: false
