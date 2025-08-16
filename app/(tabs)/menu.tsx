@@ -202,7 +202,7 @@ export default function MenuScreen() {
     try {
       await Share.share({
         message: t('share.appMessage', { 
-          url: 'https://apps.apple.com/ug/app/share-jesus-today/id6739215196' 
+          url: 'https://play.google.com/store/apps/details?id=com.himfirstapps.sharejesustoday' 
         }),
         title: t('share.appTitle')
       });
