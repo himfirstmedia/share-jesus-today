@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -425,6 +426,25 @@ export default function EditProfileScreen() {
     </View>
   );
 
+  const renderGenderPicker = () => (
+    <View style={styles.inputGroup}>
+      <Text style={{color:'#000'}}>{i18n.t('editProfileScreen.genderLabel')}</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={profile?.gender}
+          onValueChange={(itemValue) => handleInputChange('gender', itemValue)}
+          style={styles.picker}
+          enabled={!saving}
+          itemStyle={{ color: '#111827', fontSize: 16 }} // Add itemStyle
+        >
+          <Picker.Item label={i18n.t('editProfileScreen.selectGender')} value="" />
+          <Picker.Item label={i18n.t('editProfileScreen.male')} value="Male" />
+          <Picker.Item label={i18n.t('editProfileScreen.female')} value="Female" />
+        </Picker>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -523,7 +543,7 @@ export default function EditProfileScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{i18n.t('editProfileScreen.personalInfo')}</Text>
               
-              {renderInputField(i18n.t('editProfileScreen.genderLabel'), 'gender', i18n.t('editProfileScreen.genderPlaceholder'))}
+              {renderGenderPicker()}
 
               {renderDatePicker()}
 
@@ -748,6 +768,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    justifyContent: 'center',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+    color:'#9ca3af'
   },
   saveButton: {
     backgroundColor: '#3260AD',
