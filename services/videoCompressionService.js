@@ -17,17 +17,58 @@ const initializeVideoFilesDirectory = async () => {
   }
 };
 
-// Helper function to safely check if file exists and get its info
-const safeFileCheck = async (uri) => {
-  try {
-    const normalizedUri = uri.startsWith('file://') ? uri : `file://${uri}`;
-    const fileInfo = await FileSystem.getInfoAsync(normalizedUri);
-    console.log(`VideoCompressionService: File check for ${normalizedUri}:`, fileInfo);
-    return fileInfo;
-  } catch (error) {
-    console.error(`VideoCompressionService: Error checking file ${uri}:`, error);
-    return { exists: false, size: 0 };
+// Helper function to safely check if file exists and get its info with retry logic
+const safeFileCheck = async (uri, maxRetries = 3, delayMs = 500) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const normalizedUri = uri.startsWith('file://') ? uri : `file://${uri}`;
+      const fileInfo = await FileSystem.getInfoAsync(normalizedUri);
+      console.log(`VideoCompressionService: File check attempt ${attempt} for ${normalizedUri}:`, fileInfo);
+      
+      // If file exists, return immediately
+      if (fileInfo.exists) {
+        return fileInfo;
+      }
+      
+      // If this is not the last attempt, wait before retrying
+      if (attempt < maxRetries) {
+        console.log(`VideoCompressionService: File not found on attempt ${attempt}, retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    } catch (error) {
+      console.error(`VideoCompressionService: Error checking file ${uri} on attempt ${attempt}:`, error);
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
   }
+  
+  console.warn(`VideoCompressionService: File ${uri} not found after ${maxRetries} attempts`);
+  return { exists: false, size: 0 };
+};
+
+// Alternative file check that tries multiple URI formats
+const comprehensiveFileCheck = async (uri) => {
+  const urisToTry = [
+    uri,
+    uri.startsWith('file://') ? uri : `file://${uri}`,
+    uri.startsWith('file://') ? uri.substring(7) : uri,
+  ];
+  
+  for (const testUri of urisToTry) {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(testUri);
+      if (fileInfo.exists) {
+        console.log(`VideoCompressionService: Found file at: ${testUri}`, fileInfo);
+        return { ...fileInfo, actualUri: testUri };
+      }
+    } catch (error) {
+      console.log(`VideoCompressionService: Could not check ${testUri}:`, error.message);
+    }
+  }
+  
+  console.warn(`VideoCompressionService: File not found in any format for: ${uri}`);
+  return { exists: false, size: 0, actualUri: uri };
 };
 
 // Helper function to move the compressed file to the permanent 'videofiles' directory
@@ -35,28 +76,23 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
   try {
     console.log(`VideoCompressionService: Starting to move file from cache: ${cacheUri}`);
     
-    // First, check if the source file actually exists
-    const sourceFileInfo = await safeFileCheck(cacheUri);
+    // Use comprehensive file check with retry logic
+    const sourceFileInfo = await comprehensiveFileCheck(cacheUri);
     if (!sourceFileInfo.exists) {
-      // Try without file:// prefix in case that's the issue
-      const alternativeUri = cacheUri.replace('file://', '');
-      const altFileInfo = await safeFileCheck(alternativeUri);
-      if (!altFileInfo.exists) {
-        throw new Error(`Source file does not exist: ${cacheUri}. Also checked: ${alternativeUri}`);
-      }
-      // Use the alternative URI that exists
-      cacheUri = alternativeUri;
-      console.log(`VideoCompressionService: Using alternative URI: ${cacheUri}`);
+      throw new Error(`Source file does not exist after comprehensive check: ${cacheUri}`);
     }
+    
+    const actualSourceUri = sourceFileInfo.actualUri;
+    console.log(`VideoCompressionService: Using actual source URI: ${actualSourceUri}`);
 
     const permanentDir = await initializeVideoFilesDirectory();
     const fileName = `compressed_${Date.now()}.mp4`;
     const permanentUri = `${permanentDir}${fileName}`;
 
-    console.log(`VideoCompressionService: Copying from ${cacheUri} to ${permanentUri}`);
+    console.log(`VideoCompressionService: Copying from ${actualSourceUri} to ${permanentUri}`);
     
     // Ensure both URIs are properly formatted
-    const sourceUri = cacheUri.startsWith('file://') ? cacheUri : `file://${cacheUri}`;
+    const sourceUri = actualSourceUri.startsWith('file://') ? actualSourceUri : `file://${actualSourceUri}`;
     const destUri = permanentUri.startsWith('file://') ? permanentUri : `file://${permanentUri}`;
     
     // Attempt the copy operation
@@ -65,8 +101,8 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
       to: destUri 
     });
 
-    // Verify the copy was successful
-    const copiedFileInfo = await safeFileCheck(destUri);
+    // Verify the copy was successful with retry logic
+    const copiedFileInfo = await safeFileCheck(destUri, 5, 1000);
     if (!copiedFileInfo.exists || copiedFileInfo.size === 0) {
       throw new Error(`Failed to copy compressed file to permanent storage. Destination file ${destUri} ${!copiedFileInfo.exists ? 'does not exist' : 'is empty'}.`);
     }
@@ -76,7 +112,7 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
     // Clean up the original cache file if it still exists and is different from destination
     try {
       if (sourceUri !== destUri) {
-        const originalExists = await safeFileCheck(sourceUri);
+        const originalExists = await safeFileCheck(sourceUri, 1, 0);
         if (originalExists.exists) {
           await FileSystem.deleteAsync(sourceUri, { idempotent: true });
           console.log(`VideoCompressionService: Cleaned up original cache file: ${sourceUri}`);
@@ -89,6 +125,68 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
     return destUri;
   } catch (error) {
     console.error('VideoCompressionService: Error moving compressed file to permanent storage:', error);
+    throw error;
+  }
+};
+
+// Alternative approach: Compress directly to permanent directory
+const compressToCustomDirectory = async (videoUri, options = {}) => {
+  const {
+    progressCallback = () => {},
+  } = options;
+
+  try {
+    console.log('VideoCompressionService: Starting compression with custom output directory for:', videoUri);
+    
+    // Initialize permanent directory first
+    const permanentDir = await initializeVideoFilesDirectory();
+    const outputFileName = `compressed_${Date.now()}.mp4`;
+    const outputPath = `${permanentDir}${outputFileName}`;
+    
+    // Remove file:// prefix for the output path as some compressors expect local path
+    const localOutputPath = outputPath.replace('file://', '');
+    
+    console.log('VideoCompressionService: Target output path:', outputPath);
+    console.log('VideoCompressionService: Local output path for compressor:', localOutputPath);
+
+    // Try to compress directly to our target directory
+    const result = await Video.compress(
+      videoUri,
+      {
+        compressionMethod: 'auto',
+        // Some versions of react-native-compressor support output path
+        outputPath: localOutputPath,
+        getCancellationId: (cancellationId) => {
+          console.log('VideoCompressionService: Compression started with ID:', cancellationId);
+        }
+      },
+      (progress) => {
+        console.log(`VideoCompressionService: Compression progress: ${Math.round(progress * 100)}%`);
+        if (progressCallback) {
+          progressCallback(progress);
+        }
+      }
+    );
+
+    console.log('VideoCompressionService: Compression result:', result);
+
+    // Check if the file was created in our target directory
+    const targetFileInfo = await comprehensiveFileCheck(outputPath);
+    if (targetFileInfo.exists) {
+      console.log('VideoCompressionService: File successfully compressed to target directory');
+      return targetFileInfo.actualUri;
+    }
+
+    // If not in target directory, fall back to moving from cache
+    if (result) {
+      console.log('VideoCompressionService: File not in target directory, attempting to move from cache:', result);
+      return await moveCompressedFileToPermanentStorage(result);
+    }
+
+    throw new Error('Compression did not produce a valid result');
+
+  } catch (error) {
+    console.error('VideoCompressionService: Custom directory compression failed:', error);
     throw error;
   }
 };
@@ -107,19 +205,32 @@ const VideoCompressionService = {
       console.log('VideoCompressionService: Starting video compression for:', videoUri);
       
       // Verify source video exists before starting compression
-      const sourceFileInfo = await safeFileCheck(videoUri);
+      const sourceFileInfo = await safeFileCheck(videoUri, 1, 0);
       if (!sourceFileInfo.exists) {
         throw new Error(`Source video file does not exist: ${videoUri}`);
       }
       
       console.log(`VideoCompressionService: Source video verified. Size: ${sourceFileInfo.size} bytes`);
 
+      // Try the custom directory approach first
+      try {
+        const result = await compressToCustomDirectory(videoUri, { progressCallback });
+        if (result) {
+          console.log('VideoCompressionService: Successfully compressed using custom directory approach');
+          return result;
+        }
+      } catch (customDirError) {
+        console.log('VideoCompressionService: Custom directory approach failed, falling back to traditional method:', customDirError.message);
+      }
+
+      // Fallback to traditional compression method
+      console.log('VideoCompressionService: Using traditional compression method');
+      
       // Perform compression - this will create a file in cache directory
       const result = await Video.compress(
         videoUri,
         {
           compressionMethod: 'auto',
-          // Add some additional options that might help with consistency
           getCancellationId: (cancellationId) => {
             console.log('VideoCompressionService: Compression started with ID:', cancellationId);
           }
@@ -140,13 +251,23 @@ const VideoCompressionService = {
       compressionSuccessful = true;
       console.log('VideoCompressionService: Compression completed, temp file:', compressedCacheUri);
 
-      // Verify the compressed file exists immediately after compression
-      const compressedFileInfo = await safeFileCheck(compressedCacheUri);
+      // Add a small delay before checking the file to allow filesystem to sync
+      console.log('VideoCompressionService: Waiting for filesystem sync...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify the compressed file exists with retry logic
+      const compressedFileInfo = await safeFileCheck(compressedCacheUri, 5, 1000);
       if (!compressedFileInfo.exists) {
-        throw new Error(`Compressed file was not created or was immediately deleted: ${compressedCacheUri}`);
+        // Try alternative approaches to find the file
+        const comprehensiveCheck = await comprehensiveFileCheck(compressedCacheUri);
+        if (!comprehensiveCheck.exists) {
+          throw new Error(`Compressed file was not created or was immediately deleted: ${compressedCacheUri}`);
+        }
+        // Update the cache URI to the one that actually exists
+        compressedCacheUri = comprehensiveCheck.actualUri;
       }
       
-      console.log(`VideoCompressionService: Compressed file verified. Size: ${compressedFileInfo.size} bytes`);
+      console.log(`VideoCompressionService: Compressed file verified. Size: ${compressedFileInfo.size || comprehensiveCheck.size} bytes`);
 
       // Move the file to the existing 'videofiles' directory immediately
       const permanentUri = await moveCompressedFileToPermanentStorage(compressedCacheUri);
@@ -161,7 +282,7 @@ const VideoCompressionService = {
       // Clean up the cached file if it exists and compression was successful
       if (compressedCacheUri && compressionSuccessful) {
         try {
-          const cacheFileExists = await safeFileCheck(compressedCacheUri);
+          const cacheFileExists = await safeFileCheck(compressedCacheUri, 1, 0);
           if (cacheFileExists.exists) {
             await FileSystem.deleteAsync(compressedCacheUri, { idempotent: true });
             console.log('VideoCompressionService: Cleaned up cache file after error:', compressedCacheUri);
@@ -202,7 +323,7 @@ const VideoCompressionService = {
   // Utility method to get compression info
   async getCompressionInfo(videoUri) {
     try {
-      const fileInfo = await safeFileCheck(videoUri);
+      const fileInfo = await safeFileCheck(videoUri, 1, 0);
       return {
         exists: fileInfo.exists,
         size: fileInfo.size,

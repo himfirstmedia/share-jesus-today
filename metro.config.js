@@ -16,7 +16,7 @@ config.resolver.alias = {
 };
 
 // Ensure TypeScript files are resolved
-config.resolver.sourceExts.push('ts', 'tsx');
+config.resolver.sourceExts.push('ts', 'tsx', 'mjs');
 
 // Add video and media file extensions for proper asset handling
 config.resolver.assetExts = [

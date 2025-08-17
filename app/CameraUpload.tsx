@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,8 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-// Import services
-// import CameraCompressionService from '../services/cameraCompressionService';
 import CameraCompressionService from '../services/cameraCompressionService';
 import videoApiService from '../services/videoApiService';
 import { t } from '../utils/i18n';
@@ -25,6 +24,7 @@ import { t } from '../utils/i18n';
 
 enum UploadState {
   IDLE = 'idle',
+  SECURING = 'securing', // New state for securing the video file
   COMPRESSING = 'compressing',
   UPLOADING = 'uploading',
   PROCESSING = 'processing',
@@ -44,6 +44,7 @@ const CameraUpload: React.FC = () => {
   const params = useLocalSearchParams<{ videoUri: string; videoName?: string; videoType?: string }>();
   
   const [videoFile, setVideoFile] = useState<VideoFile | null>(null);
+  const [secureVideoUri, setSecureVideoUri] = useState<string | null>(null); // New state for secured video
   const [videoTitle, setVideoTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -54,37 +55,107 @@ const CameraUpload: React.FC = () => {
   const [uploadPhase, setUploadPhase] = useState<string>('');
   const progressAnimation = useRef(new Animated.Value(0)).current;
 
-  const player = useVideoPlayer(videoFile?.uri || '', (player) => {
+  // Use secureVideoUri for video player if available, otherwise use original
+  const playerUri = secureVideoUri || videoFile?.uri || '';
+  const player = useVideoPlayer(playerUri, (player) => {
     player.loop = false;
     player.muted = false;
   });
 
   const { videoUri, videoName, videoType } = params;
 
-  useEffect(() => {
-    if (videoUri) {
-      const newVideoFile = {
-        uri: videoUri,
-        name: videoName || `recorded_video_${Date.now()}.mp4`,
-        type: videoType || 'video/mp4',
-      };
-      setVideoFile(newVideoFile);
-    } else {
-      Alert.alert(t('videoUploadInterface.alertError'), t('cameraUpload.noVideoProvided'), [
-        { text: t('alerts.ok'), onPress: () => router.replace('/(tabs)/post') },
-      ]);
+  // --- New function to secure the video file immediately ---
+  const secureVideoFile = async (originalUri: string): Promise<string> => {
+    try {
+      console.log('LOG: Securing camera recording immediately');
+      
+      // Create a secure copy in our app's document directory
+      const secureFileName = `secure_${Date.now()}.mp4`;
+      const secureDirectory = `${FileSystem.documentDirectory}videofiles/`;
+      
+      // Ensure directory exists
+      await FileSystem.makeDirectoryAsync(secureDirectory, { intermediates: true });
+      
+      const securePath = `${secureDirectory}${secureFileName}`;
+      
+      // Check if source file exists before copying
+      const sourceInfo = await FileSystem.getInfoAsync(originalUri, { size: true });
+      if (!sourceInfo.exists) {
+        throw new Error('Source camera file no longer exists');
+      }
+      
+      console.log(`LOG: Copying camera file to secure location: ${securePath}`);
+      
+      // Copy the file to our secure location
+      await FileSystem.copyAsync({
+        from: originalUri,
+        to: securePath,
+      });
+      
+      // Verify the copy
+      const secureInfo = await FileSystem.getInfoAsync(securePath, { size: true });
+      if (!secureInfo.exists || secureInfo.size === 0) {
+        throw new Error('Failed to create secure copy');
+      }
+      
+      console.log(`LOG: Video secured successfully: ${securePath} (${secureInfo.size} bytes)`);
+      return securePath;
+      
+    } catch (error) {
+      console.error('ERROR: Failed to secure video file:', error);
+      throw error;
     }
+  };
+
+  useEffect(() => {
+    const initializeVideo = async () => {
+      if (videoUri) {
+        const newVideoFile = {
+          uri: videoUri,
+          name: videoName || `recorded_video_${Date.now()}.mp4`,
+          type: videoType || 'video/mp4',
+        };
+        setVideoFile(newVideoFile);
+        
+        // Immediately secure the video file
+        try {
+          setUploadState(UploadState.SECURING);
+          setUploadPhase('Securing video file...');
+          
+          const securedUri = await secureVideoFile(videoUri);
+          setSecureVideoUri(securedUri);
+          
+          console.log('LOG: Video file secured for processing');
+          setUploadState(UploadState.IDLE);
+          setUploadPhase('');
+          
+        } catch (error) {
+          console.error('ERROR: Failed to secure video file:', error);
+          Alert.alert(
+            t('videoUploadInterface.alertError'), 
+            'Failed to secure video file. Please try recording again.',
+            [{ text: t('alerts.ok'), onPress: () => router.replace('/(tabs)/post') }]
+          );
+        }
+      } else {
+        Alert.alert(t('videoUploadInterface.alertError'), t('cameraUpload.noVideoProvided'), [
+          { text: t('alerts.ok'), onPress: () => router.replace('/(tabs)/post') },
+        ]);
+      }
+    };
+
+    initializeVideo();
   }, [videoUri, videoName, videoType, router]);
 
   useEffect(() => {
-    if (!player || !videoFile) return;
+    if (!player || !playerUri) return;
     const subscription = player.addListener('statusChange', (status) => {
       if (status.status === 'readyToPlay' && !videoLoaded) {
         setVideoLoaded(true);
       }
     });
     return () => subscription?.remove();
-  }, [player, videoFile, videoLoaded]);
+  }, [player, playerUri, videoLoaded]);
 
   const handlePlayPause = useCallback(() => {
     if (!player) return;
@@ -103,6 +174,8 @@ const CameraUpload: React.FC = () => {
 
   const getUploadStateText = () => {
     switch (uploadState) {
+      case UploadState.SECURING:
+        return 'Securing video...';
       case UploadState.COMPRESSING:
         return uploadPhase || t('videoUploadInterface.compressingVideo');
       case UploadState.UPLOADING:
@@ -120,10 +193,10 @@ const CameraUpload: React.FC = () => {
   const handleCancelUpload = () => {
     Alert.alert(
       t('videoActions.cancel'),
-      t('videoActions.cancel'), // Need to add proper cancel upload confirmation text
+      'Are you sure you want to cancel the upload?',
       [
         {
-          text: t('videoUploadInterface.uploadButton'),
+          text: 'Continue Upload',
           style: 'cancel',
         },
         {
@@ -143,7 +216,7 @@ const CameraUpload: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!videoTitle.trim() || !videoFile) {
+    if (!videoTitle.trim() || !videoFile || !secureVideoUri) {
       Alert.alert(t('videoUploadInterface.alertError'), t('videoUploadInterface.enterVideoTitle'));
       return;
     }
@@ -154,7 +227,7 @@ const CameraUpload: React.FC = () => {
     animateProgress(0);
 
     try {
-      console.log('Starting complete upload process with video:', videoFile);
+      console.log('Starting complete upload process with secured video:', secureVideoUri);
 
       // --- Phase 1: Compression (0% - 50%) ---
       setUploadState(UploadState.COMPRESSING);
@@ -162,7 +235,8 @@ const CameraUpload: React.FC = () => {
       
       setUploadPhase(t('videoUploadInterface.compressingVideo'));
       
-      const compressedUri = await CameraCompressionService.createCompressedCopy(videoFile.uri, {
+      // Use the secured video URI for compression
+      const compressedUri = await CameraCompressionService.createCompressedCopy(secureVideoUri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
           // Map compression progress to 0-50% of total progress
@@ -197,7 +271,7 @@ const CameraUpload: React.FC = () => {
       
       const fileToUpload = { 
         ...videoFile, 
-        uri: compressedUri,
+        uri: compressedUri, // Use the compressed/secured URI
         mimeType: videoFile.type,
       };
 
@@ -262,6 +336,20 @@ const CameraUpload: React.FC = () => {
       console.log('Upload response received:', response);
 
       if (response.success) {
+        // Clean up secured files after successful upload
+        try {
+          if (secureVideoUri) {
+            await FileSystem.deleteAsync(secureVideoUri, { idempotent: true });
+            console.log('LOG: Cleaned up secured video file');
+          }
+          if (compressedUri && compressedUri !== secureVideoUri) {
+            await FileSystem.deleteAsync(compressedUri, { idempotent: true });
+            console.log('LOG: Cleaned up compressed video file');
+          }
+        } catch (cleanupError) {
+          console.warn('WARN: Failed to cleanup files:', cleanupError);
+        }
+        
         // Show completion state briefly before navigating
         setTimeout(() => {
           setIsLoading(false);
@@ -302,7 +390,7 @@ const CameraUpload: React.FC = () => {
   };
 
   const renderUploadProgress = () => {
-    if (!isLoading) return null;
+    if (!isLoading && uploadState === UploadState.IDLE) return null;
     
     // Use the more specific 'uploadPhase' if available, otherwise fallback to the general state text.
     const progressMessage = uploadPhase || getUploadStateText();
@@ -311,6 +399,14 @@ const CameraUpload: React.FC = () => {
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressText}>{progressMessage}</Text>
+          {isLoading && uploadState !== UploadState.SECURING && (
+            <TouchableOpacity 
+              style={styles.cancelButton} 
+              onPress={handleCancelUpload}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.progressBarContainer}>
           <Animated.View
@@ -331,11 +427,15 @@ const CameraUpload: React.FC = () => {
   };
 
   const renderVideoPreview = () => {
-    if (!videoFile || !videoFile.uri) {
+    if (!videoFile || !playerUri) {
       return (
         <View style={styles.videoPlaceholder}>
           <ActivityIndicator size="large" color="#3260a0" />
-          <Text style={styles.placeholderText}>{t('cameraUpload.loadingVideo')}</Text>
+          <Text style={styles.placeholderText}>{
+            uploadState === UploadState.SECURING ? 
+            'Securing video...' : 
+            t('cameraUpload.loadingVideo')
+          }</Text>
         </View>
       );
     }
@@ -357,6 +457,18 @@ const CameraUpload: React.FC = () => {
       </View>
     );
   };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up secured file if component unmounts without successful upload
+      if (secureVideoUri) {
+        FileSystem.deleteAsync(secureVideoUri, { idempotent: true }).catch(error => {
+          console.warn('WARN: Failed to cleanup on unmount:', error);
+        });
+      }
+    };
+  }, [secureVideoUri]);
 
   return (
     <View style={styles.container}>
@@ -383,7 +495,7 @@ const CameraUpload: React.FC = () => {
               placeholder={t('videoUploadInterface.enterTitlePlaceholder')}
               value={videoTitle}
               onChangeText={setVideoTitle}
-              editable={!isLoading}
+              editable={!isLoading && uploadState !== UploadState.SECURING}
             />
           </View>
 
@@ -393,12 +505,12 @@ const CameraUpload: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.uploadButton, 
-                (!videoFile || !videoTitle.trim() || isLoading) && styles.disabledButton
+                (!videoFile || !videoTitle.trim() || isLoading || !secureVideoUri) && styles.disabledButton
               ]}
               onPress={handleSave}
-              disabled={!videoFile || !videoTitle.trim() || isLoading}
+              disabled={!videoFile || !videoTitle.trim() || isLoading || !secureVideoUri}
             >
-              {isLoading ? (
+              {isLoading || uploadState === UploadState.SECURING ? (
                 <View style={styles.uploadButtonLoading}>
                   <ActivityIndicator size="small" color="white" style={{ marginRight: 10 }} />
                   <Text style={styles.uploadButtonText}>{getUploadStateText()}</Text>
@@ -536,6 +648,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   progressHeader: { 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center', 
     marginBottom: 10 
   },
@@ -543,7 +657,18 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     fontWeight: '600', 
     color: '#333', 
-    textAlign: 'center' 
+    flex: 1
+  },
+  cancelButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#dc3545',
+    borderRadius: 6,
+  },
+  cancelButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   progressBarContainer: { 
     height: 8, 

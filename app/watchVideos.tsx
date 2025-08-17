@@ -292,7 +292,6 @@ const WatchVideosScreen = () => {
               return updatedAllVideos;
             });
             console.log(`Loaded ${nonBlockedNewVideos.length} more non-blocked videos.`);
-            preCacheVideos(nonBlockedNewVideos);
           }
         }
         setCurrentPage(response.data.number !== undefined ? response.data.number : nextPageToFetch);
