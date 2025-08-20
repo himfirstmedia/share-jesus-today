@@ -302,7 +302,7 @@ export default function MenuScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('menu.title')}</Text>
         {/* <Text style={styles.version}>{t('common.version')}</Text> */}
-        <Text style={styles.version}>{'v20.0.0'}</Text>
+        <Text style={styles.version}>{'v21.0.0'}</Text>
       </View>
 
       <ScrollView

@@ -6,81 +6,99 @@ import { Video } from 'react-native-compressor';
 const MAX_SIZE_MB_DEFAULT = 15;
 const ANDROID_9_API_LEVEL = 28;
 
+// Enhanced error code mapping for better diagnostics
+const ERROR_CODES = {
+  '0xffffec77': 'CODEC_ERROR',
+  '0xffffec78': 'INVALID_PARAMETER',
+  '0xffffec79': 'INVALID_STATE',
+  '0xffffec7a': 'INSUFFICIENT_RESOURCES'
+};
+
 // Check if we're running on Android 9 or lower
 const isAndroid9OrLower = () => {
   return Platform.OS === 'android' && Platform.Version <= ANDROID_9_API_LEVEL;
 };
 
-// Android 9 specific video metadata validation
-const validateVideoMetadataAndroid9 = async (videoUri) => {
+// Enhanced video validation with codec checks
+const validateVideoFile = async (videoUri) => {
   try {
-    console.log('VideoCompressionService: Validating video metadata for Android 9:', videoUri);
+    console.log('VideoCompressionService: Validating video file:', videoUri);
     
-    // Try to get basic file info first
+    // Basic file validation
     const fileInfo = await FileSystem.getInfoAsync(videoUri);
     if (!fileInfo.exists || !fileInfo.size || fileInfo.size === 0) {
       throw new Error('Invalid video file: file does not exist or is empty');
     }
     
-    console.log('VideoCompressionService: File info valid:', { size: fileInfo.size });
+    // Check file size (videos larger than 500MB often cause codec issues)
+    const fileSizeMB = fileInfo.size / (1024 * 1024);
+    console.log(`VideoCompressionService: File size: ${fileSizeMB.toFixed(2)}MB`);
     
-    // For Android 9, try to access media library info to validate the video
-    if (Platform.OS === 'android') {
-      try {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status === 'granted') {
-          // Try to get asset info from MediaLibrary which has better Android 9 support
-          const asset = await MediaLibrary.createAssetAsync(videoUri);
-          if (asset && asset.duration !== undefined && asset.duration > 0) {
-            console.log('VideoCompressionService: MediaLibrary validation successful:', { 
-              duration: asset.duration,
-              mediaType: asset.mediaType 
-            });
-            return { isValid: true, duration: asset.duration };
-          }
-        }
-      } catch (mediaLibError) {
-        console.log('VideoCompressionService: MediaLibrary validation failed (non-critical):', mediaLibError.message);
-      }
+    if (fileSizeMB > 500) {
+      throw new Error(`Video file too large (${fileSizeMB.toFixed(1)}MB). Maximum supported size is 500MB.`);
     }
     
-    return { isValid: true, duration: null };
+    // Try to get video metadata using MediaLibrary for additional validation
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status === 'granted') {
+        const asset = await MediaLibrary.createAssetAsync(videoUri);
+        if (asset && asset.duration !== undefined) {
+          console.log('VideoCompressionService: Video metadata:', { 
+            duration: asset.duration,
+            mediaType: asset.mediaType,
+            width: asset.width,
+            height: asset.height
+          });
+          
+          // Check for extremely long videos (over 30 minutes can cause issues)
+          if (asset.duration > 1800) { // 30 minutes
+            console.warn('VideoCompressionService: Very long video detected, may cause compression issues');
+          }
+          
+          return { 
+            isValid: true, 
+            duration: asset.duration,
+            size: fileInfo.size,
+            width: asset.width,
+            height: asset.height
+          };
+        }
+      }
+    } catch (mediaLibError) {
+      console.log('VideoCompressionService: MediaLibrary validation failed (non-critical):', mediaLibError.message);
+    }
+    
+    return { isValid: true, duration: null, size: fileInfo.size };
   } catch (error) {
-    console.error('VideoCompressionService: Video metadata validation failed:', error);
+    console.error('VideoCompressionService: Video validation failed:', error);
     return { isValid: false, error: error.message };
   }
 };
 
-// Android 9 compatible compression with fallback strategies
-const compressVideoAndroid9Compatible = async (videoUri, options = {}) => {
+// Progressive compression with multiple fallback strategies
+const compressVideoWithFallbacks = async (videoUri, options = {}) => {
   const { progressCallback = () => {} } = options;
   
-  console.log('VideoCompressionService: Starting Android 9 compatible compression for:', videoUri);
+  console.log('VideoCompressionService: Starting progressive compression for:', videoUri);
   
-  // Strategy 1: Use minimal compression settings for Android 9
-  const android9CompressionConfig = {
-    compressionMethod: 'manual', // More reliable than 'auto' on Android 9
-    quality: 'medium',
-    bitrate: 1000, // Lower bitrate for compatibility
-    minimumFileSizeForCompress: 1, // Force compression even for small files
-    getCancellationId: (cancellationId) => {
-      console.log('VideoCompressionService: Android 9 compression started with ID:', cancellationId);
-    }
-  };
-  
+  // Strategy 1: High quality compression (default)
   try {
-    console.log('VideoCompressionService: Attempting Strategy 1 - Manual compression');
+    console.log('VideoCompressionService: Attempting Strategy 1 - High quality compression');
     
     const result = await Video.compress(
       videoUri,
-      android9CompressionConfig,
-      (progress) => {
-        // Validate progress value for Android 9
-        const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
-        console.log(`VideoCompressionService: Android 9 compression progress: ${Math.round(validProgress * 100)}%`);
-        if (progressCallback) {
-          progressCallback(validProgress);
+      {
+        compressionMethod: 'auto',
+        quality: 'high',
+        getCancellationId: (cancellationId) => {
+          console.log('VideoCompressionService: High quality compression started with ID:', cancellationId);
         }
+      },
+      (progress) => {
+        const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
+        console.log(`VideoCompressionService: High quality compression progress: ${Math.round(validProgress * 100)}%`);
+        progressCallback(validProgress * 0.8); // Reserve 20% for file operations
       }
     );
     
@@ -89,34 +107,39 @@ const compressVideoAndroid9Compatible = async (videoUri, options = {}) => {
       return result;
     }
     
-    throw new Error('Strategy 1 failed: Invalid result');
+    throw new Error('High quality compression returned invalid result');
     
   } catch (strategy1Error) {
     console.log('VideoCompressionService: Strategy 1 failed:', strategy1Error.message);
     
-    // Strategy 2: Try with even lower settings
+    // Check for specific error codes
+    const errorMessage = strategy1Error.message || '';
+    const isCodecError = Object.keys(ERROR_CODES).some(code => errorMessage.includes(code));
+    
+    if (isCodecError) {
+      console.log('VideoCompressionService: Codec error detected, trying alternative approach');
+    }
+    
+    // Strategy 2: Medium quality with manual settings
     try {
-      console.log('VideoCompressionService: Attempting Strategy 2 - Low quality compression');
-      
-      const lowQualityConfig = {
-        compressionMethod: 'manual',
-        quality: 'low',
-        bitrate: 500,
-        minimumFileSizeForCompress: 1,
-        getCancellationId: (cancellationId) => {
-          console.log('VideoCompressionService: Strategy 2 compression started with ID:', cancellationId);
-        }
-      };
+      console.log('VideoCompressionService: Attempting Strategy 2 - Medium quality manual compression');
       
       const result = await Video.compress(
         videoUri,
-        lowQualityConfig,
+        {
+          compressionMethod: 'manual',
+          quality: 'medium',
+          bitrate: 1500, // Conservative bitrate
+          maxWidth: 1280,
+          maxHeight: 720,
+          getCancellationId: (cancellationId) => {
+            console.log('VideoCompressionService: Medium quality compression started with ID:', cancellationId);
+          }
+        },
         (progress) => {
           const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
-          console.log(`VideoCompressionService: Strategy 2 progress: ${Math.round(validProgress * 100)}%`);
-          if (progressCallback) {
-            progressCallback(validProgress);
-          }
+          console.log(`VideoCompressionService: Medium quality compression progress: ${Math.round(validProgress * 100)}%`);
+          progressCallback(validProgress * 0.8);
         }
       );
       
@@ -125,42 +148,143 @@ const compressVideoAndroid9Compatible = async (videoUri, options = {}) => {
         return result;
       }
       
-      throw new Error('Strategy 2 failed: Invalid result');
+      throw new Error('Medium quality compression returned invalid result');
       
     } catch (strategy2Error) {
       console.log('VideoCompressionService: Strategy 2 failed:', strategy2Error.message);
       
-      // Strategy 3: Copy without compression for Android 9 as last resort
-      console.log('VideoCompressionService: Attempting Strategy 3 - Copy without compression');
-      
-      const fileInfo = await FileSystem.getInfoAsync(videoUri);
-      const fileSizeMB = fileInfo.size / (1024 * 1024);
-      
-      if (fileSizeMB <= MAX_SIZE_MB_DEFAULT) {
-        console.log('VideoCompressionService: File is small enough, copying without compression');
+      // Strategy 3: Low quality compression (most compatible)
+      try {
+        console.log('VideoCompressionService: Attempting Strategy 3 - Low quality compression');
         
-        const permanentDir = await initializeVideoFilesDirectory();
-        const fileName = `android9_copy_${Date.now()}.mp4`;
-        const permanentUri = `${permanentDir}${fileName}`;
-        
-        await FileSystem.copyAsync({ 
-          from: normalizeUri(videoUri), 
-          to: normalizeUri(permanentUri) 
-        });
-        
-        // Simulate progress for UI consistency
-        for (let i = 0; i <= 100; i += 10) {
-          if (progressCallback) {
-            progressCallback(i / 100);
+        const result = await Video.compress(
+          videoUri,
+          {
+            compressionMethod: 'manual',
+            quality: 'low',
+            bitrate: 800,
+            maxWidth: 854,
+            maxHeight: 480,
+            getCancellationId: (cancellationId) => {
+              console.log('VideoCompressionService: Low quality compression started with ID:', cancellationId);
+            }
+          },
+          (progress) => {
+            const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
+            console.log(`VideoCompressionService: Low quality compression progress: ${Math.round(validProgress * 100)}%`);
+            progressCallback(validProgress * 0.8);
           }
-          await new Promise(resolve => setTimeout(resolve, 50));
+        );
+        
+        if (result && typeof result === 'string') {
+          console.log('VideoCompressionService: Strategy 3 successful:', result);
+          return result;
         }
         
-        console.log('VideoCompressionService: Strategy 3 successful (copy):', permanentUri);
-        return permanentUri;
-      } else {
-        throw new Error(`File too large (${fileSizeMB.toFixed(1)}MB) and compression failed on Android 9`);
+        throw new Error('Low quality compression returned invalid result');
+        
+      } catch (strategy3Error) {
+        console.log('VideoCompressionService: Strategy 3 failed:', strategy3Error.message);
+        
+        // Strategy 4: Copy without compression if file is small enough
+        console.log('VideoCompressionService: Attempting Strategy 4 - Copy without compression');
+        
+        const fileInfo = await FileSystem.getInfoAsync(videoUri);
+        const fileSizeMB = fileInfo.size / (1024 * 1024);
+        
+        if (fileSizeMB <= MAX_SIZE_MB_DEFAULT) {
+          console.log('VideoCompressionService: File is small enough, copying without compression');
+          
+          const permanentDir = await initializeVideoFilesDirectory();
+          const fileName = `copy_${Date.now()}.mp4`;
+          const permanentUri = `${permanentDir}${fileName}`;
+          
+          await FileSystem.copyAsync({ 
+            from: normalizeUri(videoUri), 
+            to: normalizeUri(permanentUri) 
+          });
+          
+          // Simulate progress for UI consistency
+          for (let i = 0; i <= 100; i += 10) {
+            progressCallback(i / 100);
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+          
+          console.log('VideoCompressionService: Strategy 4 successful (copy):', permanentUri);
+          return permanentUri;
+        } else {
+          // Strategy 5: Segment and compress (for very large files)
+          throw new Error(`All compression strategies failed. File size: ${fileSizeMB.toFixed(1)}MB. Original errors: [${strategy1Error.message}] [${strategy2Error.message}] [${strategy3Error.message}]`);
+        }
       }
+    }
+  }
+};
+
+// Android 9 specific compression (kept from original)
+const compressVideoAndroid9Compatible = async (videoUri, options = {}) => {
+  const { progressCallback = () => {} } = options;
+  
+  console.log('VideoCompressionService: Starting Android 9 compatible compression for:', videoUri);
+  
+  const android9CompressionConfig = {
+    compressionMethod: 'manual',
+    quality: 'medium',
+    bitrate: 1000,
+    maxWidth: 1280,
+    maxHeight: 720,
+    minimumFileSizeForCompress: 1,
+    getCancellationId: (cancellationId) => {
+      console.log('VideoCompressionService: Android 9 compression started with ID:', cancellationId);
+    }
+  };
+  
+  try {
+    const result = await Video.compress(
+      videoUri,
+      android9CompressionConfig,
+      (progress) => {
+        const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
+        console.log(`VideoCompressionService: Android 9 compression progress: ${Math.round(validProgress * 100)}%`);
+        progressCallback(validProgress);
+      }
+    );
+    
+    if (result && typeof result === 'string') {
+      console.log('VideoCompressionService: Android 9 compression successful:', result);
+      return result;
+    }
+    
+    throw new Error('Android 9 compression failed: Invalid result');
+    
+  } catch (error) {
+    console.log('VideoCompressionService: Android 9 compression failed, trying fallback');
+    
+    // Fallback to copy for Android 9
+    const fileInfo = await FileSystem.getInfoAsync(videoUri);
+    const fileSizeMB = fileInfo.size / (1024 * 1024);
+    
+    if (fileSizeMB <= MAX_SIZE_MB_DEFAULT) {
+      console.log('VideoCompressionService: Android 9 fallback - copying without compression');
+      
+      const permanentDir = await initializeVideoFilesDirectory();
+      const fileName = `android9_copy_${Date.now()}.mp4`;
+      const permanentUri = `${permanentDir}${fileName}`;
+      
+      await FileSystem.copyAsync({ 
+        from: normalizeUri(videoUri), 
+        to: normalizeUri(permanentUri) 
+      });
+      
+      // Simulate progress
+      for (let i = 0; i <= 100; i += 10) {
+        progressCallback(i / 100);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      
+      return permanentUri;
+    } else {
+      throw error;
     }
   }
 };
@@ -184,7 +308,7 @@ const normalizeUri = (uri) => {
   return uri.startsWith('file://') ? uri : `file://${uri}`;
 };
 
-// Enhanced file check with Android 9 compatibility
+// Enhanced file check with better retry logic
 const safeFileCheck = async (uri, maxRetries = 3, delayMs = 500) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -212,10 +336,10 @@ const safeFileCheck = async (uri, maxRetries = 3, delayMs = 500) => {
   return { exists: false, size: 0 };
 };
 
-// Move compressed file to permanent storage with Android 9 compatibility
+// Move compressed file to permanent storage
 const moveCompressedFileToPermanentStorage = async (cacheUri) => {
   try {
-    console.log(`VideoCompressionService: Moving file from cache (Android 9): ${cacheUri}`);
+    console.log(`VideoCompressionService: Moving file from cache: ${cacheUri}`);
     
     const sourceFileInfo = await safeFileCheck(cacheUri, 5, 1000);
     if (!sourceFileInfo.exists || sourceFileInfo.size === 0) {
@@ -223,7 +347,7 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
     }
     
     const permanentDir = await initializeVideoFilesDirectory();
-    const fileName = `compressed_android9_${Date.now()}.mp4`;
+    const fileName = `compressed_${Date.now()}.mp4`;
     const permanentUri = `${permanentDir}${fileName}`;
     
     const sourceUri = normalizeUri(cacheUri);
@@ -233,7 +357,7 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
     
     await FileSystem.copyAsync({ from: sourceUri, to: destUri });
     
-    // Extra verification for Android 9
+    // Verification
     await new Promise(resolve => setTimeout(resolve, 1000));
     const copiedFileInfo = await safeFileCheck(destUri, 5, 1000);
     
@@ -260,6 +384,44 @@ const moveCompressedFileToPermanentStorage = async (cacheUri) => {
   }
 };
 
+// Enhanced error message generation
+const generateUserFriendlyErrorMessage = (error) => {
+  const errorMessage = error.message || '';
+  
+  // Check for specific error codes
+  for (const [code, type] of Object.entries(ERROR_CODES)) {
+    if (errorMessage.includes(code)) {
+      switch (type) {
+        case 'CODEC_ERROR':
+          return 'Video format not supported. Please try recording a new video or use a different format.';
+        case 'INVALID_PARAMETER':
+          return 'Video file is corrupted or has invalid parameters. Please select a different video.';
+        case 'INVALID_STATE':
+          return 'Video processing failed due to device state. Please restart the app and try again.';
+        case 'INSUFFICIENT_RESOURCES':
+          return 'Not enough memory to process this video. Please close other apps and try again.';
+      }
+    }
+  }
+  
+  // Check for other common issues
+  if (errorMessage.includes('too large')) {
+    return errorMessage;
+  } else if (errorMessage.includes('cancel')) {
+    return 'Video compression was cancelled.';
+  } else if (errorMessage.includes('does not exist')) {
+    return 'Video file not found. Please select the video again.';
+  } else if (errorMessage.includes('storage') || errorMessage.includes('space')) {
+    return 'Not enough storage space. Please free up some space and try again.';
+  } else if (errorMessage.includes('permission')) {
+    return 'Permission denied. Please check app permissions.';
+  } else if (errorMessage.includes('NumberFormatException') || errorMessage.includes('-9223372036854775808')) {
+    return 'Video format not supported on this device. Please try a different video.';
+  }
+  
+  return 'Failed to compress video. Please try again with a different video.';
+};
+
 const VideoCompressionService = {
   async createCompressedCopy(videoUri, options = {}) {
     const {
@@ -272,67 +434,36 @@ const VideoCompressionService = {
 
     try {
       console.log('VideoCompressionService: Starting video compression for:', videoUri);
-      console.log('VideoCompressionService: Android version check:', {
+      console.log('VideoCompressionService: Platform info:', {
         platform: Platform.OS,
         version: Platform.Version,
         isAndroid9OrLower: isAndroid9OrLower()
       });
       
-      // Validate source video
-      const sourceFileInfo = await safeFileCheck(videoUri, 1, 0);
-      if (!sourceFileInfo.exists || sourceFileInfo.size === 0) {
-        throw new Error(`Source video file does not exist or is empty: ${videoUri}`);
+      // Enhanced video validation
+      const validation = await validateVideoFile(videoUri);
+      if (!validation.isValid) {
+        throw new Error(`Video validation failed: ${validation.error}`);
       }
       
-      console.log(`VideoCompressionService: Source video verified. Size: ${sourceFileInfo.size} bytes`);
+      console.log('VideoCompressionService: Video validation passed');
       
-      // Android 9 specific validation
+      // Choose compression strategy based on Android version
       if (isAndroid9OrLower()) {
-        console.log('VideoCompressionService: Performing Android 9 specific validation');
-        
-        const validation = await validateVideoMetadataAndroid9(videoUri);
-        if (!validation.isValid) {
-          throw new Error(`Android 9 video validation failed: ${validation.error}`);
-        }
-        
-        console.log('VideoCompressionService: Android 9 validation passed');
-        
-        // Use Android 9 compatible compression
+        console.log('VideoCompressionService: Using Android 9 compatible compression');
         compressedCacheUri = await compressVideoAndroid9Compatible(videoUri, { progressCallback });
-        compressionSuccessful = true;
-        
       } else {
-        // Use standard compression for newer Android versions
-        console.log('VideoCompressionService: Using standard compression for newer Android');
-        
-        const result = await Video.compress(
-          videoUri,
-          {
-            compressionMethod: 'auto',
-            getCancellationId: (cancellationId) => {
-              console.log('VideoCompressionService: Standard compression started with ID:', cancellationId);
-            }
-          },
-          (progress) => {
-            const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
-            console.log(`VideoCompressionService: Standard compression progress: ${Math.round(validProgress * 100)}%`);
-            if (progressCallback) {
-              progressCallback(validProgress);
-            }
-          }
-        );
-        
-        if (!result || typeof result !== 'string') {
-          throw new Error('Standard compression failed to return a valid path.');
-        }
-        
-        compressedCacheUri = result;
-        compressionSuccessful = true;
+        console.log('VideoCompressionService: Using progressive compression with fallbacks');
+        compressedCacheUri = await compressVideoWithFallbacks(videoUri, { progressCallback });
       }
       
+      compressionSuccessful = true;
       console.log('VideoCompressionService: Compression completed, temp file:', compressedCacheUri);
       
-      // Add extra wait time for Android 9
+      // Update progress to 80%
+      progressCallback(0.8);
+      
+      // Wait for filesystem sync
       const waitTime = isAndroid9OrLower() ? 2000 : 1000;
       console.log(`VideoCompressionService: Waiting ${waitTime}ms for filesystem sync...`);
       await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -345,17 +476,26 @@ const VideoCompressionService = {
       
       console.log(`VideoCompressionService: Compressed file verified. Size: ${compressedFileInfo.size} bytes`);
       
-      // Move to permanent storage
-      const permanentUri = await moveCompressedFileToPermanentStorage(compressedCacheUri);
+      // Update progress to 90%
+      progressCallback(0.9);
       
-      console.log('VideoCompressionService: File successfully moved to permanent location:', permanentUri);
+      // Move to permanent storage (only if not already in permanent location)
+      let permanentUri = compressedCacheUri;
+      if (!compressedCacheUri.includes('videofiles/')) {
+        permanentUri = await moveCompressedFileToPermanentStorage(compressedCacheUri);
+      }
+      
+      // Final progress update
+      progressCallback(1.0);
+      
+      console.log('VideoCompressionService: File successfully processed:', permanentUri);
       
       return permanentUri;
 
     } catch (error) {
       console.error('VideoCompressionService: Video compression failed:', error);
 
-      // Enhanced cleanup for Android 9
+      // Enhanced cleanup
       if (compressedCacheUri && compressionSuccessful) {
         try {
           const cacheFileExists = await safeFileCheck(compressedCacheUri, 1, 0);
@@ -368,29 +508,14 @@ const VideoCompressionService = {
         }
       }
       
-      // Handle Android 9 specific errors
-      let userMessage = 'Failed to compress video. Please try again.';
+      // Generate user-friendly error message
+      const userMessage = generateUserFriendlyErrorMessage(error);
       
-      if (error.message) {
-        if (error.message.includes('NumberFormatException') || error.message.includes('-9223372036854775808')) {
-          userMessage = 'Video format not supported on this Android version. Please try a different video or record a new one.';
-        } else if (error.message.includes('Android 9')) {
-          userMessage = 'Video processing failed on Android 9. Please try recording a shorter video or use a different format.';
-        } else if (error.message.includes('too large')) {
-          userMessage = error.message;
-        } else if (error.message.includes('cancel')) {
-          Alert.alert('Cancelled', 'Video compression was cancelled.');
-          return null; 
-        } else if (error.message.includes('does not exist')) {
-          userMessage = 'Video file not found. Please select the video again.';
-        } else if (error.message.includes('storage') || error.message.includes('space')) {
-          userMessage = 'Not enough storage space. Please free up some space and try again.';
-        } else if (error.message.includes('permission')) {
-          userMessage = 'Permission denied. Please check app permissions.';
-        }
+      // Don't show alert for cancellation
+      if (!userMessage.includes('cancelled')) {
+        Alert.alert('Compression Error', userMessage);
       }
       
-      Alert.alert('Compression Error', userMessage);
       throw error;
     }
   },
@@ -399,17 +524,19 @@ const VideoCompressionService = {
     console.log('VideoCompressionService: Compression cancellation requested.');
   },
 
-  // Enhanced compression info for Android 9
   async getCompressionInfo(videoUri) {
     try {
-      const fileInfo = await safeFileCheck(videoUri, 1, 0);
+      const validation = await validateVideoFile(videoUri);
       const result = {
-        exists: fileInfo.exists,
-        size: fileInfo.size || 0,
-        sizeInMB: fileInfo.size ? (fileInfo.size / (1024 * 1024)).toFixed(2) : 0,
+        exists: validation.isValid,
+        size: validation.size || 0,
+        sizeInMB: validation.size ? (validation.size / (1024 * 1024)).toFixed(2) : 0,
+        duration: validation.duration,
         platform: Platform.OS,
         androidVersion: Platform.Version,
-        isAndroid9Compatible: isAndroid9OrLower()
+        isAndroid9Compatible: isAndroid9OrLower(),
+        width: validation.width,
+        height: validation.height
       };
       
       console.log('VideoCompressionService: Compression info:', result);

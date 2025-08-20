@@ -1,7 +1,8 @@
-// VideoUploadInterface.tsx - Fixed with Retry Logic and Updated APIs
+// VideoUploadInterface.tsx - Android 9 Compatible Version
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -9,6 +10,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +25,7 @@ import VideoTrimmer from './VideoTrimmer';
 
 const { width } = Dimensions.get('window');
 const MAX_VIDEO_DURATION = 30.5;
+const ANDROID_9_API_LEVEL = 28;
 
 enum UploadState {
   IDLE = 'idle',
@@ -31,6 +34,11 @@ enum UploadState {
   PROCESSING = 'processing',
   COMPLETE = 'complete'
 }
+
+// Check if we're on Android 9 or lower
+const isAndroid9OrLower = (): boolean => {
+  return Platform.OS === 'android' && Platform.Version <= ANDROID_9_API_LEVEL;
+};
 
 const initializeVideoFilesDirectory = async () => {
   try {
@@ -47,6 +55,40 @@ const normalizeUri = (uri: string): string => {
   return uri.startsWith('file://') ? uri : `file://${uri}`;
 };
 
+// Android 9 specific video validation
+const validateVideoForAndroid9 = async (uri: string): Promise<{ isValid: boolean; error?: string; duration?: number }> => {
+  try {
+    console.log('VideoUpload: Validating video for Android 9:', uri);
+
+    // Check file exists and has size
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    if (!fileInfo.exists || !fileInfo.size || fileInfo.size === 0) {
+      return { isValid: false, error: 'File does not exist or is empty' };
+    }
+
+    // Try to get video duration using MediaLibrary (more reliable on Android 9)
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status === 'granted') {
+        const asset = await MediaLibrary.createAssetAsync(uri);
+        if (asset && asset.duration !== undefined && asset.duration > 0) {
+          console.log('VideoUpload: Android 9 validation successful via MediaLibrary');
+          return { isValid: true, duration: asset.duration };
+        }
+      }
+    } catch (mediaLibError) {
+      console.log('VideoUpload: MediaLibrary validation failed, but continuing:', mediaLibError.message);
+    }
+
+    // Basic validation passed even if MediaLibrary failed
+    return { isValid: true };
+
+  } catch (error) {
+    console.error('VideoUpload: Android 9 validation failed:', error);
+    return { isValid: false, error: error.message };
+  }
+};
+
 const ensureVideoIsPersistent = async (temporaryUri: string, retries = 3, delay = 500): Promise<string> => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -57,16 +99,21 @@ const ensureVideoIsPersistent = async (temporaryUri: string, retries = 3, delay 
       const sourceUri = normalizeUri(temporaryUri);
       const destUri = normalizeUri(permanentUri);
 
-      // Check if source file exists before copying
       const sourceInfo = await FileSystem.getInfoAsync(sourceUri);
-      if (!sourceInfo.exists) {
-        throw new Error('Source video file does not exist.');
+      if (!sourceInfo.exists || sourceInfo.size === 0) {
+        throw new Error('Source video file does not exist or is empty.');
       }
 
       await FileSystem.copyAsync({ from: sourceUri, to: destUri });
 
+      // Extra wait time for Android 9
+      if (isAndroid9OrLower()) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
       const fileInfo = await FileSystem.getInfoAsync(destUri);
-      if (fileInfo.exists && fileInfo.size) {
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > 0) {
+        console.log('VideoUpload: Video made persistent successfully');
         return destUri;
       }
       throw new Error('Failed to copy video to persistent storage.');
@@ -82,49 +129,82 @@ const ensureVideoIsPersistent = async (temporaryUri: string, retries = 3, delay 
   throw new Error('Failed to make video persistent after multiple retries.');
 };
 
-// Retry logic for video selection with exponential backoff
+// Enhanced retry logic for Android 9
 const retryVideoSelection = async (maxRetries = 3): Promise<ImagePicker.ImagePickerResult> => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      console.log(`Video selection attempt ${attempt + 1}/${maxRetries}`);
-      
-      // Try different API versions based on what's available
+      console.log(`Video selection attempt ${attempt + 1}/${maxRetries} (Android ${Platform.Version})`);
+
+      // Android 9 specific configuration
       let mediaTypeConfig;
-      
-      if (ImagePicker.MediaTypeOptions && ImagePicker.MediaTypeOptions.Videos) {
-        // Legacy API (still widely supported)
-        mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
-      } else if (ImagePicker.MediaType && ImagePicker.MediaType.Videos) {
-        // New API format
-        mediaTypeConfig = { mediaTypes: [ImagePicker.MediaType.Videos] };
+      let additionalOptions = {};
+
+      if (isAndroid9OrLower()) {
+        console.log('VideoUpload: Using Android 9 compatible image picker settings');
+
+        // Use legacy API for Android 9
+        if (ImagePicker.MediaTypeOptions && ImagePicker.MediaTypeOptions.Videos) {
+          mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
+        } else {
+          mediaTypeConfig = { mediaTypes: 'Videos' as any };
+        }
+
+        // More conservative settings for Android 9
+        additionalOptions = {
+          quality: 0.8, // Slightly lower quality for compatibility
+          videoMaxDuration: 120, // Shorter max duration
+          allowsEditing: false,
+          allowsMultipleSelection: false,
+        };
       } else {
-        // Fallback - try string value
-        mediaTypeConfig = { mediaTypes: 'Videos' as any };
+        // Use newer API for modern Android
+        if (ImagePicker.MediaType && ImagePicker.MediaType.Videos) {
+          mediaTypeConfig = { mediaTypes: [ImagePicker.MediaType.Videos] };
+        } else if (ImagePicker.MediaTypeOptions && ImagePicker.MediaTypeOptions.Videos) {
+          mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
+        } else {
+          mediaTypeConfig = { mediaTypes: 'Videos' as any };
+        }
+
+        additionalOptions = {
+          quality: 1,
+          videoMaxDuration: 300,
+          allowsEditing: false,
+          allowsMultipleSelection: false,
+        };
       }
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         ...mediaTypeConfig,
-        allowsEditing: false,
-        quality: 1,
-        videoMaxDuration: 300,
-        allowsMultipleSelection: false,
+        ...additionalOptions,
+      });
+
+      console.log('VideoUpload: Image picker result:', {
+        cancelled: result.canceled,
+        hasAssets: !!result.assets,
+        assetsLength: result.assets?.length,
+        platform: Platform.OS,
+        version: Platform.Version
       });
 
       return result;
     } catch (error) {
       console.error(`Video selection attempt ${attempt + 1} failed:`, error);
-      
+
       if (attempt === maxRetries - 1) {
         throw error;
       }
-      
-      // Exponential backoff delay
-      const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+
+      // Longer delay for Android 9
+      const delay = isAndroid9OrLower()
+        ? Math.pow(2, attempt) * 1500  // 1.5s, 3s, 6s for Android 9
+        : Math.pow(2, attempt) * 1000; // 1s, 2s, 4s for newer versions
+
       console.log(`Retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
+
   throw new Error('Failed to select video after all retries');
 };
 
@@ -154,12 +234,13 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   const [videoDuration, setVideoDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSelectingVideo, setIsSelectingVideo] = useState(false);
-  const [selectionAttempt, setSelectionAttempt] = useState(0); // Track retry attempts
+  const [selectionAttempt, setSelectionAttempt] = useState(0);
   const [needsTrimming, setNeedsTrimming] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [hasBeenTrimmed, setHasBeenTrimmed] = useState(false);
   const [originalDuration, setOriginalDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [android9Warning, setAndroid9Warning] = useState(false);
 
   const [uploadState, setUploadState] = useState<UploadState>(UploadState.IDLE);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -170,6 +251,14 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     player.loop = false;
     player.muted = false;
   });
+
+  // Check for Android 9 on component mount
+  useEffect(() => {
+    if (isAndroid9OrLower()) {
+      console.log('VideoUpload: Running on Android 9 or lower, enabling compatibility mode');
+      setAndroid9Warning(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (initialVideo) {
@@ -191,9 +280,9 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         } else {
           setNeedsTrimming(false);
         }
-        
+
         if (!hasBeenTrimmed) {
-            setOriginalDuration(durationSeconds);
+          setOriginalDuration(durationSeconds);
         }
       }
       setIsPlaying(status.status === 'playing');
@@ -212,15 +301,15 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const getUploadStateText = () => {
     switch (uploadState) {
-      case UploadState.COMPRESSING: 
+      case UploadState.COMPRESSING:
         return t('videoUploadInterface.compressingVideo');
-      case UploadState.UPLOADING: 
+      case UploadState.UPLOADING:
         return uploadPhase || t('videoUploadInterface.uploadingVideo');
-      case UploadState.PROCESSING: 
+      case UploadState.PROCESSING:
         return uploadPhase || t('videoUploadInterface.processingVideo');
-      case UploadState.COMPLETE: 
+      case UploadState.COMPLETE:
         return t('videoUploadInterface.uploadComplete');
-      default: 
+      default:
         return t('videoUploadInterface.uploadButton');
     }
   };
@@ -239,31 +328,24 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     try {
       setIsSelectingVideo(true);
       setSelectionAttempt(0);
-      
-      // Debug: Log available ImagePicker properties
-      console.log('ImagePicker properties:', {
-        hasMediaTypeOptions: !!ImagePicker.MediaTypeOptions,
-        hasMediaType: !!ImagePicker.MediaType,
-        MediaTypeOptions: ImagePicker.MediaTypeOptions,
-        MediaType: ImagePicker.MediaType,
-      });
-      
+
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permissionResult.granted === false) {
         Alert.alert(t('videoUploadInterface.alertError'), t('cameraScreen.mediaLibraryPermissionMessage'));
         return;
       }
 
-      // Clear any potential cache issues
-      try {
-        const cacheDir = `${FileSystem.cacheDirectory}ImagePicker/`;
-        const cacheInfo = await FileSystem.getInfoAsync(cacheDir);
-        if (cacheInfo.exists) {
-          console.log('Clearing ImagePicker cache...');
-          await FileSystem.deleteAsync(cacheDir, { idempotent: true });
+      // Clear cache for Android 9
+      if (isAndroid9OrLower()) {
+        try {
+          const cacheDir = `${FileSystem.cacheDirectory}ImagePicker/`;
+          const cacheInfo = await FileSystem.getInfoAsync(cacheDir);
+          if (cacheInfo.exists) {
+            await FileSystem.deleteAsync(cacheDir, { idempotent: true });
+          }
+        } catch (cacheError) {
+          console.log('Cache clear failed (non-critical):', cacheError);
         }
-      } catch (cacheError) {
-        console.log('Cache clear failed (non-critical):', cacheError);
       }
 
       const result = await retryVideoSelection(3);
@@ -272,17 +354,17 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         const asset = result.assets[0];
         if (!asset.uri) throw new Error('No URI in selected video');
 
-        console.log('Selected video asset:', {
-          uri: asset.uri,
-          fileName: asset.fileName,
-          type: asset.type,
-          fileSize: asset.fileSize,
-        });
+        // Android 9 specific validation
+        if (isAndroid9OrLower()) {
+          const validation = await validateVideoForAndroid9(asset.uri);
+          if (!validation.isValid) {
+            throw new Error(`Android 9 validation failed: ${validation.error}`);
+          }
+        }
 
-        // Enhanced file persistence with retry
-        const persistentUri = await ensureVideoIsPersistent(asset.uri, 5, 1000); // More retries for persistence
+        const persistentUri = await ensureVideoIsPersistent(asset.uri, 5, 1000);
         const fileName = asset.fileName || `video_${Date.now()}.mp4`;
-        
+
         let mimeType = 'video/mp4';
         if (asset.type && asset.type.includes('/')) {
           mimeType = asset.type;
@@ -297,8 +379,6 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           mimeType: mimeType,
         };
 
-        console.log('Video file created successfully:', videoFile);
-
         setHasBeenTrimmed(false);
         setOriginalDuration(0);
         setVideoLoaded(false);
@@ -312,29 +392,28 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       }
     } catch (error: any) {
       console.error('Error in handleSelectVideo:', error);
-      
+
       let errorMessage = t('videoUploadInterface.alertFailedSelectVideo');
-      
-      if (error.message?.includes('rejected') || error.message?.includes('Failed to write')) {
+
+      if (isAndroid9OrLower() && (
+        error.message?.includes('NumberFormatException') ||
+        error.message?.includes('-9223372036854775808') ||
+        error.message?.includes('Android 9')
+      )) {
+        errorMessage = 'Video format not supported on Android 9. Please try recording a new video or choose a different one.';
+      } else if (error.message?.includes('rejected') || error.message?.includes('Failed to write')) {
         errorMessage = 'Failed to access video file. Please try again or choose a different video.';
       } else if (error.message?.includes('Permission')) {
         errorMessage = 'Permission denied. Please check app permissions in Settings.';
-      } else if (error.message?.includes('timeout')) {
-        errorMessage = 'Video selection timed out. Please try again.';
-      } else if (error.message?.includes('Cannot read property')) {
-        errorMessage = 'Video picker configuration error. Please update the app or try again.';
       }
-      
+
       Alert.alert(
-        t('videoUploadInterface.alertError'), 
+        t('videoUploadInterface.alertError'),
         errorMessage,
         [
-          { 
-            text: 'Retry', 
-            onPress: () => {
-              // Short delay before retry
-              setTimeout(() => handleSelectVideo(), 1000);
-            }
+          {
+            text: 'Retry',
+            onPress: () => setTimeout(() => handleSelectVideo(), 1000)
           },
           { text: 'Cancel', style: 'cancel' }
         ]
@@ -351,7 +430,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       setShowTrimmer(false);
       return;
     }
-    
+
     try {
       if (selectedVideo) {
         const updatedVideo: VideoFile = {
@@ -372,7 +451,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     }
   };
 
-  const handleTrimComplete = (videoData: { startTime: number, endTime: number, uri: string }) => {
+  const handleTrimComplete = () => {
     setShowTrimmer(false);
   };
 
@@ -398,16 +477,16 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     setUploadProgress(0);
     setUploadPhase('');
     animateProgress(0);
-    
+
     try {
       setUploadState(UploadState.COMPRESSING);
       setUploadPhase(t('cameraScreen.preparingVideo'));
-      
+
       const videoExists = await FileSystem.getInfoAsync(selectedVideo.uri);
       if (!videoExists.exists) throw new Error('Video file not found before compression');
-      
+
       setUploadPhase(t('videoUploadInterface.compressingVideo'));
-      
+
       const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
@@ -419,10 +498,10 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           }
         },
       });
-      
+
       const compressedExists = await FileSystem.getInfoAsync(compressedUri);
       if (!compressedExists.exists) throw new Error('Compressed video file not found after compression');
-      
+
       setUploadProgress(50);
       animateProgress(50);
       setUploadPhase(t('videoUploadInterface.uploadComplete'));
@@ -492,8 +571,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         setTimeout(() => {
           setIsLoading(false);
           Alert.alert(
-            t('videoUploadInterface.alertSuccess'), 
-            t('videoUploadInterface.alertVideoUploaded'), 
+            t('videoUploadInterface.alertSuccess'),
+            t('videoUploadInterface.alertVideoUploaded'),
             [{ text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }]
           );
         }, 1000);
@@ -508,13 +587,25 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       setUploadPhase('');
       animateProgress(0);
       setIsPlaying(false);
+
       let errorMessage = t('alerts.unexpectedError');
       if (error.message) {
-        if (error.message.includes('Authentication')) errorMessage = t('alerts.authRequired');
-        else if (error.message.includes('timeout')) errorMessage = t('alerts.trimmingErrorMessageTimeout');
-        else if (error.message.includes('Network') || error.message.includes('network')) errorMessage = t('forgotPassword.alertNetworkError');
-        else if (error.message.includes('cancel')) errorMessage = t('alerts.cancel');
-        else errorMessage = error.message;
+        if (isAndroid9OrLower() && (
+          error.message.includes('NumberFormatException') ||
+          error.message.includes('-9223372036854775808')
+        )) {
+          errorMessage = 'Video compression failed on Android 9. Please try a different video or record a new one.';
+        } else if (error.message.includes('Authentication')) {
+          errorMessage = t('alerts.authRequired');
+        } else if (error.message.includes('timeout')) {
+          errorMessage = t('alerts.trimmingErrorMessageTimeout');
+        } else if (error.message.includes('Network') || error.message.includes('network')) {
+          errorMessage = t('forgotPassword.alertNetworkError');
+        } else if (error.message.includes('cancel')) {
+          errorMessage = t('alerts.cancel');
+        } else {
+          errorMessage = error.message;
+        }
       }
       Alert.alert(t('videoUploadInterface.alertError'), errorMessage);
     }
@@ -522,45 +613,23 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
   const renderUploadProgress = () => {
     if (!isLoading) return null;
-    
-    const progressMessage = uploadPhase || getUploadStateText();
 
     return (
       <View style={styles.progressContainer}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.progressText}>{progressMessage}</Text>
-        </View>
+        <Text style={styles.progressText}>{uploadPhase || getUploadStateText()}</Text>
         <View style={styles.progressBarContainer}>
           <Animated.View
             style={[
               styles.progressBar,
-              { 
-                width: progressAnimation.interpolate({ 
-                  inputRange: [0, 100], 
-                  outputRange: ['0%', '100%'], 
-                  extrapolate: 'clamp' 
-                }) 
+              {
+                width: progressAnimation.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: ['0%', '100%'],
+                  extrapolate: 'clamp'
+                })
               },
             ]}
           />
-        </View>
-      </View>
-    );
-  };
-
-  const renderGalleryLoading = () => {
-    if (!isSelectingVideo) return null;
-    
-    return (
-      <View style={styles.galleryLoadingContainer}>
-        <View style={styles.galleryLoadingContent}>
-          <ActivityIndicator size="large" color="#3260a0" />
-          <Text style={styles.galleryLoadingText}>
-            {selectionAttempt > 0 
-              ? `Retry attempt ${selectionAttempt}/3...`
-              : t('videoUploadInterface.processingVideo') || 'Processing selected video...'
-            }
-          </Text>
         </View>
       </View>
     );
@@ -575,12 +644,12 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         </View>
       );
     }
-    
+
     return (
       <View style={styles.videoContainer}>
         <VideoView style={styles.video} player={player} contentFit="contain" />
-        <TouchableOpacity 
-          style={styles.playButton} 
+        <TouchableOpacity
+          style={styles.playButton}
           onPress={handlePlayPause}
           disabled={isLoading || isSelectingVideo}
         >
@@ -606,8 +675,8 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     <ScrollView style={styles.container}>
       {onCancel && (
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={onCancel} 
+          <TouchableOpacity
+            onPress={onCancel}
             style={styles.closeButton}
             disabled={isAnyLoading}
           >
@@ -618,14 +687,23 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         </View>
       )}
 
+      {/* Android 9 Warning */}
+      {android9Warning && !selectedVideo && (
+        <View style={styles.warningContainer}>
+          <Text style={styles.warningText}>
+           .
+          </Text>
+        </View>
+      )}
+
       {!isFromRecording && (
-        <TouchableOpacity 
-          style={[styles.selectVideoButton, isAnyLoading && styles.disabledButton]} 
-          onPress={handleSelectVideo} 
+        <TouchableOpacity
+          style={[styles.selectVideoButton, isAnyLoading && styles.disabledButton]}
+          onPress={handleSelectVideo}
           disabled={isAnyLoading}
         >
           {isSelectingVideo ? (
-            <View style={styles.selectVideoButtonLoading}>
+            <View style={styles.buttonLoading}>
               <ActivityIndicator size="small" color="white" style={{ marginRight: 10 }} />
               <Text style={styles.selectVideoText}>
                 {t('loading.loadingVideos') || 'Selecting Video...'}
@@ -639,33 +717,38 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
         </TouchableOpacity>
       )}
 
-      {renderGalleryLoading()}
-
       {selectedVideo && (
         <>
           <View style={styles.previewSection}>
             {renderVideoPreview()}
             {videoLoaded && videoDuration > 0 && !isSelectingVideo && (
-              needsTrimming ? (
-                <View style={styles.warningContainer}>
-                  <Text style={styles.warningText}>
-                    {t('videoUploadInterface.videoTooLong', { maxDuration: MAX_VIDEO_DURATION })}
-                  </Text>
-                  <TouchableOpacity 
-                    style={[styles.trimButton, isAnyLoading && styles.disabledButton]} 
-                    onPress={() => setShowTrimmer(true)}
-                    disabled={isAnyLoading}
-                  >
-                    <Text style={styles.trimButtonText}>{t('videoUploadInterface.trimVideo')}</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <Text style={styles.durationText}>
-                  {t('videoUploadInterface.duration', { 
-                    duration: videoDuration.toFixed(1)
-                  })}
+              <>
+                {needsTrimming && (
+                  <View style={styles.warningContainer}>
+                    <Text style={styles.warningText}>
+                      {t('videoUploadInterface.videoTooLong', { maxDuration: MAX_VIDEO_DURATION })}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.trimButton, isAnyLoading && styles.disabledButton]}
+                      onPress={() => setShowTrimmer(true)}
+                      disabled={isAnyLoading}
+                    >
+                      <Text style={styles.trimButtonText}>{t('videoUploadInterface.trimVideo')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Always show duration, but with different styling if trimmed */}
+                <Text style={[
+                  styles.durationText,
+                  hasBeenTrimmed && styles.trimmedDurationText
+                ]}>
+                  {hasBeenTrimmed
+                    ? `${videoDuration.toFixed(1)}s (trimmed from ${originalDuration.toFixed(1)}s)`
+                    : `${videoDuration.toFixed(1)}s`
+                  }
                 </Text>
-              )
+              </>
             )}
           </View>
 
@@ -684,36 +767,34 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
               {renderUploadProgress()}
 
-              <View style={styles.uploadSection}>
-                <TouchableOpacity
-                  style={[
-                    styles.uploadButton, 
-                    (!videoTitle.trim() || isAnyLoading || needsTrimming) && styles.disabledButton
-                  ]}
-                  onPress={handleSave}
-                  disabled={!videoTitle.trim() || isAnyLoading || needsTrimming}
-                >
-                  {isLoading ? (
-                    <View style={styles.uploadButtonLoading}>
-                      <ActivityIndicator size="small" color="white" style={{ marginRight: 10 }} />
-                      <Text style={styles.uploadButtonText}>{getUploadStateText()}</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.uploadButtonText}>{t('videoUploadInterface.uploadButton')}</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.uploadButton,
+                  (!videoTitle.trim() || isAnyLoading || needsTrimming) && styles.disabledButton
+                ]}
+                onPress={handleSave}
+                disabled={!videoTitle.trim() || isAnyLoading || needsTrimming}
+              >
+                {isLoading ? (
+                  <View style={styles.buttonLoading}>
+                    <ActivityIndicator size="small" color="white" style={{ marginRight: 10 }} />
+                    <Text style={styles.uploadButtonText}>{getUploadStateText()}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.uploadButtonText}>{t('videoUploadInterface.uploadButton')}</Text>
+                )}
+              </TouchableOpacity>
             </>
           )}
         </>
       )}
 
       {showTrimmer && selectedVideo && !isSelectingVideo && (
-        <VideoTrimmer 
-          videoUri={selectedVideo.uri} 
-          maxDuration={30} 
-          onCancel={handleTrimCancel} 
-          onSave={handleTrimSave} 
+        <VideoTrimmer
+          videoUri={selectedVideo.uri}
+          maxDuration={30}
+          onCancel={handleTrimCancel}
+          onSave={handleTrimSave}
           onTrimComplete={handleTrimComplete}
         />
       )}
@@ -723,83 +804,58 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 20, 
-    paddingVertical: 15, 
-    backgroundColor: 'white', 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#e0e0e0' 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0'
   },
   closeButton: { padding: 5 },
   headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
   placeholder: { width: 34 },
-  selectVideoButton: { 
-    backgroundColor: '#3260ad', 
-    marginHorizontal: 20, 
-    marginVertical: 20, 
-    paddingVertical: 15, 
-    borderRadius: 8, 
-    alignItems: 'center' 
+  selectVideoButton: {
+    backgroundColor: '#3260ad',
+    marginHorizontal: 20,
+    marginVertical: 20,
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center'
   },
   selectVideoText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  selectVideoButtonLoading: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
-  galleryLoadingContainer: {
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  galleryLoadingContent: {
+  buttonLoading: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  galleryLoadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
+    justifyContent: 'center'
   },
   previewSection: { marginHorizontal: 20, marginBottom: 20 },
-  videoContainer: { 
-    backgroundColor: 'white', 
-    borderRadius: 12, 
-    overflow: 'hidden', 
-    position: 'relative' 
+  videoContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative'
   },
   video: { width: '100%', height: 200, backgroundColor: '#000' },
-  playButton: { 
-    position: 'absolute', 
-    top: '50%', 
-    left: '50%', 
-    transform: [{ translateX: -25 }, { translateY: -25 }], 
-    backgroundColor: 'rgba(0,0,0,0.6)', 
-    borderRadius: 25, 
-    width: 50, 
-    height: 50, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  playButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -25 }, { translateY: -25 }],
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  loadingOverlay: { 
-    ...StyleSheet.absoluteFillObject, 
-    backgroundColor: 'rgba(0,0,0,0.3)', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   loadingOverlayText: {
     color: 'white',
@@ -808,87 +864,84 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'center',
   },
-  warningContainer: { 
-    backgroundColor: '#fff3cd', 
-    borderColor: '#ffeaa7', 
-    borderWidth: 1, 
-    borderRadius: 8, 
-    padding: 15, 
-    marginTop: 15 
+  warningContainer: {
+    backgroundColor: '#fff3cd',
+    borderColor: '#ffeaa7',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 15,
+    marginHorizontal: 20,
+    marginBottom: 15
   },
-  warningText: { 
-    color: '#856404', 
-    fontSize: 14, 
-    textAlign: 'center', 
-    marginBottom: 10 
+  warningText: {
+    color: '#856404',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 10
   },
-  durationText: { 
-    color: '#28a745', 
-    fontSize: 14, 
-    textAlign: 'center', 
-    backgroundColor: '#d4edda', 
-    borderColor: '#c3e6cb', 
-    borderWidth: 1, 
-    borderRadius: 8, 
-    padding: 10, 
-    marginTop: 15 
+  durationText: {
+    color: '#28a745',
+    fontSize: 14,
+    textAlign: 'center',
+    backgroundColor: '#d4edda',
+    borderColor: '#c3e6cb',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 15
   },
-  videoPlaceholder: { 
-    backgroundColor: 'white', 
-    borderRadius: 12, 
-    height: 200, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    borderWidth: 2, 
-    borderColor: '#e0e0e0', 
-    borderStyle: 'dashed' 
+  videoPlaceholder: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed'
   },
   placeholderText: { marginTop: 10, color: '#666', fontSize: 16 },
-  trimButton: { 
-    backgroundColor: '#FF6B35', 
-    paddingVertical: 12, 
-    paddingHorizontal: 20, 
-    borderRadius: 8, 
-    alignItems: 'center', 
-    justifyContent: 'center' 
+  trimButton: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   trimButtonText: { color: 'white', fontSize: 14, fontWeight: '600' },
   inputSection: { marginHorizontal: 20, marginBottom: 20 },
   inputLabel: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 8 },
-  titleInput: { 
-    backgroundColor: 'white', 
-    borderRadius: 8, 
-    paddingHorizontal: 15, 
-    paddingVertical: 12, 
-    fontSize: 16, 
-    borderWidth: 1, 
-    borderColor: '#e0e0e0' 
+  titleInput: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0'
   },
-  disabledInput: { 
-    backgroundColor: '#f8f9fa', 
-    color: '#6c757d' 
+  disabledInput: {
+    backgroundColor: '#f8f9fa',
+    color: '#6c757d'
   },
-  uploadSection: { marginHorizontal: 20, marginBottom: 20 },
-  uploadButton: { 
-    backgroundColor: '#3260ad', 
-    paddingVertical: 15, 
-    borderRadius: 8, 
-    alignItems: 'center' 
+  uploadButton: {
+    backgroundColor: '#3260ad',
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20
   },
   uploadButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-  uploadButtonLoading: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
   disabledButton: { backgroundColor: '#bdc3c7' },
-  progressContainer: { 
-    backgroundColor: 'white', 
-    marginHorizontal: 20, 
-    marginBottom: 20, 
-    borderRadius: 12, 
-    padding: 15, 
-    borderWidth: 1, 
+  progressContainer: {
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 15,
+    borderWidth: 1,
     borderColor: '#e0e0e0',
     elevation: 2,
     shadowColor: '#000',
@@ -896,23 +949,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  progressHeader: { 
-    alignItems: 'center', 
-    marginBottom: 10 
+  progressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 10
   },
-  progressText: { 
-    fontSize: 14, 
-    fontWeight: '600', 
-    color: '#333', 
-    textAlign: 'center' 
-  },
-  progressBarContainer: { 
-    height: 8, 
-    backgroundColor: '#e9ecef', 
-    borderRadius: 4, 
-    overflow: 'hidden' 
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#e9ecef',
+    borderRadius: 4,
+    overflow: 'hidden'
   },
   progressBar: { height: '100%', backgroundColor: '#3260ad', borderRadius: 4 },
+   trimmedDurationText: { 
+    backgroundColor: '#d1ecf1', 
+    borderColor: '#bee5eb',
+    color: '#0c5460'
+  },
 });
 
 export default VideoUploadInterface;
