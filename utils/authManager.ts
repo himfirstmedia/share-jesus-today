@@ -21,7 +21,9 @@ class AuthManager {
     if (!this.initializationPromise) {
       this.initializationPromise = (async () => {
         try {
+          console.log('🔄 AuthManager: Starting initialization...');
           const token = await AsyncStorage.getItem('authToken');
+
           if (token) {
             this.authToken = token;
             console.log('🔑 AuthManager: Token initialized from storage');
@@ -31,8 +33,14 @@ class AuthManager {
           }
         } catch (error) {
           console.error('❌ AuthManager: Failed to initialize token:', error);
-          // We might want to reject the promise here or handle it depending on strategy
-          // For now, it completes, but authToken remains null.
+
+          // Android 9/10 specific error handling
+          if (error.message?.includes('permission') || error.message?.includes('security')) {
+            console.error('🔒 Possible Android storage permission issue');
+          }
+
+          // Set token to null to ensure consistent state
+          this.authToken = null;
         }
       })();
     }
@@ -84,7 +92,13 @@ class AuthManager {
 
   // Check if authenticated
   isAuthenticated(): boolean {
-    return this.authToken !== null && this.authToken.length > 0;
+    console.log('🔍 Checking authentication status...');
+    console.log('🔍 Auth token:', this.authToken ? 'exists' : 'null');
+    console.log('🔍 Initialization promise:', this.initializationPromise ? 'exists' : 'null');
+
+    const result = this.authToken !== null && this.authToken.length > 0;
+    console.log('🔍 Authentication result:', result);
+    return result;
   }
 
   // Subscribe to auth token changes

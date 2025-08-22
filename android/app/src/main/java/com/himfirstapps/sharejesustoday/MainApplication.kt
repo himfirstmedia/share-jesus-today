@@ -1,7 +1,9 @@
 package com.himfirstapps.sharejesustoday
 
 import android.app.Application
+import android.content.Context
 import android.content.res.Configuration
+import androidx.multidex.MultiDex
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -17,6 +19,12 @@ import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
 
 class MainApplication : Application(), ReactApplication {
+
+  // CRITICAL: Add this method for Multidex support
+  override fun attachBaseContext(base: Context) {
+    super.attachBaseContext(base)
+    MultiDex.install(this)
+  }
 
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
         this,
@@ -42,12 +50,25 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
-    SoLoader.init(this, OpenSourceMergedSoMapping)
-    if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
-      // If you opted-in for the New Architecture, we load the native entry point for this app.
-      load()
+    
+    try {
+      SoLoader.init(this, OpenSourceMergedSoMapping)
+      
+      if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
+        // If you opted-in for the New Architecture, we load the native entry point for this app.
+        load()
+      }
+      
+      ApplicationLifecycleDispatcher.onApplicationCreate(this)
+      
+      // ADD: Log successful initialization for debugging
+      android.util.Log.d("MainApplication", "✅ App initialization completed successfully")
+      
+    } catch (e: Exception) {
+      // ADD: Catch any initialization errors
+      android.util.Log.e("MainApplication", "❌ App initialization failed", e)
+      throw e
     }
-    ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

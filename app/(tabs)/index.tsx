@@ -485,10 +485,29 @@ export default function HomeTabScreen() {
   };
 
   const navigateToPostVideo = () => {
-    if (AuthManager.isAuthenticated()) {
-      router.push('/(tabs)/post');
-    } else {
-      router.push('/(tabs)/AuthLanding');
+    try {
+      console.log('Attempting to navigate to post video...');
+
+      // Add a fallback check
+      let isAuth = false;
+      try {
+        isAuth = AuthManager.isAuthenticated();
+      } catch (authError) {
+        console.error('Auth check failed:', authError);
+        // Default to not authenticated on error
+        isAuth = false;
+      }
+
+      if (isAuth) {
+        console.log('User authenticated, navigating to post');
+        router.push('/(tabs)/post');
+      } else {
+        console.log('User not authenticated, navigating to auth');
+        router.push('/(tabs)/AuthLanding');
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Alert.alert('Error', 'Failed to navigate. Please try again.');
     }
   };
 
