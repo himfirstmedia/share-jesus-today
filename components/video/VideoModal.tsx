@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -22,8 +23,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Import react-native-video and its types
-import Video, { OnLoadData, OnProgressData } from 'react-native-video';
 
 import videoCacheService from '@/services/videoCacheService';
 import { t } from '@/utils/i18n';
@@ -67,10 +66,9 @@ interface VideoModalProps {
   onFlagPress?: () => void;
 }
 
-export const VideoModal: React.FC<VideoModalProps> = React.memo(({
+const VideoModalComponent: React.FC<VideoModalProps> = ({
   visible,
   video,
-  isLoading,
   onClose,
   onVideoLoad,
   onVideoError,
@@ -84,66 +82,22 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
   onFlagPress,
 }) => {
   const [showControls, setShowControls] = React.useState(true);
-  const [showLoading, setShowLoading] = React.useState(true);
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [currentTime, setCurrentTime] = React.useState(0);
-  const [duration, setDuration] = React.useState(0);
-  const [playerReady, setPlayerReady] = React.useState(false);
+  const [isPlaying, setIsPlaying] = React.useState(true);
   const [videoUri, setVideoUri] = React.useState<string | null>(null);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const videoViewRef = React.useRef<VideoView>(null);
 
-  // Ref for the react-native-video component
-  const videoPlayerRef = React.useRef<Video>(null);
+  const player = useVideoPlayer(videoUri || '', player => {
+    player.loop = false;
+    player.play();
+  });
+
   const controlsTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const progressUpdateTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Reanimated shared values for swipe animation
   const translateX = useSharedValue(0);
   const isSwipeInProgress = useSharedValue(false);
-
-  // Optimized buffer configuration for smoother playback
-  const bufferConfig = React.useMemo(() => ({
-    minBufferMs: Platform.OS === 'ios' ? 2000 : 3000,
-    maxBufferMs: Platform.OS === 'ios' ? 120000 : 150000,
-    bufferForPlaybackMs: Platform.OS === 'ios' ? 1000 : 1500,
-    bufferForPlaybackAfterRebufferMs: Platform.OS === 'ios' ? 1000 : 2000,
-    cacheSizeMB: 200,
-    backBufferDurationMs: 120000,
-  }), []);
-
-  // Throttled progress update to reduce re-renders
-  const throttledProgressUpdate = React.useCallback((currentTime: number) => {
-    if (progressUpdateTimeoutRef.current) return;
-    
-    progressUpdateTimeoutRef.current = setTimeout(() => {
-      setCurrentTime(currentTime);
-      progressUpdateTimeoutRef.current = null;
-    }, 500); // Update every 500ms instead of every frame
-  }, []);
-
-  // Handle video load success
-  const handleVideoLoad = React.useCallback(
-    (data: OnLoadData) => {
-      console.log('Video loaded successfully');
-      setDuration(data.duration);
-      setPlayerReady(true);
-      setShowLoading(false);
-      onVideoLoad();
-    },
-    [onVideoLoad]
-  );
-
-  // Handle video error
-  const handleVideoError = React.useCallback(
-    (error: any) => {
-      console.error('Video error:', error);
-      setShowLoading(false);
-      setPlayerReady(false);
-      onVideoError(error);
-    },
-    [onVideoError]
-  );
 
   // Debounced controls timeout
   const resetControlsTimeout = React.useCallback(() => {
@@ -170,11 +124,16 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
 
   // Toggle play/pause by updating state
   const togglePlayPause = React.useCallback(() => {
-    if (playerReady) {
-      setIsPlaying((prev) => !prev);
+    if (player) {
+      if (isPlaying) {
+        player.pause();
+      } else {
+        player.play();
+      }
+      setIsPlaying(!isPlaying);
       resetControlsTimeout();
     }
-  }, [playerReady, resetControlsTimeout]);
+  }, [player, isPlaying, resetControlsTimeout]);
 
   // Memoized time formatter
   const formatTime = React.useCallback((timeInSeconds: number): string => {
@@ -210,55 +169,38 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
   const handleSwipeToNext = React.useCallback(() => {
     if (onNextVideo && videoList && currentVideoIndex < videoList.length - 1) {
       console.log('Executing swipe to next video');
-      setIsPlaying(false);
-      setShowLoading(true);
-      setPlayerReady(false);
-      setCurrentTime(0);
-      setDuration(0);
+      player.pause();
       onNextVideo();
     }
-  }, [onNextVideo, videoList, currentVideoIndex]);
+  }, [onNextVideo, videoList, currentVideoIndex, player]);
 
   // Handle swipe to previous video
   const handleSwipeToPrevious = React.useCallback(() => {
     if (onPreviousVideo && currentVideoIndex > 0) {
       console.log('Executing swipe to previous video');
-      setIsPlaying(false);
-      setShowLoading(true);
-      setPlayerReady(false);
-      setCurrentTime(0);
-      setDuration(0);
+      player.pause();
       onPreviousVideo();
     }
-  }, [onPreviousVideo, currentVideoIndex]);
+  }, [onPreviousVideo, currentVideoIndex, player]);
 
   // Reset states when video changes or modal opens/closes
   React.useEffect(() => {
     if (visible && video?.url) {
       console.log('Video changed or modal opened:', video.url);
-      setShowLoading(true);
       setShowControls(true);
-      setPlayerReady(false);
       setIsPlaying(true); // Auto-play
-      setCurrentTime(0);
-      setDuration(0);
       resetControlsTimeout();
       translateX.value = 0;
       isSwipeInProgress.value = false;
+      player.replace(videoUri || '');
     } else if (!visible) {
-      setIsPlaying(false);
+      player.pause();
       setShowControls(true);
-      setShowLoading(true);
-      setPlayerReady(false);
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      if (progressUpdateTimeoutRef.current) {
-        clearTimeout(progressUpdateTimeoutRef.current);
-        progressUpdateTimeoutRef.current = null;
-      }
     }
-  }, [visible, video?.id, resetControlsTimeout]);
+  }, [visible, video, resetControlsTimeout, player, videoUri]);
 
   // Optimized video URI fetching with error handling
   React.useEffect(() => {
@@ -287,27 +229,32 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
     }
   }, [video?.url]);
 
-  // Optimized playback status monitoring with reduced frequency
   React.useEffect(() => {
-    if (!visible || !playerReady) return;
-    
-    const interval = setInterval(() => {
-      onPlaybackStatusUpdate({
-        isLoaded: playerReady,
-        isPlaying: isPlaying,
-        positionMillis: currentTime * 1000,
-        durationMillis: duration * 1000,
-      });
-    }, 2000); // Reduced frequency to every 2 seconds
-    
-    return () => clearInterval(interval);
-  }, [visible, playerReady, isPlaying, currentTime, duration, onPlaybackStatusUpdate]);
+    const playingSub = player.addListener('playingChange', (isPlaying) => {
+      setIsPlaying(isPlaying);
+      onPlaybackStatusUpdate({ isPlaying });
+    });
+
+    const statusSub = player.addListener('statusChange', (status, error) => {
+      if (status === 'error' && error) {
+        onVideoError(error);
+      }
+      if (status === 'readyToPlay') {
+        onVideoLoad();
+      }
+    });
+
+    return () => {
+      playingSub.remove();
+      statusSub.remove();
+    };
+  }, [player, onPlaybackStatusUpdate, onVideoError, onVideoLoad]);
+
 
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-      if (progressUpdateTimeoutRef.current) clearTimeout(progressUpdateTimeoutRef.current);
     };
   }, []);
 
@@ -396,9 +343,9 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
   }, [currentUserId, onClose, router]);
 
   // Memoized progress bar width calculation
-  const progressWidth = React.useMemo(() => 
-    duration > 0 ? `${(currentTime / duration) * 100}%` : '0%'
-  , [currentTime, duration]);
+  const progressWidth = React.useMemo(() =>
+    player.duration > 0 ? `${(player.currentTime / player.duration) * 100}%` : '0%'
+  , [player.currentTime, player.duration]);
 
   if (!visible || !video) {
     return null;
@@ -419,34 +366,16 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
             <Animated.View style={[styles.videoContentWrapper, animatedStyle]}>
               <View style={styles.videoContainer}>
                 {visible && videoUri && (
-                  <Video
-                    ref={videoPlayerRef}
-                    source={{ uri: videoUri }}
+                  <VideoView
+                    ref={videoViewRef}
                     style={styles.video}
-                    paused={!isPlaying}
-                    controls={false}
-                    resizeMode="contain"
-                    repeat={false}
-                    bufferConfig={bufferConfig}
-                    onLoadStart={() => setShowLoading(true)}
-                    onLoad={handleVideoLoad}
-                    onError={handleVideoError}
-                    onProgress={(data: OnProgressData) => throttledProgressUpdate(data.currentTime)}
-                    onReadyForDisplay={() => {
-                      setShowLoading(false);
-                      setPlayerReady(true);
-                    }}
-                    onEnd={() => setIsPlaying(false)}
-                    playInBackground={false}
-                    playWhenInactive={false}
-                    progressUpdateInterval={1000} // Reduce progress update frequency
-                    reportBandwidth={false} // Disable bandwidth reporting for better performance
-                    poster={video.thumbnailUrl} // Add poster for better loading experience
-                    posterResizeMode="cover"
+                    player={player}
+                    nativeControls={false}
+                    contentFit="contain"
                   />
                 )}
 
-                {showLoading && (
+                {player.status === 'loading' && (
                   <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>{t('videoModal.loadingVideo')}</Text>
@@ -455,9 +384,9 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
 
                 {/* FIXED: Persistent controls with proper positioning and higher z-index */}
                 <View style={styles.persistentControls}>
-                  <TouchableOpacity 
-                    style={styles.closeButton} 
-                    onPress={onClose} 
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={onClose}
                     activeOpacity={0.7}
                     hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                   >
@@ -490,7 +419,7 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
                       </Text>
                     </View>
 
-                    {playerReady && (
+                    {player.status === 'readyToPlay' && (
                       <View style={styles.centerControls}>
                         <TouchableOpacity
                           style={styles.playPauseButton}
@@ -503,15 +432,15 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
                     )}
 
                     <View style={styles.bottomControls}>
-                      {playerReady && duration > 0 && (
+                      {player.status === 'readyToPlay' && player.duration > 0 && (
                         <View style={styles.progressContainer}>
-                          <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+                          <Text style={styles.timeText}>{formatTime(player.currentTime)}</Text>
                           <View style={styles.progressBar}>
                             <View
                               style={[styles.progressFill, { width: progressWidth }]}
                             />
                           </View>
-                          <Text style={styles.timeText}>{formatTime(duration)}</Text>
+                          <Text style={styles.timeText}>{formatTime(player.duration)}</Text>
                         </View>
                       )}
                       <View style={styles.navigationIndicators}>
@@ -567,7 +496,9 @@ export const VideoModal: React.FC<VideoModalProps> = React.memo(({
       </GestureHandlerRootView>
     </Modal>
   );
-});
+};
+
+export const VideoModal = React.memo(VideoModalComponent);
 
 const styles = StyleSheet.create({
   container: {

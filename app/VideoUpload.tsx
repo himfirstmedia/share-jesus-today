@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Video, { OnLoadData } from 'react-native-video';
+import { AVPlaybackStatus, Video } from 'expo-av';
 import videoApiService from '../services/videoApiService';
 import VideoCompressionService from '../services/videoCompressionService';
 import VideoDetectionService from '../services/videoDetectionService'; // NEW IMPORT
@@ -130,11 +130,7 @@ const retryVideoSelection = async (maxRetries = 3): Promise<ImagePicker.ImagePic
       let additionalOptions = {};
       if (isAndroid9OrLower()) {
         console.log('VideoUpload: Using Android 9 compatible image picker settings');
-        if (ImagePicker.MediaTypeOptions && ImagePicker.MediaTypeOptions.Videos) {
-          mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
-        } else {
-          mediaTypeConfig = { mediaTypes: 'Videos' as any };
-        }
+        mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
         additionalOptions = {
           quality: 0.8,
           videoMaxDuration: 120,
@@ -142,13 +138,7 @@ const retryVideoSelection = async (maxRetries = 3): Promise<ImagePicker.ImagePic
           allowsMultipleSelection: false,
         };
       } else {
-        if (ImagePicker.MediaType && ImagePicker.MediaType.Videos) {
-          mediaTypeConfig = { mediaTypes: [ImagePicker.MediaType.Videos] };
-        } else if (ImagePicker.MediaTypeOptions && ImagePicker.MediaTypeOptions.Videos) {
-          mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
-        } else {
-          mediaTypeConfig = { mediaTypes: 'Videos' as any };
-        }
+        mediaTypeConfig = { mediaTypes: ImagePicker.MediaTypeOptions.Videos };
         additionalOptions = {
           quality: 1,
           videoMaxDuration: 300,
@@ -283,13 +273,15 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
   };
 
   // Updated handleVideoLoad - now works as backup when service fails
-  const handleVideoLoad = (data: OnLoadData) => {
-    console.log('VideoUpload: Video player onLoad called with duration:', data.duration);
-    
+  const handleVideoLoad = (status: AVPlaybackStatus) => {
+    if (!status.isLoaded) return;
+
+    console.log('VideoUpload: Video player onLoad called with duration:', status.durationMillis);
+
     // Only use video player data if service detection failed
     if (!videoLoaded && !isDetectingDuration) {
       setVideoLoaded(true);
-      const durationSeconds = data.duration;
+      const durationSeconds = (status.durationMillis || 0) / 1000;
       setVideoDuration(durationSeconds);
 
       if (durationSeconds > MAX_VIDEO_DURATION) {
@@ -648,7 +640,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           style={styles.video}
           resizeMode="contain"
           paused={!isPlaying}
-          onLoad={handleVideoLoad}
+          onPlaybackStatusUpdate={handleVideoLoad}
           onEnd={() => setIsPlaying(false)}
           onError={(e) => console.error('Video Player Error:', e)}
         />
