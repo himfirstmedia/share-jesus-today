@@ -12,3 +12,31 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# react-native-video
+-keep class com.brentvatne.react.** { *; }
+-dontwarn com.brentvatne.react.**
+
+# react-native-video-trim
+-keep class com.reactnativevideotrim.** { *; }
+-dontwarn com.reactnativevideotrim.**
+
+# expo-image-picker
+-keep class expo.modules.imagepicker.** { *; }
+-dontwarn expo.modules.imagepicker.**
+
+# expo-file-system
+-keep class expo.modules.filesystem.** { *; }
+-dontwarn expo.modules.filesystem.**
+
+# react-native-compressor
+-keep class com.reactnativecompressor.** { *; }
+-dontwarn com.reactnativecompressor.**
+
+# react-native-fs
+-keep class com.rnfs.** { *; }
+-dontwarn com.rnfs.**
+
+# react-native-blob-util
+-keep class com.ReactNativeBlobUtil.** { *; }
+-dontwarn com.ReactNativeBlobUtil.**
