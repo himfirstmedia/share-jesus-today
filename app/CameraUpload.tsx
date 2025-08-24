@@ -16,8 +16,7 @@ import {
   View,
 } from 'react-native';
 // Import services
-// import CameraCompressionService from '../services/cameraCompressionService';
-import CameraCompressionService from '../services/cameraCompressionService';
+import FfmpegCompressionService from '../services/ffmpegCompressionService';
 import videoApiService from '../services/videoApiService';
 import { t } from '../utils/i18n';
 
@@ -162,7 +161,7 @@ const CameraUpload: React.FC = () => {
       
       setUploadPhase(t('videoUploadInterface.compressingVideo'));
       
-      const compressedUri = await CameraCompressionService.createCompressedCopy(videoFile.uri, {
+      const compressedUri = await FfmpegCompressionService.createCompressedCopy(videoFile.uri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
           // Map compression progress to 0-50% of total progress

@@ -14,6 +14,7 @@ install! 'cocoapods',
 prepare_react_native_project!
 
 target 'ShareJesusToday' do
+  pod 'kroog-ffmpeg-kit-react-native', :subspecs => ['video'], :podspec => '../node_modules/kroog-ffmpeg-kit-react-native/kroog-ffmpeg-kit-react-native.podspec'
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'

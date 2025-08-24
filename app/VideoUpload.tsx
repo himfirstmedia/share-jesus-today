@@ -17,7 +17,7 @@ import {
   View
 } from 'react-native';
 import videoApiService from '../services/videoApiService';
-import VideoCompressionService from '../services/videoCompressionService';
+import FfmpegCompressionService from '../services/ffmpegCompressionService';
 import { t } from '../utils/i18n';
 import VideoTrimmer from './VideoTrimmer';
 
@@ -408,7 +408,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
       
       setUploadPhase(t('videoUploadInterface.compressingVideo'));
       
-      const compressedUri = await VideoCompressionService.createCompressedCopy(selectedVideo.uri, {
+      const compressedUri = await FfmpegCompressionService.createCompressedCopy(selectedVideo.uri, {
         maxSizeMB: 15,
         progressCallback: (progress: number) => {
           const progressPercentage = Math.round(progress * 50);
