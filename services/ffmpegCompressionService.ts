@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system';
-import { FFmpegKit, ReturnCode } from 'kroog-ffmpeg-kit-react-native';
+import { FFmpegKit, FFmpegKitConfig, ReturnCode } from 'expo-ffmpeg-kit';
 
 // --- Type Definitions ---
 type ExistingVideoInfo = {
@@ -85,34 +85,25 @@ class FfmpegCompressionService {
 
       console.log('Executing FFmpeg command:', command);
 
-      if (progressCallback) {
-        // FFmpegKit doesn't directly provide progress for encoding in the same way as react-native-compressor.
-        // We can simulate progress or use FFmpegKit's statistics callback for more advanced scenarios.
-        // For now, we'll just indicate that the process has started.
-        progressCallback(0.1);
-      }
-
+      // expo-ffmpeg-kit provides a way to handle progress, but for now we will keep it simple.
+      // The `execute` method is asynchronous and we can await it.
       const session = await FFmpegKit.execute(command);
       const returnCode = await session.getReturnCode();
 
-      if (progressCallback) {
-        progressCallback(0.9);
-      }
-
       if (ReturnCode.isSuccess(returnCode)) {
+        if (progressCallback) {
+          progressCallback(1); // Indicate completion
+        }
         const compressedInfo = await this.getVideoInfo(compressedUri);
         if (!compressedInfo.exists) {
           throw new Error('Compressed file verification failed');
         }
         console.log(`LOG: FFmpeg compression successful! ${sourceInfo.sizeMB}MB -> ${compressedInfo.sizeMB}MB`);
-        if (progressCallback) {
-            progressCallback(1);
-        }
         return compressedUri;
       } else {
         const logs = await session.getOutput();
         console.error('FFmpeg compression failed. Logs:', logs);
-        throw new Error(`FFmpeg process failed with return code ${returnCode}.`);
+        throw new Error(`FFmpeg process failed with return code ${await returnCode.getValue()}.`);
       }
     } catch (error: any) {
       console.error('ERROR: Compression process failed:', error.message);
