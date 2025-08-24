@@ -1754,6 +1754,11 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
+"@miblanchard/react-native-slider@^2.6.0":
+  version "2.6.0"
+  resolved "https://registry.npmjs.org/@miblanchard/react-native-slider/-/react-native-slider-2.6.0.tgz"
+  integrity sha512-o7hk/f/8vkqh6QNR5L52m+ws846fQeD/qNCC9CCSRdBqjq66KiCgbxzlhRzKM/gbtxcvMYMIEEJ1yes5cr6I3A==
+
 "@napi-rs/wasm-runtime@^0.2.11":
   version "0.2.12"
   resolved "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz"
@@ -5006,6 +5011,11 @@ fetch-retry@^4.1.1:
   resolved "https://registry.npmjs.org/fetch-retry/-/fetch-retry-4.1.1.tgz"
   integrity sha512-e6eB7zN6UBSwGVwrbWVH+gdLnkW9WwHhmq2YDK1Sh30pzx1onRVGBvogTlUeWxwTa+L86NYdo4hFkh7O8ZjSnA==
 
+ffmpeg-kit-react-native@^6.0.2:
+  version "6.0.2"
+  resolved "https://registry.npmjs.org/ffmpeg-kit-react-native/-/ffmpeg-kit-react-native-6.0.2.tgz"
+  integrity sha512-r9uSmahq8TeyIb7fXf3ft+uUXyoeWRFa99+khjo0TAzWO9y0z9wU7eGnab9JLw1MmCB9v64o4yojNluJhVm9nQ==
+
 figures@3.2.0:
   version "3.2.0"
   resolved "https://registry.npmjs.org/figures/-/figures-3.2.0.tgz"
@@ -7915,12 +7925,19 @@ react-native-url-polyfill@^2.0.0:
   dependencies:
     whatwg-url-without-unicode "8.0.0-3"
 
-react-native-video-trim@^5.0.3:
-  version "5.0.3"
-  resolved "https://registry.npmjs.org/react-native-video-trim/-/react-native-video-trim-5.0.3.tgz"
-  integrity sha512-CJZAGIw3M7jhmgJkTW3fpk8mhSMrCjn9eqxqLvVqnA3Z5pFXwFqgeJIn6ZIozx3WheOhT6sKFKKkqaMUy09iNA==
+react-native-video-trimmer-core@^0.3.5:
+  version "0.3.5"
+  resolved "https://registry.npmjs.org/react-native-video-trimmer-core/-/react-native-video-trimmer-core-0.3.5.tgz"
+  integrity sha512-IjWIDq9FmnSiE9Ec1Zzi+pR3Y810x0dSDiuOPgLxEq6KyLB+/jzLkMLAEBiKlPpHFsmzj9hU5oebk1+wLgh+DA==
 
-react-native-video@^6.16.1:
+react-native-video-trimmer-ui@^0.3.6:
+  version "0.3.6"
+  resolved "https://registry.npmjs.org/react-native-video-trimmer-ui/-/react-native-video-trimmer-ui-0.3.6.tgz"
+  integrity sha512-th/DrDPXCHKL9+dKf1uGiueTwdN4XLLp+3O3zpGy7ccKRcfJ9PKMfrTlT+YUp/3bEf1pZuSmqziO44repSSBeg==
+  dependencies:
+    "@miblanchard/react-native-slider" "^2.6.0"
+
+react-native-video@^6.16.1, react-native-video@^6.6.4:
   version "6.16.1"
   resolved "https://registry.npmjs.org/react-native-video/-/react-native-video-6.16.1.tgz"
   integrity sha512-+G6tVVGbwFqNTyPivqb+PhQzWr5OudDQ1dgvBNyBRAgcS8rOcbwuS6oX+m8cxOsXHn1UT9ofQnjQEwkGOsvomg==
@@ -7947,7 +7964,7 @@ react-native-webview@*, react-native-webview@13.13.5:
     escape-string-regexp "^4.0.0"
     invariant "2.2.4"
 
-react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", react-native@0.79.4:
+react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", react-native@>=0.59, react-native@0.79.4:
   version "0.79.4"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.79.4.tgz"
   integrity sha512-CfxYMuszvnO/33Q5rB//7cU1u9P8rSOvzhE2053Phdb8+6bof9NLayCllU2nmPrm8n9o6RU1Fz5H0yquLQ0DAw==
