@@ -140,7 +140,7 @@ interface VideoFile {
 interface VideoUploadProps {
   initialVideo?: VideoFile;
   onCancel?: () => void;
-  onComplete: (videoData?: any) => void;
+  onComplete?: (videoData?: any) => void; // Made optional with default handling
   isFromRecording?: boolean;
 }
 
@@ -513,7 +513,23 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
           Alert.alert(
             t('videoUploadInterface.alertSuccess'), 
             t('videoUploadInterface.alertVideoUploaded'), 
-            [{ text: t('languageScreen.okButton'), onPress: () => onComplete(response.data) }]
+            [{ 
+              text: t('languageScreen.okButton'), 
+              onPress: () => {
+                // Safely call onComplete if it exists
+                if (typeof onComplete === 'function') {
+                  onComplete(response.data);
+                } else {
+                  // Fallback behavior if onComplete is not provided
+                  console.log('Video upload completed successfully:', response.data);
+                  // You might want to navigate back or show a different success message
+                  router.push('/watchVideos')
+                  if (onCancel) {
+                    onCancel(); // Use onCancel as a fallback to close the screen
+                  }
+                }
+              }
+            }]
           );
         }, 1000);
       } else {
