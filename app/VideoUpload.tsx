@@ -613,7 +613,7 @@ const VideoUploadInterface: React.FC<VideoUploadProps> = ({
     
     return (
       <View style={styles.videoContainer}>
-        <VideoView style={styles.video} player={player} contentFit="contain" />
+        <VideoView style={styles.video} player={player}  contentFit="contain" />
         <TouchableOpacity 
           style={styles.playButton} 
           onPress={handlePlayPause}
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden', 
     position: 'relative' 
   },
-  video: { width: '100%', height: 200, backgroundColor: '#000' },
+  video: { width: '100%', height: 300, backgroundColor: '#000' },
   playButton: { 
     position: 'absolute', 
     top: '50%', 

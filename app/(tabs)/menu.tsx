@@ -244,6 +244,10 @@ export default function MenuScreen() {
     router.push('/menuscreens/terms')
   };
 
+  const handleTestTrimmer = () => {
+    router.push('../TestTrimmer');
+  };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       t('alerts.deleteAccount'),
@@ -272,7 +276,7 @@ export default function MenuScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('menu.title')}</Text>
         {/* <Text style={styles.version}>{t('common.version')}</Text> */}
-        <Text style={styles.version}>{'v18.0.0'}</Text>
+        <Text style={styles.version}>{'v25.0.0'}</Text>
       </View>
 
       <ScrollView
@@ -387,6 +391,15 @@ export default function MenuScreen() {
             title={t('menu.termsAndConditions')}
             onPress={handleTermsAndConditions}
           />
+
+          {/* --- DEV/TEST SECTION --- */}
+          <View style={{paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#f0f0f0"}}>
+            <MenuItem
+              icon="cut"
+              title="Test Video Trimmer"
+              onPress={handleTestTrimmer}
+            />
+          </View>
 
           {isAuthenticated && (
             <>
